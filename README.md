@@ -2,6 +2,8 @@
 
 ## Overview
 
+![Color Highlighter in Obsidian](images/example.png)
+
 Color Highlighter is a plugin for Obsidian that enhances your note-taking experience by automatically highlighting color codes in your notes. It provides visual representation of colors directly in your text, making it easier to work with color-related information.
 
 **Note: This plugin is currently in beta. Please report any issues or feedback to help improve it!**
