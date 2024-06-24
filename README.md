@@ -1,4 +1,4 @@
-# Obsidian Color Highlighter Plugin
+# Color Highlighter
 
 ## Overview
 
