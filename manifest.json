@@ -1,0 +1,9 @@
+{
+    "id": "color-highlighter",
+    "name": "Color Highlighter",
+    "version": "0.1.0",
+    "minAppVersion": "0.12.0",
+    "description": "Highlights color codes in your notes.",
+    "author": "Heather Piper",
+    "isDesktopOnly": false
+  }
