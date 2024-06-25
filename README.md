@@ -25,7 +25,7 @@ Color Highlighter is a plugin for Obsidian that enhances your note-taking experi
 As this plugin is currently in beta, it's not available in the Obsidian Community Plugins browser. To install:
 
 1. Download the latest release from the GitHub repository.
-2. Extract the zip file in your Obsidian vault's `.obsidian/plugins/` directory.
+2. Move the downloaded files (`main.js` and `manifest.json`) into your Obsidian vault's plugin directory at `.obsidian/plugins/`.
 3. Reload Obsidian.
 4. Go to "Settings" > "Community plugins" and enable "Color Highlighter".
 
