@@ -5,7 +5,7 @@ export interface ColorHighlighterSettings {
     highlightEverywhere: boolean;
     highlightInBackticks: boolean;
     highlightInCodeblocks: boolean;
-    highlightStyle: 'background' | 'underline' | 'square';
+    highlightStyle: 'background' | 'underline' | 'square' | 'border';
 }
 
 export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
@@ -84,10 +84,11 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             .setDesc('Choose how to highlight color codes')
             .addDropdown(dropdown => dropdown
                 .addOption('background', 'Background color')
-                .addOption('underline', 'Underline')
+                .addOption('border', 'Border')
                 .addOption('square', 'Colored square')
+                .addOption('underline', 'Underline')
                 .setValue(this.plugin.settings.highlightStyle)
-                .onChange(async (value: 'background' | 'underline' | 'square') => {
+                .onChange(async (value: 'background' | 'underline' | 'square' | 'border') => {
                     this.plugin.settings.highlightStyle = value;
                     await this.plugin.saveSettings();
                     this.display();

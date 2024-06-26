@@ -56,6 +56,11 @@ export default class ColorHighlighterPlugin extends Plugin {
                 margin-left: 2px;
                 vertical-align: middle;
             }
+            .color-highlighter-border {
+                border-width: 2px;
+                border-style: solid;
+                padding: 0 2px;
+            }
         `;
 
         this.registerMarkdownPostProcessor((el) => {
@@ -162,7 +167,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return false;
                 }
             
-                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square') {
+                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
                     const editorBackground = getComputedStyle(view.dom).backgroundColor;
                     
                     let decorationAttributes: { [key: string]: string } = {
@@ -180,6 +185,10 @@ export default class ColorHighlighterPlugin extends Plugin {
                             break;
                         case 'square':
                             // No additional style for the text itself
+                            break;
+                        case 'border':
+                            decorationAttributes.class += " color-highlighter-border";
+                            decorationAttributes.style = `border: 2px solid ${color};`;
                             break;
                     }
 
@@ -348,6 +357,10 @@ export default class ColorHighlighterPlugin extends Plugin {
                                 square.classList.add('color-highlighter-square');
                                 square.style.backgroundColor = backgroundColor;
                                 span.appendChild(square);
+                                break;
+                            case 'border':
+                                span.classList.add('color-highlighter-border');
+                                span.style.borderColor = backgroundColor;
                                 break;
                         }
 

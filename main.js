@@ -83,7 +83,7 @@ var ColorHighlighterSettingTab = class extends import_obsidian.PluginSettingTab 
       })
     );
     new import_obsidian.Setting(containerEl).setName("Highlight style").setDesc("Choose how to highlight color codes").addDropdown(
-      (dropdown) => dropdown.addOption("background", "Background color").addOption("underline", "Underline").addOption("square", "Colored square").setValue(this.plugin.settings.highlightStyle).onChange(async (value) => {
+      (dropdown) => dropdown.addOption("background", "Background color").addOption("border", "Border").addOption("square", "Colored square").addOption("underline", "Underline").setValue(this.plugin.settings.highlightStyle).onChange(async (value) => {
         this.plugin.settings.highlightStyle = value;
         await this.plugin.saveSettings();
         this.display();
@@ -147,6 +147,11 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
                 height: 10px;
                 margin-left: 2px;
                 vertical-align: middle;
+            }
+            .color-highlighter-border {
+                border-width: 2px;
+                border-style: solid;
+                padding: 0 2px;
             }
         `;
     this.registerMarkdownPostProcessor((el) => {
@@ -243,6 +248,10 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
               decorationAttributes.style = `border-bottom: 2px solid ${color}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
               break;
             case "square":
+              break;
+            case "border":
+              decorationAttributes.class += " color-highlighter-border";
+              decorationAttributes.style = `border: 2px solid ${color};`;
               break;
           }
           builder.add(start, end, import_view.Decoration.mark({
@@ -400,6 +409,10 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
                 square.classList.add("color-highlighter-square");
                 square.style.backgroundColor = backgroundColor;
                 span.appendChild(square);
+                break;
+              case "border":
+                span.classList.add("color-highlighter-border");
+                span.style.borderColor = backgroundColor;
                 break;
             }
             fragment.appendChild(span);
