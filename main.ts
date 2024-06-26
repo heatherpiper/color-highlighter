@@ -220,28 +220,28 @@ export default class ColorHighlighterPlugin extends Plugin {
                 ) {
                     const fragment = document.createDocumentFragment();
                     let lastIndex = 0;
-                    let match;
+                    let match;    
 
                     while ((match = COLOR_REGEX.exec(node.textContent)) !== null) {
                         const colorCode = match[0];
                         const startIndex = match.index;
                         const endIndex = startIndex + colorCode.length;
-
+    
                         // Add text before the color code
                         if (startIndex > lastIndex) {
                             fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex, startIndex)));
                         }
-
+    
                         // Add highlighted color code
                         const span = document.createElement('span');
                         span.textContent = colorCode;
-                        span.style.backgroundColor = colorCode;
-                        const backgroundColor = window.getComputedStyle(el).backgroundColor || 'white';
-                        span.style.color = this.getContrastColor(colorCode, backgroundColor);
+                        const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
+                        span.style.backgroundColor = backgroundColor;
+                        span.style.color = this.getContrastColor(backgroundColor, 'white');
                         span.style.padding = '1px 3px';
                         span.style.borderRadius = '3px';
                         fragment.appendChild(span);
-
+    
                         lastIndex = endIndex;
                     }
 
@@ -319,15 +319,23 @@ export default class ColorHighlighterPlugin extends Plugin {
             const [r, g, b, a] = rgba.match(/[\d.]+/g)?.map(Number) || [];
             const [bgR, bgG, bgB] = this.extractRgbComponents(background);
             const alpha = a !== undefined ? a : 1;
-
+    
             const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
             const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
             const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
-
+    
             return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
         } catch (error) {
+            console.error('Error in blendRgbaWithBackground:', error);
             return background; // Fallback to background color if there's an error
         }
+    }
+
+    getEffectiveBackgroundColor(color: string, background: string): string {
+        if (color.startsWith('rgba')) {
+            return this.blendRgbaWithBackground(color, background);
+        }
+        return color;
     }
 
     extractRgbComponents(rgbString: string): [number, number, number] {

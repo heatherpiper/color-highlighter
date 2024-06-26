@@ -46,7 +46,6 @@ var ColorHighlighterSettingTab = class extends import_obsidian.PluginSettingTab 
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Color Highlighter Settings" });
     const descEl = containerEl.createEl("p", {
       text: "NOTE: After changing any of these settings, you may need to reload any open notes in order to see the changes.",
       cls: "setting-item-description"
@@ -294,9 +293,9 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
             }
             const span = document.createElement("span");
             span.textContent = colorCode;
-            span.style.backgroundColor = colorCode;
-            const backgroundColor = window.getComputedStyle(el).backgroundColor || "white";
-            span.style.color = this.getContrastColor(colorCode, backgroundColor);
+            const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
+            span.style.backgroundColor = backgroundColor;
+            span.style.color = this.getContrastColor(backgroundColor, "white");
             span.style.padding = "1px 3px";
             span.style.borderRadius = "3px";
             fragment.appendChild(span);
@@ -368,8 +367,15 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
       const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
       return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
     } catch (error) {
+      console.error("Error in blendRgbaWithBackground:", error);
       return background;
     }
+  }
+  getEffectiveBackgroundColor(color, background) {
+    if (color.startsWith("rgba")) {
+      return this.blendRgbaWithBackground(color, background);
+    }
+    return color;
   }
   extractRgbComponents(rgbString) {
     rgbString = this.convertNamedColor(rgbString);
