@@ -6,7 +6,7 @@
 
 Color Highlighter is a plugin for Obsidian that enhances your note-taking experience by automatically highlighting color codes in your notes. It provides visual representation of colors directly in your text, making it easier to work with color-related information. Customizable options allow you to control where your highlights happen and how they look.
 
-![Color Highlighter highlight options](images/highlighting-modes.png)
+![Color Highlighter highlight options](images/highlighting-styles.png)
 
 > [!NOTE]
 > This plugin is currently in beta. Please report any issues or feedback to help improve it!
@@ -16,8 +16,8 @@ Color Highlighter is a plugin for Obsidian that enhances your note-taking experi
 - Highlights color codes in various formats (HEX, RGB, RGBA, HSL, HSLA)
 - Customize where to highlight
   - Highlight everywhere, highlight only in inline code (single backticks), highlight only in codeblocks (triple backticks)
-- Customize how to highlight
-  - Highlight with background color, underline, or preview square
+- Customize highlighting style
+  - Highlight with background color, border, colored square, or underline
 - Works in Source Mode, Reading Mode, and Live Preview
 - Automatically adjusts text color for optimal contrast with the highlighted background
 
@@ -55,8 +55,9 @@ Once installed and enabled, the plugin will automatically highlight color codes 
    - Highlight in codeblocks: Only highlights color codes within triple backticks (codeblocks).
 4. Choose your preferred highlighting style:
    - Background: Highlights color codes by changing their background color
+   - Border: Highlights color codes by adding a solid color border
+   - Colored Square: Highlights color codes by adding a small colored square following the color code
    - Underline: Highlights color codes by adding a solid color underline
-   - Colored Square: Highlights color codes by adding a small preview square following the color code
 
 **Note:** After changing any settings, you may need to reload any open notes to see the changes take effect.
 
