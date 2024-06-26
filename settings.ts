@@ -5,12 +5,14 @@ export interface ColorHighlighterSettings {
     highlightEverywhere: boolean;
     highlightInBackticks: boolean;
     highlightInCodeblocks: boolean;
+    highlightStyle: 'background' | 'underline' | 'square';
 }
 
 export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     highlightEverywhere: true,
     highlightInBackticks: false,
-    highlightInCodeblocks: false
+    highlightInCodeblocks: false,
+    highlightStyle: 'background'
 }
 
 export class ColorHighlighterSettingTab extends PluginSettingTab {
@@ -43,7 +45,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                         this.plugin.settings.highlightInCodeblocks = false;
                     }
                     await this.plugin.saveSettings();
-                    this.display(); // Refresh the display to update other toggles
+                    this.display();
                 })
             );
 
@@ -58,7 +60,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                         this.plugin.settings.highlightEverywhere = false;
                     }
                     await this.plugin.saveSettings();
-                    this.display(); // Refresh the display to update other toggles
+                    this.display();
                 })
             );
 
@@ -73,7 +75,23 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                         this.plugin.settings.highlightEverywhere = false;
                     }
                     await this.plugin.saveSettings();
-                    this.display();})
+                    this.display();
+                })
             );
-        }
+
+        new Setting(containerEl)
+            .setName('Highlight style')
+            .setDesc('Choose how to highlight color codes')
+            .addDropdown(dropdown => dropdown
+                .addOption('background', 'Background color')
+                .addOption('underline', 'Underline')
+                .addOption('square', 'Colored square')
+                .setValue(this.plugin.settings.highlightStyle)
+                .onChange(async (value: 'background' | 'underline' | 'square') => {
+                    this.plugin.settings.highlightStyle = value;
+                    await this.plugin.saveSettings();
+                    this.display();
+                })
+            );
     }
+}

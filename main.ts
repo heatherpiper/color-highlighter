@@ -1,5 +1,5 @@
 import { Plugin, MarkdownView, MarkdownPostProcessorContext } from 'obsidian';
-import { EditorView, ViewUpdate, ViewPlugin, Decoration, DecorationSet } from '@codemirror/view';
+import { EditorView, ViewUpdate, ViewPlugin, Decoration, DecorationSet, WidgetType } from '@codemirror/view';
 import { RangeSetBuilder, EditorState } from '@codemirror/state';
 import { ColorHighlighterSettings, DEFAULT_SETTINGS, ColorHighlighterSettingTab } from './settings';
 import { syntaxTree } from '@codemirror/language';
@@ -26,6 +26,35 @@ export default class ColorHighlighterPlugin extends Plugin {
                 border-radius: 3px;
                 box-decoration-break: clone;
                 -webkit-box-decoration-break: clone;
+            }
+            .color-highlighter-underline {
+                text-decoration: none !important;
+                border-bottom-width: 2px;
+                border-bottom-style: solid;
+                padding-bottom: 1px;
+                border-radius: 0 !important;
+            }
+            .color-highlighter-underline::before,
+            .color-highlighter-underline::after {
+                content: "";
+                position: absolute;
+                bottom: -2px;
+                width: 0;
+                height: 2px;
+                background-color: inherit;
+            }
+            .color-highlighter-underline::before {
+                left: 0;
+            }
+            .color-highlighter-underline::after {
+                right: 0;
+            }
+            .color-highlighter-square {
+                display: inline-block;
+                width: 10px;
+                height: 10px;
+                margin-left: 2px;
+                vertical-align: middle;
             }
         `;
 
@@ -61,7 +90,7 @@ export default class ColorHighlighterPlugin extends Plugin {
 
                 buildDecorations(view: EditorView) {
                     const builder = new RangeSetBuilder<Decoration>();
-                    const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks } = plugin.settings;
+                    const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = plugin.settings;
 
                     for (const { from, to } of view.visibleRanges) {
                         const text = view.state.doc.sliceString(from, to);
@@ -71,7 +100,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                             const end = start + match[0].length;
                             
                             if (this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks)) {
-                                this.addDecoration(builder, start, end, match[0], view);
+                                this.addDecoration(builder, start, end, match[0], view, highlightStyle);
                             }
                         }
                     }
@@ -133,16 +162,80 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return false;
                 }
             
-                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView) {
+                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square') {
                     const editorBackground = getComputedStyle(view.dom).backgroundColor;
-                    const contrastColor = this.getContrastColor(color, editorBackground);
                     
+                    let decorationAttributes: { [key: string]: string } = {
+                        class: "color-highlighter-inline-code",
+                    };
+
+                    switch (highlightStyle) {
+                        case 'background':
+                            const contrastColor = this.getContrastColor(color, editorBackground);
+                            decorationAttributes.style = `background-color: ${color}; color: ${contrastColor};`;
+                            break;
+                        case 'underline':
+                            decorationAttributes.class += " color-highlighter-underline";
+                            decorationAttributes.style = `border-bottom: 2px solid ${color}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
+                            break;
+                        case 'square':
+                            // No additional style for the text itself
+                            break;
+                    }
+
                     builder.add(start, end, Decoration.mark({
-                        attributes: { 
-                            class: "color-highlighter-inline-code",
-                            style: `background-color: ${color}; color: ${contrastColor}; border-radius: 3px; padding: 1px 3px;`
-                        }
+                        attributes: decorationAttributes
                     }));
+
+                    if (highlightStyle === 'square') {
+                        builder.add(end, end, Decoration.widget({
+                            widget: new class extends WidgetType {
+                                constructor(readonly color: string) {
+                                    super();
+                                }
+                                
+                                toDOM() {
+                                    const span = document.createElement('span');
+                                    span.className = 'color-highlighter-square';
+                                    span.style.display = 'inline-block';
+                                    span.style.width = '10px';
+                                    span.style.height = '10px';
+                                    span.style.backgroundColor = this.color;
+                                    span.style.marginLeft = '2px';
+                                    span.style.verticalAlign = 'middle';
+                                    return span;
+                                }
+
+                                eq(other: WidgetType): boolean {
+                                    return other instanceof this.constructor && (other as any).color === this.color;
+                                }
+
+                                updateDOM(dom: HTMLElement): boolean {
+                                    return false; // The widget is static, so no update is needed
+                                }
+
+                                ignoreEvent(): boolean {
+                                    return false; // Allow events to pass through
+                                }
+
+                                get estimatedHeight(): number {
+                                    return 10; // The square is 10px high
+                                }
+
+                                get lineBreaks(): number {
+                                    return 0; // The square doesn't introduce any line breaks
+                                }
+
+                                coordsAt(dom: HTMLElement, pos: number, side: number): { top: number, right: number, bottom: number, left: number } | null {
+                                    return null; // We don't need to implement custom coordinates
+                                }
+
+                                destroy() {
+                                    // No cleanup needed for this simple widget
+                                }
+                            }(color)
+                        }));
+                    }
                 }
             
                 getContrastColor(color: string, background: string): string {
@@ -208,7 +301,7 @@ export default class ColorHighlighterPlugin extends Plugin {
     }
 
     postProcessor(el: HTMLElement, ctx: MarkdownPostProcessorContext) {
-        const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks } = this.settings;
+        const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
 
         const processNode = (node: Node) => {
             if (node.nodeType === Node.TEXT_NODE && node.textContent) {
@@ -236,10 +329,28 @@ export default class ColorHighlighterPlugin extends Plugin {
                         const span = document.createElement('span');
                         span.textContent = colorCode;
                         const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
-                        span.style.backgroundColor = backgroundColor;
-                        span.style.color = this.getContrastColor(backgroundColor, 'white');
-                        span.style.padding = '1px 3px';
-                        span.style.borderRadius = '3px';
+
+                        span.classList.add('color-highlighter-inline-code');
+
+                        switch (highlightStyle) {
+                            case 'background':
+                                const contrastColor = this.getContrastColor(backgroundColor, 'white');
+                                span.style.backgroundColor = backgroundColor;
+                                span.style.color = contrastColor;
+                                break;
+                            case 'underline':
+                                span.classList.add('color-highlighter-underline');
+                                span.style.borderBottomColor = backgroundColor;
+                                span.style.borderRadius = '0';
+                                break;
+                            case 'square':
+                                const square = document.createElement('span');
+                                square.classList.add('color-highlighter-square');
+                                square.style.backgroundColor = backgroundColor;
+                                span.appendChild(square);
+                                break;
+                        }
+
                         fragment.appendChild(span);
     
                         lastIndex = endIndex;
