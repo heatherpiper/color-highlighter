@@ -326,7 +326,25 @@ export default class ColorHighlighterPlugin extends Plugin {
     
             return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
         } catch (error) {
-            console.error('Error in blendRgbaWithBackground:', error);
+            return background; // Fallback to background color if there's an error
+        }
+    }
+
+    blendHslaWithBackground(hsla: string, background: string): string {
+        try {
+            const [h, s, l, a] = this.extractHslaComponents(hsla);
+            const [bgR, bgG, bgB] = this.extractRgbComponents(background);
+            
+            // Convert HSLA to RGBA
+            const rgba = this.hslaToRgba(h, s, l, a);
+            
+            // Blend with background
+            const blendedR = Math.round((1 - a) * bgR + a * rgba[0]);
+            const blendedG = Math.round((1 - a) * bgG + a * rgba[1]);
+            const blendedB = Math.round((1 - a) * bgB + a * rgba[2]);
+    
+            return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
+        } catch (error) {
             return background; // Fallback to background color if there's an error
         }
     }
@@ -334,6 +352,8 @@ export default class ColorHighlighterPlugin extends Plugin {
     getEffectiveBackgroundColor(color: string, background: string): string {
         if (color.startsWith('rgba')) {
             return this.blendRgbaWithBackground(color, background);
+        } else if (color.startsWith('hsla')) {
+            return this.blendHslaWithBackground(color, background);
         }
         return color;
     }
@@ -356,17 +376,33 @@ export default class ColorHighlighterPlugin extends Plugin {
         return match.slice(0, 3).map(Number) as [number, number, number];
     }
 
+    extractHslaComponents(hsla: string): [number, number, number, number] {
+        const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
+        if (!match) {
+            throw new Error('Invalid HSLA string');
+        }
+        const h = parseInt(match[1], 10);
+        const s = parseInt(match[2], 10) / 100;
+        const l = parseInt(match[3], 10) / 100;
+        const a = match[4] ? parseFloat(match[4]) : 1;
+        return [h, s, l, a];
+    }
 
     hslToRgb(hsl: string): string {
         try {
-            const [h, s, l] = hsl.match(/\d+/g)?.map(Number) || [];
+            const [h, s, l] = hsl.match(/\d+%?/g)?.map(val => {
+                if (val.endsWith('%')) {
+                    return parseFloat(val) / 100;
+                }
+                return parseFloat(val);
+            }) || [];
             if (h === undefined || s === undefined || l === undefined) {
                 throw new Error('Invalid HSL values');
             }
-            const sNorm = s / 100;
-            const lNorm = l / 100;
+            const sNorm = s;
+            const lNorm = l;
             const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
-            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
             const m = lNorm - c / 2;
             let r = 0, g = 0, b = 0;
             if (h < 60) { r = c; g = x; b = 0; }
@@ -383,4 +419,30 @@ export default class ColorHighlighterPlugin extends Plugin {
             return 'rgb(0,0,0)'; // Fallback to black if there's an error
         }
     }
+
+    hslaToRgba(h: number, s: number, l: number, a: number): [number, number, number, number] {
+        let r, g, b;
+    
+        if (s === 0) {
+            r = g = b = l; // achromatic
+        } else {
+            const hue2rgb = (p: number, q: number, t: number) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+    
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h / 360 + 1/3);
+            g = hue2rgb(p, q, h / 360);
+            b = hue2rgb(p, q, h / 360 - 1/3);
+        }
+    
+        return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), a];
+    }
+    
 }

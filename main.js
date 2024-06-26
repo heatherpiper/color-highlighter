@@ -367,13 +367,27 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
       const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
       return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
     } catch (error) {
-      console.error("Error in blendRgbaWithBackground:", error);
+      return background;
+    }
+  }
+  blendHslaWithBackground(hsla, background) {
+    try {
+      const [h, s, l, a] = this.extractHslaComponents(hsla);
+      const [bgR, bgG, bgB] = this.extractRgbComponents(background);
+      const rgba = this.hslaToRgba(h, s, l, a);
+      const blendedR = Math.round((1 - a) * bgR + a * rgba[0]);
+      const blendedG = Math.round((1 - a) * bgG + a * rgba[1]);
+      const blendedB = Math.round((1 - a) * bgB + a * rgba[2]);
+      return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
+    } catch (error) {
       return background;
     }
   }
   getEffectiveBackgroundColor(color, background) {
     if (color.startsWith("rgba")) {
       return this.blendRgbaWithBackground(color, background);
+    } else if (color.startsWith("hsla")) {
+      return this.blendHslaWithBackground(color, background);
     }
     return color;
   }
@@ -393,15 +407,31 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     }
     return match.slice(0, 3).map(Number);
   }
+  extractHslaComponents(hsla) {
+    const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
+    if (!match) {
+      throw new Error("Invalid HSLA string");
+    }
+    const h = parseInt(match[1], 10);
+    const s = parseInt(match[2], 10) / 100;
+    const l = parseInt(match[3], 10) / 100;
+    const a = match[4] ? parseFloat(match[4]) : 1;
+    return [h, s, l, a];
+  }
   hslToRgb(hsl) {
     var _a;
     try {
-      const [h, s, l] = ((_a = hsl.match(/\d+/g)) == null ? void 0 : _a.map(Number)) || [];
+      const [h, s, l] = ((_a = hsl.match(/\d+%?/g)) == null ? void 0 : _a.map((val) => {
+        if (val.endsWith("%")) {
+          return parseFloat(val) / 100;
+        }
+        return parseFloat(val);
+      })) || [];
       if (h === void 0 || s === void 0 || l === void 0) {
         throw new Error("Invalid HSL values");
       }
-      const sNorm = s / 100;
-      const lNorm = l / 100;
+      const sNorm = s;
+      const lNorm = l;
       const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
       const x = c * (1 - Math.abs(h / 60 % 2 - 1));
       const m = lNorm - c / 2;
@@ -438,5 +468,26 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     } catch (error) {
       return "rgb(0,0,0)";
     }
+  }
+  hslaToRgba(h, s, l, a) {
+    let r, g, b;
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const hue2rgb = (p2, q2, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p2 + (q2 - p2) * 6 * t;
+        if (t < 1 / 2) return q2;
+        if (t < 2 / 3) return p2 + (q2 - p2) * (2 / 3 - t) * 6;
+        return p2;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h / 360 + 1 / 3);
+      g = hue2rgb(p, q, h / 360);
+      b = hue2rgb(p, q, h / 360 - 1 / 3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), a];
   }
 };
