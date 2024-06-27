@@ -118,7 +118,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
             }
             .color-highlighter.background {
                 border-radius: 3px;
-                padding: 0.2em 0.4em;
+                padding: 0.1em 0.2em;
             }
             .color-highlighter.border {
                 border-radius: 3px;
