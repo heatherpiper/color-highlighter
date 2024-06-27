@@ -112,22 +112,28 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
   }
   addStyles() {
     const styles = `
-            .color-highlighter-inline-code {
-                font-family: var(--font-monospace);
-                padding: 0.2em 0.4em;
-                border-radius: 3px;
+            .color-highlighter {
                 box-decoration-break: clone;
                 -webkit-box-decoration-break: clone;
             }
-            .color-highlighter-underline {
+            .color-highlighter.background {
+                border-radius: 3px;
+                padding: 0.2em 0.4em;
+            }
+            .color-highlighter.border {
+                border-radius: 3px;
+                border-width: 2px;
+                border-style: solid;
+                padding: 0 2px;
+            }
+            .color-highlighter.underline {
                 text-decoration: none !important;
                 border-bottom-width: 2px;
                 border-bottom-style: solid;
                 padding-bottom: 1px;
-                border-radius: 0 !important;
             }
-            .color-highlighter-underline::before,
-            .color-highlighter-underline::after {
+            .color-highlighter.underline::before,
+            .color-highlighter.underline::after {
                 content: "";
                 position: absolute;
                 bottom: -2px;
@@ -135,10 +141,10 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
                 height: 2px;
                 background-color: inherit;
             }
-            .color-highlighter-underline::before {
+            .color-highlighter.underline::before {
                 left: 0;
             }
-            .color-highlighter-underline::after {
+            .color-highlighter.underline::after {
                 right: 0;
             }
             .color-highlighter-square {
@@ -147,11 +153,6 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
                 height: 10px;
                 margin-left: 2px;
                 vertical-align: middle;
-            }
-            .color-highlighter-border {
-                border-width: 2px;
-                border-style: solid;
-                padding: 0 2px;
             }
         `;
     this.registerMarkdownPostProcessor((el) => {
@@ -392,17 +393,17 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
             const span = document.createElement("span");
             span.textContent = colorCode;
             const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
-            span.classList.add("color-highlighter-inline-code");
+            span.classList.add("color-highlighter");
             switch (highlightStyle) {
               case "background":
+                span.classList.add("background");
                 const contrastColor = this.getContrastColor(backgroundColor, "white");
                 span.style.backgroundColor = backgroundColor;
                 span.style.color = contrastColor;
                 break;
               case "underline":
-                span.classList.add("color-highlighter-underline");
+                span.classList.add("underline");
                 span.style.borderBottomColor = backgroundColor;
-                span.style.borderRadius = "0";
                 break;
               case "square":
                 const square = document.createElement("span");
@@ -411,7 +412,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
                 span.appendChild(square);
                 break;
               case "border":
-                span.classList.add("color-highlighter-border");
+                span.classList.add("border");
                 span.style.borderColor = backgroundColor;
                 break;
             }

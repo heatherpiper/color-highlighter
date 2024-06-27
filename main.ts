@@ -20,22 +20,28 @@ export default class ColorHighlighterPlugin extends Plugin {
 
     addStyles() {
         const styles = `
-            .color-highlighter-inline-code {
-                font-family: var(--font-monospace);
-                padding: 0.2em 0.4em;
-                border-radius: 3px;
+            .color-highlighter {
                 box-decoration-break: clone;
                 -webkit-box-decoration-break: clone;
             }
-            .color-highlighter-underline {
+            .color-highlighter.background {
+                border-radius: 3px;
+                padding: 0.2em 0.4em;
+            }
+            .color-highlighter.border {
+                border-radius: 3px;
+                border-width: 2px;
+                border-style: solid;
+                padding: 0 2px;
+            }
+            .color-highlighter.underline {
                 text-decoration: none !important;
                 border-bottom-width: 2px;
                 border-bottom-style: solid;
                 padding-bottom: 1px;
-                border-radius: 0 !important;
             }
-            .color-highlighter-underline::before,
-            .color-highlighter-underline::after {
+            .color-highlighter.underline::before,
+            .color-highlighter.underline::after {
                 content: "";
                 position: absolute;
                 bottom: -2px;
@@ -43,10 +49,10 @@ export default class ColorHighlighterPlugin extends Plugin {
                 height: 2px;
                 background-color: inherit;
             }
-            .color-highlighter-underline::before {
+            .color-highlighter.underline::before {
                 left: 0;
             }
-            .color-highlighter-underline::after {
+            .color-highlighter.underline::after {
                 right: 0;
             }
             .color-highlighter-square {
@@ -55,11 +61,6 @@ export default class ColorHighlighterPlugin extends Plugin {
                 height: 10px;
                 margin-left: 2px;
                 vertical-align: middle;
-            }
-            .color-highlighter-border {
-                border-width: 2px;
-                border-style: solid;
-                padding: 0 2px;
             }
         `;
 
@@ -311,7 +312,7 @@ export default class ColorHighlighterPlugin extends Plugin {
 
     postProcessor(el: HTMLElement, ctx: MarkdownPostProcessorContext) {
         const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
-
+    
         const processNode = (node: Node) => {
             if (node.nodeType === Node.TEXT_NODE && node.textContent) {
                 const parent = node.parentElement;
@@ -323,34 +324,34 @@ export default class ColorHighlighterPlugin extends Plugin {
                     const fragment = document.createDocumentFragment();
                     let lastIndex = 0;
                     let match;    
-
+    
                     while ((match = COLOR_REGEX.exec(node.textContent)) !== null) {
                         const colorCode = match[0];
                         const startIndex = match.index;
                         const endIndex = startIndex + colorCode.length;
-    
+        
                         // Add text before the color code
                         if (startIndex > lastIndex) {
                             fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex, startIndex)));
                         }
-    
+        
                         // Add highlighted color code
                         const span = document.createElement('span');
                         span.textContent = colorCode;
                         const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
-
-                        span.classList.add('color-highlighter-inline-code');
-
+    
+                        span.classList.add('color-highlighter');
+    
                         switch (highlightStyle) {
                             case 'background':
+                                span.classList.add('background');
                                 const contrastColor = this.getContrastColor(backgroundColor, 'white');
                                 span.style.backgroundColor = backgroundColor;
                                 span.style.color = contrastColor;
                                 break;
                             case 'underline':
-                                span.classList.add('color-highlighter-underline');
+                                span.classList.add('underline');
                                 span.style.borderBottomColor = backgroundColor;
-                                span.style.borderRadius = '0';
                                 break;
                             case 'square':
                                 const square = document.createElement('span');
@@ -359,21 +360,21 @@ export default class ColorHighlighterPlugin extends Plugin {
                                 span.appendChild(square);
                                 break;
                             case 'border':
-                                span.classList.add('color-highlighter-border');
+                                span.classList.add('border');
                                 span.style.borderColor = backgroundColor;
                                 break;
                         }
-
-                        fragment.appendChild(span);
     
+                        fragment.appendChild(span);
+        
                         lastIndex = endIndex;
                     }
-
+    
                     // Add any remaining text
                     if (lastIndex < node.textContent.length) {
                         fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
                     }
-
+    
                     if (node.parentNode) {
                         node.parentNode.replaceChild(fragment, node);
                     }
@@ -382,7 +383,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 Array.from(node.childNodes).forEach(processNode);
             }
         };
-
+    
         try {
             processNode(el);
         } catch (error) {
