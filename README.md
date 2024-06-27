@@ -28,7 +28,7 @@ Color Highlighter enhances your note-taking experience by automatically highligh
 
 ### Install manually
 
-As this plugin is currently in beta, it's not yet available in the Obsidian Community Plugins browser. 
+As this plugin is currently in beta, it's not yet available in the Obsidian community plugins browser. 
 
 To install:
 
