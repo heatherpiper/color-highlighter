@@ -6,8 +6,6 @@
 
 Color Highlighter enhances your note-taking experience by automatically highlighting color codes in your notes. It provides visual representation of colors directly in your text, making it easier to work with color-related information. Customizable options allow you to control where and how your highlights appear.
 
-![Color Highlighter highlight options](images/highlighting-styles.png)
-
 > [!NOTE]
 > This plugin is currently in beta. Please report any issues or feedback to help improve it!
 
@@ -67,6 +65,8 @@ Once installed and enabled, the plugin will automatically highlight color codes 
    - **Border**: Highlights color codes by adding a solid color border
    - **Colored Square**: Highlights color codes by adding a small colored square following the color code
    - **Underline**: Highlights color codes by adding a solid color underline
+
+![Color Highlighter highlighting styles](images/highlighting-styles.png)
 
 > [!NOTE]
 > After changing settings, you may need to reload any open notes in order to see the changes take effect.
