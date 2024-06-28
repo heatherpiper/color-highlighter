@@ -451,7 +451,11 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     try {
       color = this.convertNamedColor(color);
       background = this.convertNamedColor(background);
-      if (color.startsWith("hsl")) {
+      if (color.startsWith("#")) {
+        if (color.length === 4) {
+          color = "#" + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+        }
+      } else if (color.startsWith("hsl")) {
         color = this.hslToRgb(color);
       } else if (color.startsWith("rgba")) {
         color = this.blendRgbaWithBackground(color, background);
@@ -519,14 +523,11 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
   extractRgbComponents(rgbString) {
     rgbString = this.convertNamedColor(rgbString);
     if (rgbString.startsWith("#")) {
-      const hex = rgbString.slice(1);
+      let hex = rgbString.slice(1);
       if (hex.length === 3) {
-        return [
-          parseInt(hex[0] + hex[0], 16),
-          parseInt(hex[1] + hex[1], 16),
-          parseInt(hex[2] + hex[2], 16)
-        ];
-      } else if (hex.length === 6 || hex.length === 8) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      if (hex.length === 6 || hex.length === 8) {
         return [
           parseInt(hex.slice(0, 2), 16),
           parseInt(hex.slice(2, 4), 16),
