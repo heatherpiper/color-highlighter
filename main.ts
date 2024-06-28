@@ -97,7 +97,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 buildDecorations(view: EditorView) {
                     const builder = new RangeSetBuilder<Decoration>();
                     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = plugin.settings;
-
+    
                     for (const { from, to } of view.visibleRanges) {
                         const text = view.state.doc.sliceString(from, to);
                         let match;
@@ -106,7 +106,10 @@ export default class ColorHighlighterPlugin extends Plugin {
                             const end = start + match[0].length;
                             
                             if (this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks)) {
-                                this.addDecoration(builder, start, end, match[0], view, highlightStyle);
+                                const color = match[0];
+                                const editorBackground = getComputedStyle(view.dom).backgroundColor;
+                                const textColor = plugin.getContrastColor(color, editorBackground);
+                                this.addDecoration(builder, start, end, color, textColor, view, highlightStyle);
                             }
                         }
                     }
@@ -168,17 +171,16 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return false;
                 }
             
-                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
+                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, textColor: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
                     const editorBackground = getComputedStyle(view.dom).backgroundColor;
                     
                     let decorationAttributes: { [key: string]: string } = {
                         class: "color-highlighter-inline-code",
                     };
-
+    
                     switch (highlightStyle) {
                         case 'background':
-                            const contrastColor = this.getContrastColor(color, editorBackground);
-                            decorationAttributes.style = `background-color: ${color}; color: ${contrastColor};`;
+                            decorationAttributes.style = `background-color: ${color}; color: ${textColor};`;
                             break;
                         case 'underline':
                             decorationAttributes.class += " color-highlighter-underline";
@@ -339,19 +341,19 @@ export default class ColorHighlighterPlugin extends Plugin {
                         const span = document.createElement('span');
                         span.textContent = colorCode;
                         const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
-    
-                        span.classList.add('color-highlighter');
-    
+                        const textColor = this.getContrastColor(backgroundColor, window.getComputedStyle(el).backgroundColor);
+
+                        span.classList.add('color-highlighter-inline-code');
+
                         switch (highlightStyle) {
                             case 'background':
-                                span.classList.add('background');
-                                const contrastColor = this.getContrastColor(backgroundColor, 'white');
                                 span.style.backgroundColor = backgroundColor;
-                                span.style.color = contrastColor;
+                                span.style.color = textColor;
                                 break;
                             case 'underline':
-                                span.classList.add('underline');
+                                span.classList.add('color-highlighter-underline');
                                 span.style.borderBottomColor = backgroundColor;
+                                span.style.borderRadius = '0';
                                 break;
                             case 'square':
                                 const square = document.createElement('span');
@@ -360,11 +362,11 @@ export default class ColorHighlighterPlugin extends Plugin {
                                 span.appendChild(square);
                                 break;
                             case 'border':
-                                span.classList.add('border');
+                                span.classList.add('color-highlighter-border');
                                 span.style.borderColor = backgroundColor;
                                 break;
                         }
-    
+
                         fragment.appendChild(span);
         
                         lastIndex = endIndex;

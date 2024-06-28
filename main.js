@@ -188,7 +188,10 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
               const start = from + match.index;
               const end = start + match[0].length;
               if (this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks)) {
-                this.addDecoration(builder, start, end, match[0], view, highlightStyle);
+                const color = match[0];
+                const editorBackground = getComputedStyle(view.dom).backgroundColor;
+                const textColor = plugin.getContrastColor(color, editorBackground);
+                this.addDecoration(builder, start, end, color, textColor, view, highlightStyle);
               }
             }
           }
@@ -234,15 +237,14 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           }
           return false;
         }
-        addDecoration(builder, start, end, color, view, highlightStyle) {
+        addDecoration(builder, start, end, color, textColor, view, highlightStyle) {
           const editorBackground = getComputedStyle(view.dom).backgroundColor;
           let decorationAttributes = {
             class: "color-highlighter-inline-code"
           };
           switch (highlightStyle) {
             case "background":
-              const contrastColor = this.getContrastColor(color, editorBackground);
-              decorationAttributes.style = `background-color: ${color}; color: ${contrastColor};`;
+              decorationAttributes.style = `background-color: ${color}; color: ${textColor};`;
               break;
             case "underline":
               decorationAttributes.class += " color-highlighter-underline";
@@ -393,17 +395,17 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
             const span = document.createElement("span");
             span.textContent = colorCode;
             const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
-            span.classList.add("color-highlighter");
+            const textColor = this.getContrastColor(backgroundColor, window.getComputedStyle(el).backgroundColor);
+            span.classList.add("color-highlighter-inline-code");
             switch (highlightStyle) {
               case "background":
-                span.classList.add("background");
-                const contrastColor = this.getContrastColor(backgroundColor, "white");
                 span.style.backgroundColor = backgroundColor;
-                span.style.color = contrastColor;
+                span.style.color = textColor;
                 break;
               case "underline":
-                span.classList.add("underline");
+                span.classList.add("color-highlighter-underline");
                 span.style.borderBottomColor = backgroundColor;
+                span.style.borderRadius = "0";
                 break;
               case "square":
                 const square = document.createElement("span");
@@ -412,7 +414,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
                 span.appendChild(square);
                 break;
               case "border":
-                span.classList.add("border");
+                span.classList.add("color-highlighter-border");
                 span.style.borderColor = backgroundColor;
                 break;
             }
