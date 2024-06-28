@@ -4,14 +4,17 @@
 
 ![Color Highlighter in Obsidian](images/example.png)
 
-Color Highlighter enhances your note-taking experience by automatically highlighting color codes in your notes. It provides visual representation of colors directly in your text, making it easier to work with color-related information. Customizable options allow you to control where and how your highlights appear.
+Color Highlighter automatically detects and highlights color codes in your notes. It provides visual representation of colors directly in your text, making it easier to work with color-related information. Customizable options allow you to control where and how your highlights appear.
 
 > [!NOTE]
-> This plugin is currently in beta. Please report any issues or feedback to help improve it!
+> This plugin is currently in beta. Please report any issues or feedback to help improve it.
 
 ## Features
 
-- Automatically detects and highlights color codes in various formats (HEX, RGB, RGBA, HSL, HSLA)
+- Automatically detects and highlights color codes in various formats
+    - HEX (standard and shorthand formats supported, with or without alpha channel specified)
+    - RGB/RBGA
+    - HSL/HSLA
 - Customize where colors are highlighted:
     - Everywhere
     - Within inline code (single backticks)
