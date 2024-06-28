@@ -4,7 +4,7 @@ import { RangeSetBuilder, EditorState } from '@codemirror/state';
 import { ColorHighlighterSettings, DEFAULT_SETTINGS, ColorHighlighterSettingTab } from './settings';
 import { syntaxTree } from '@codemirror/language';
 
-const COLOR_REGEX = /#([0-9A-Fa-f]{3}){1,2}([0-9A-Fa-f]{2})?|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
+const COLOR_REGEX = /#([0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})\b|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
 
 export default class ColorHighlighterPlugin extends Plugin {
     settings: ColorHighlighterSettings;
@@ -108,8 +108,9 @@ export default class ColorHighlighterPlugin extends Plugin {
                             if (this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks)) {
                                 const color = match[0];
                                 const editorBackground = getComputedStyle(view.dom).backgroundColor;
-                                const textColor = plugin.getContrastColor(color, editorBackground);
-                                this.addDecoration(builder, start, end, color, textColor, view, highlightStyle);
+                                const effectiveColor = plugin.getEffectiveBackgroundColor(color, editorBackground);
+                                const textColor = plugin.getContrastColor(effectiveColor, editorBackground);
+                                this.addDecoration(builder, start, end, color, effectiveColor, textColor, view, highlightStyle);
                             }
                         }
                     }
@@ -171,30 +172,28 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return false;
                 }
             
-                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, textColor: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
-                    const editorBackground = getComputedStyle(view.dom).backgroundColor;
-                    
+                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, originalColor: string, effectiveColor: string, textColor: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
                     let decorationAttributes: { [key: string]: string } = {
                         class: "color-highlighter-inline-code",
                     };
     
                     switch (highlightStyle) {
                         case 'background':
-                            decorationAttributes.style = `background-color: ${color}; color: ${textColor};`;
+                            decorationAttributes.style = `background-color: ${effectiveColor}; color: ${textColor};`;
                             break;
                         case 'underline':
                             decorationAttributes.class += " color-highlighter-underline";
-                            decorationAttributes.style = `border-bottom: 2px solid ${color}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
+                            decorationAttributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
                             break;
                         case 'square':
                             // No additional style for the text itself
                             break;
                         case 'border':
                             decorationAttributes.class += " color-highlighter-border";
-                            decorationAttributes.style = `border: 2px solid ${color};`;
+                            decorationAttributes.style = `border: 2px solid ${effectiveColor};`;
                             break;
                     }
-
+    
                     builder.add(start, end, Decoration.mark({
                         attributes: decorationAttributes
                     }));
@@ -245,7 +244,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                                 destroy() {
                                     // No cleanup needed for this simple widget
                                 }
-                            }(color)
+                            }(effectiveColor)
                         }));
                     }
                 }
@@ -487,14 +486,18 @@ export default class ColorHighlighterPlugin extends Plugin {
             return this.blendRgbaWithBackground(color, background);
         } else if (color.startsWith('hsla')) {
             return this.blendHslaWithBackground(color, background);
-        } else if (color.length === 9 && color.startsWith('#')) {
-            // Handle 8-digit HEX
+        } else if (color.startsWith('#')) {
             const hex = color.slice(1);
-            const r = parseInt(hex.slice(0, 2), 16);
-            const g = parseInt(hex.slice(2, 4), 16);
-            const b = parseInt(hex.slice(4, 6), 16);
-            const a = parseInt(hex.slice(6, 8), 16) / 255;
-            return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+            if (hex.length === 4) {
+                // Convert 4-digit hex to 8-digit hex
+                const r = hex[0], g = hex[1], b = hex[2], a = hex[3];
+                const fullHex = `${r}${r}${g}${g}${b}${b}${a}${a}`;
+                const rgba = this.hexToRgba(fullHex);
+                return this.blendRgbaWithBackground(rgba, background);
+            } else if (hex.length === 8) {
+                const rgba = this.hexToRgba(hex);
+                return this.blendRgbaWithBackground(rgba, background);
+            }
         }
         return color;
     }
@@ -502,10 +505,11 @@ export default class ColorHighlighterPlugin extends Plugin {
     extractRgbComponents(rgbString: string): [number, number, number] {
         rgbString = this.convertNamedColor(rgbString);
         if (rgbString.startsWith('#')) {
+            // Handle hex color
             let hex = rgbString.slice(1);
-            if (hex.length === 3) {
+            if (hex.length === 3 || hex.length === 4) {
                 // Convert shorthand hex to full form
-                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+                hex = hex.split('').map(char => char + char).join('');
             }
             if (hex.length === 6 || hex.length === 8) {
                 return [
@@ -534,6 +538,14 @@ export default class ColorHighlighterPlugin extends Plugin {
         return [h, s, l, a];
     }
 
+    hexToRgba(hex: string): string {
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        const a = parseInt(hex.slice(6, 8), 16) / 255;
+        return `rgba(${r},${g},${b},${a})`;
+    }
+    
     hslToRgb(hsl: string): string {
         try {
             const [h, s, l] = hsl.match(/\d+%?/g)?.map(val => {
