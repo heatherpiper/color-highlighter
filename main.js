@@ -94,7 +94,7 @@ var ColorHighlighterSettingTab = class extends import_obsidian.PluginSettingTab 
 
 // main.ts
 var import_language = require("@codemirror/language");
-var COLOR_REGEX = /#[0-9A-Fa-f]{3,6}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
+var COLOR_REGEX = /#([0-9A-Fa-f]{3}){1,2}([0-9A-Fa-f]{2})?|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
 var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
   constructor() {
     super(...arguments);
@@ -506,6 +506,13 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
       return this.blendRgbaWithBackground(color, background);
     } else if (color.startsWith("hsla")) {
       return this.blendHslaWithBackground(color, background);
+    } else if (color.length === 9 && color.startsWith("#")) {
+      const hex = color.slice(1);
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      const a = parseInt(hex.slice(6, 8), 16) / 255;
+      return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
     }
     return color;
   }
@@ -513,11 +520,19 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     rgbString = this.convertNamedColor(rgbString);
     if (rgbString.startsWith("#")) {
       const hex = rgbString.slice(1);
-      return [
-        parseInt(hex.slice(0, 2), 16),
-        parseInt(hex.slice(2, 4), 16),
-        parseInt(hex.slice(4, 6), 16)
-      ];
+      if (hex.length === 3) {
+        return [
+          parseInt(hex[0] + hex[0], 16),
+          parseInt(hex[1] + hex[1], 16),
+          parseInt(hex[2] + hex[2], 16)
+        ];
+      } else if (hex.length === 6 || hex.length === 8) {
+        return [
+          parseInt(hex.slice(0, 2), 16),
+          parseInt(hex.slice(2, 4), 16),
+          parseInt(hex.slice(4, 6), 16)
+        ];
+      }
     }
     const match = rgbString.match(/\d+/g);
     if (!match || match.length < 3) {
