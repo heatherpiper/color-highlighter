@@ -12,7 +12,7 @@ Color Highlighter automatically detects and highlights color codes in your notes
 ## Features
 
 - Automatically detects and highlights color codes in various formats
-    - HEX (standard and shorthand formats supported, with or without alpha channel specified)
+    - HEX (with or without alpha channel specified)
     - RGB/RBGA
     - HSL/HSLA
 - Customize where colors are highlighted:
