@@ -4,7 +4,7 @@ import { RangeSetBuilder, EditorState } from '@codemirror/state';
 import { ColorHighlighterSettings, DEFAULT_SETTINGS, ColorHighlighterSettingTab } from './settings';
 import { syntaxTree } from '@codemirror/language';
 
-const COLOR_REGEX = /#([0-9A-Fa-f]{3}){1,2}([0-9A-Fa-f]{2})?|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
+const COLOR_REGEX = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})(?![0-9A-Fa-f])|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
 
 export default class ColorHighlighterPlugin extends Plugin {
     settings: ColorHighlighterSettings;
@@ -175,11 +175,11 @@ export default class ColorHighlighterPlugin extends Plugin {
                         class: "color-highlighter-inline-code",
                     };
     
-                    const effectiveColor = this.getEffectiveColor(color);
+                    const effectiveColor = this.getEffectiveColor(color, editorBackground);
+                    const contrastColor = plugin.getContrastColor(effectiveColor, editorBackground);
     
                     switch (highlightStyle) {
                         case 'background':
-                            const contrastColor = plugin.getContrastColor(effectiveColor, editorBackground);
                             decorationAttributes.style = `background-color: ${effectiveColor}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
                             break;
                         case 'underline':
@@ -194,6 +194,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                             decorationAttributes.style = `border: 2px solid ${effectiveColor}; border-radius: 3px;`;
                             break;
                     }
+    
     
                     builder.add(start, end, Decoration.mark({
                         attributes: decorationAttributes
@@ -306,10 +307,26 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return `rgb(${r},${g},${b})`;
                 }
 
-                getEffectiveColor(color: string): string {
-                    if (color.startsWith('#') && color.length === 4) {
-                        // Expand 3-digit hex to 6-digit hex
-                        return `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+                getEffectiveColor(color: string, background: string): string {
+                    if (color.startsWith('#')) {
+                        if (color.length === 4) {
+                            // Expand 3-digit hex to 6-digit hex
+                            color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+                        } else if (color.length === 5) {
+                            // Handle 4-digit hex with alpha
+                            const r = parseInt(color[1] + color[1], 16);
+                            const g = parseInt(color[2] + color[2], 16);
+                            const b = parseInt(color[3] + color[3], 16);
+                            const a = parseInt(color[4] + color[4], 16) / 255;
+                            return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+                        } else if (color.length === 9) {
+                            // Handle 8-digit hex with alpha
+                            const r = parseInt(color.slice(1, 3), 16);
+                            const g = parseInt(color.slice(3, 5), 16);
+                            const b = parseInt(color.slice(5, 7), 16);
+                            const a = parseInt(color.slice(7, 9), 16) / 255;
+                            return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+                        }
                     }
                     return color;
                 }
@@ -425,19 +442,19 @@ export default class ColorHighlighterPlugin extends Plugin {
         } else if (color.startsWith('rgba')) {
             color = this.blendRgbaWithBackground(color, background);
         } else if (color.startsWith('#')) {
-            if (color.length === 9) {
-                // Handle 8-digit hex color codes as RGBA
+            if (color.length === 9 || color.length === 5) {
+                // Handle 8-digit and 4-digit hex color codes with alpha
                 const r = parseInt(color.slice(1, 3), 16);
                 const g = parseInt(color.slice(3, 5), 16);
                 const b = parseInt(color.slice(5, 7), 16);
-                const a = parseInt(color.slice(7, 9), 16) / 255;
+                const a = color.length === 9 ? parseInt(color.slice(7, 9), 16) / 255 : parseInt(color.slice(4, 5), 16) / 15;
                 color = this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
             } else if (color.length === 4) {
                 // Expand 3-digit hex to 6-digit hex
                 color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
             }
         }
-
+    
         const hex = color.startsWith('#') ? color.slice(1) : this.rgbToHex(color);
         const r = parseInt(hex.slice(0, 2), 16);
         const g = parseInt(hex.slice(2, 4), 16);
@@ -499,14 +516,23 @@ export default class ColorHighlighterPlugin extends Plugin {
             return this.blendRgbaWithBackground(color, background);
         } else if (color.startsWith('hsla')) {
             return this.blendHslaWithBackground(color, background);
-        } else if (color.length === 9 && color.startsWith('#')) {
-            // Handle 8-digit HEX
-            const hex = color.slice(1);
-            const r = parseInt(hex.slice(0, 2), 16);
-            const g = parseInt(hex.slice(2, 4), 16);
-            const b = parseInt(hex.slice(4, 6), 16);
-            const a = parseInt(hex.slice(6, 8), 16) / 255;
-            return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+        } else if (color.startsWith('#')) {
+            if (color.length === 9) {
+                // Handle 8-digit HEX
+                const hex = color.slice(1);
+                const r = parseInt(hex.slice(0, 2), 16);
+                const g = parseInt(hex.slice(2, 4), 16);
+                const b = parseInt(hex.slice(4, 6), 16);
+                const a = parseInt(hex.slice(6, 8), 16) / 255;
+                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+            } else if (color.length === 5) {
+                // Handle 4-digit HEX
+                const r = parseInt(color[1] + color[1], 16);
+                const g = parseInt(color[2] + color[2], 16);
+                const b = parseInt(color[3] + color[3], 16);
+                const a = parseInt(color[4] + color[4], 16) / 255;
+                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+            }
         }
         return color;
     }

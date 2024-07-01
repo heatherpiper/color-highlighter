@@ -94,7 +94,7 @@ var ColorHighlighterSettingTab = class extends import_obsidian.PluginSettingTab 
 
 // main.ts
 var import_language = require("@codemirror/language");
-var COLOR_REGEX = /#([0-9A-Fa-f]{3}){1,2}([0-9A-Fa-f]{2})?|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
+var COLOR_REGEX = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})(?![0-9A-Fa-f])|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
 var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
   constructor() {
     super(...arguments);
@@ -239,10 +239,10 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           let decorationAttributes = {
             class: "color-highlighter-inline-code"
           };
-          const effectiveColor = this.getEffectiveColor(color);
+          const effectiveColor = this.getEffectiveColor(color, editorBackground);
+          const contrastColor = plugin.getContrastColor(effectiveColor, editorBackground);
           switch (highlightStyle) {
             case "background":
-              const contrastColor = plugin.getContrastColor(effectiveColor, editorBackground);
               decorationAttributes.style = `background-color: ${effectiveColor}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
               break;
             case "underline":
@@ -369,9 +369,23 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           b = Math.round((b + m) * 255);
           return `rgb(${r},${g},${b})`;
         }
-        getEffectiveColor(color) {
-          if (color.startsWith("#") && color.length === 4) {
-            return `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+        getEffectiveColor(color, background) {
+          if (color.startsWith("#")) {
+            if (color.length === 4) {
+              color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+            } else if (color.length === 5) {
+              const r = parseInt(color[1] + color[1], 16);
+              const g = parseInt(color[2] + color[2], 16);
+              const b = parseInt(color[3] + color[3], 16);
+              const a = parseInt(color[4] + color[4], 16) / 255;
+              return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+            } else if (color.length === 9) {
+              const r = parseInt(color.slice(1, 3), 16);
+              const g = parseInt(color.slice(3, 5), 16);
+              const b = parseInt(color.slice(5, 7), 16);
+              const a = parseInt(color.slice(7, 9), 16) / 255;
+              return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+            }
           }
           return color;
         }
@@ -460,11 +474,11 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     } else if (color.startsWith("rgba")) {
       color = this.blendRgbaWithBackground(color, background);
     } else if (color.startsWith("#")) {
-      if (color.length === 9) {
+      if (color.length === 9 || color.length === 5) {
         const r2 = parseInt(color.slice(1, 3), 16);
         const g2 = parseInt(color.slice(3, 5), 16);
         const b2 = parseInt(color.slice(5, 7), 16);
-        const a = parseInt(color.slice(7, 9), 16) / 255;
+        const a = color.length === 9 ? parseInt(color.slice(7, 9), 16) / 255 : parseInt(color.slice(4, 5), 16) / 15;
         color = this.blendRgbaWithBackground(`rgba(${r2},${g2},${b2},${a})`, background);
       } else if (color.length === 4) {
         color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
@@ -520,13 +534,21 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
       return this.blendRgbaWithBackground(color, background);
     } else if (color.startsWith("hsla")) {
       return this.blendHslaWithBackground(color, background);
-    } else if (color.length === 9 && color.startsWith("#")) {
-      const hex = color.slice(1);
-      const r = parseInt(hex.slice(0, 2), 16);
-      const g = parseInt(hex.slice(2, 4), 16);
-      const b = parseInt(hex.slice(4, 6), 16);
-      const a = parseInt(hex.slice(6, 8), 16) / 255;
-      return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+    } else if (color.startsWith("#")) {
+      if (color.length === 9) {
+        const hex = color.slice(1);
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        const a = parseInt(hex.slice(6, 8), 16) / 255;
+        return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+      } else if (color.length === 5) {
+        const r = parseInt(color[1] + color[1], 16);
+        const g = parseInt(color[2] + color[2], 16);
+        const b = parseInt(color[3] + color[3], 16);
+        const a = parseInt(color[4] + color[4], 16) / 255;
+        return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+      }
     }
     return color;
   }
