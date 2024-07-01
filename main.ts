@@ -97,7 +97,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 buildDecorations(view: EditorView) {
                     const builder = new RangeSetBuilder<Decoration>();
                     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = plugin.settings;
-
+    
                     for (const { from, to } of view.visibleRanges) {
                         const text = view.state.doc.sliceString(from, to);
                         let match;
@@ -174,25 +174,27 @@ export default class ColorHighlighterPlugin extends Plugin {
                     let decorationAttributes: { [key: string]: string } = {
                         class: "color-highlighter-inline-code",
                     };
-
+    
+                    const effectiveColor = this.getEffectiveColor(color);
+    
                     switch (highlightStyle) {
                         case 'background':
-                            const contrastColor = this.getContrastColor(color, editorBackground);
-                            decorationAttributes.style = `background-color: ${color}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
+                            const contrastColor = plugin.getContrastColor(effectiveColor, editorBackground);
+                            decorationAttributes.style = `background-color: ${effectiveColor}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
                             break;
                         case 'underline':
                             decorationAttributes.class += " color-highlighter-underline";
-                            decorationAttributes.style = `border-bottom: 2px solid ${color}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
+                            decorationAttributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
                             break;
                         case 'square':
                             // No additional style for the text itself
                             break;
                         case 'border':
                             decorationAttributes.class += " color-highlighter-border";
-                            decorationAttributes.style = `border: 2px solid ${color}; border-radius: 3px;`;
+                            decorationAttributes.style = `border: 2px solid ${effectiveColor}; border-radius: 3px;`;
                             break;
                     }
-
+    
                     builder.add(start, end, Decoration.mark({
                         attributes: decorationAttributes
                     }));
@@ -303,6 +305,14 @@ export default class ColorHighlighterPlugin extends Plugin {
                     b = Math.round((b + m) * 255);
                     return `rgb(${r},${g},${b})`;
                 }
+
+                getEffectiveColor(color: string): string {
+                    if (color.startsWith('#') && color.length === 4) {
+                        // Expand 3-digit hex to 6-digit hex
+                        return `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+                    }
+                    return color;
+                }
             },
             {
                 decorations: v => v.decorations
@@ -410,28 +420,38 @@ export default class ColorHighlighterPlugin extends Plugin {
     }
 
     getContrastColor(color: string, background: string): string {
-        try {
-            color = this.convertNamedColor(color);
-            background = this.convertNamedColor(background);
-
-            if (color.startsWith('hsl')) {
-                color = this.hslToRgb(color);
-            } else if (color.startsWith('rgba')) {
-                color = this.blendRgbaWithBackground(color, background);
+        if (color.startsWith('hsl')) {
+            color = this.hslToRgb(color);
+        } else if (color.startsWith('rgba')) {
+            color = this.blendRgbaWithBackground(color, background);
+        } else if (color.startsWith('#')) {
+            if (color.length === 9) {
+                // Handle 8-digit hex color codes as RGBA
+                const r = parseInt(color.slice(1, 3), 16);
+                const g = parseInt(color.slice(3, 5), 16);
+                const b = parseInt(color.slice(5, 7), 16);
+                const a = parseInt(color.slice(7, 9), 16) / 255;
+                color = this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+            } else if (color.length === 4) {
+                // Expand 3-digit hex to 6-digit hex
+                color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
             }
-            const hex = color.startsWith('#') ? color.slice(1) : this.rgbToHex(color);
-            const r = parseInt(hex.slice(0, 2), 16);
-            const g = parseInt(hex.slice(2, 4), 16);
-            const b = parseInt(hex.slice(4, 6), 16);
-            const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-            return (yiq >= 128) ? 'black' : 'white';
-        } catch (error) {
-            return 'black'; // Fallback to black if there's an error
         }
+
+        const hex = color.startsWith('#') ? color.slice(1) : this.rgbToHex(color);
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return (yiq >= 128) ? 'black' : 'white';
     }
 
     rgbToHex(rgb: string): string {
         try {
+            if (rgb.startsWith('#')) {
+                // If it's already a hex code, return it as is
+                return rgb.slice(1);
+            }
             const [r, g, b] = this.extractRgbComponents(rgb);
             return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
         } catch (error) {
@@ -514,6 +534,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         }
         const match = rgbString.match(/\d+/g);
         if (!match || match.length < 3) {
+            console.error('Invalid RGB string:', rgbString);
             return [0, 0, 0]; // Fallback to black if the string is invalid
         }
         return match.slice(0, 3).map(Number) as [number, number, number];

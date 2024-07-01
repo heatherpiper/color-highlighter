@@ -239,20 +239,21 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           let decorationAttributes = {
             class: "color-highlighter-inline-code"
           };
+          const effectiveColor = this.getEffectiveColor(color);
           switch (highlightStyle) {
             case "background":
-              const contrastColor = this.getContrastColor(color, editorBackground);
-              decorationAttributes.style = `background-color: ${color}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
+              const contrastColor = plugin.getContrastColor(effectiveColor, editorBackground);
+              decorationAttributes.style = `background-color: ${effectiveColor}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
               break;
             case "underline":
               decorationAttributes.class += " color-highlighter-underline";
-              decorationAttributes.style = `border-bottom: 2px solid ${color}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
+              decorationAttributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
               break;
             case "square":
               break;
             case "border":
               decorationAttributes.class += " color-highlighter-border";
-              decorationAttributes.style = `border: 2px solid ${color}; border-radius: 3px;`;
+              decorationAttributes.style = `border: 2px solid ${effectiveColor}; border-radius: 3px;`;
               break;
           }
           builder.add(start, end, import_view.Decoration.mark({
@@ -368,6 +369,12 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           b = Math.round((b + m) * 255);
           return `rgb(${r},${g},${b})`;
         }
+        getEffectiveColor(color) {
+          if (color.startsWith("#") && color.length === 4) {
+            return `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+          }
+          return color;
+        }
       },
       {
         decorations: (v) => v.decorations
@@ -448,26 +455,33 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     });
   }
   getContrastColor(color, background) {
-    try {
-      color = this.convertNamedColor(color);
-      background = this.convertNamedColor(background);
-      if (color.startsWith("hsl")) {
-        color = this.hslToRgb(color);
-      } else if (color.startsWith("rgba")) {
-        color = this.blendRgbaWithBackground(color, background);
+    if (color.startsWith("hsl")) {
+      color = this.hslToRgb(color);
+    } else if (color.startsWith("rgba")) {
+      color = this.blendRgbaWithBackground(color, background);
+    } else if (color.startsWith("#")) {
+      if (color.length === 9) {
+        const r2 = parseInt(color.slice(1, 3), 16);
+        const g2 = parseInt(color.slice(3, 5), 16);
+        const b2 = parseInt(color.slice(5, 7), 16);
+        const a = parseInt(color.slice(7, 9), 16) / 255;
+        color = this.blendRgbaWithBackground(`rgba(${r2},${g2},${b2},${a})`, background);
+      } else if (color.length === 4) {
+        color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
       }
-      const hex = color.startsWith("#") ? color.slice(1) : this.rgbToHex(color);
-      const r = parseInt(hex.slice(0, 2), 16);
-      const g = parseInt(hex.slice(2, 4), 16);
-      const b = parseInt(hex.slice(4, 6), 16);
-      const yiq = (r * 299 + g * 587 + b * 114) / 1e3;
-      return yiq >= 128 ? "black" : "white";
-    } catch (error) {
-      return "black";
     }
+    const hex = color.startsWith("#") ? color.slice(1) : this.rgbToHex(color);
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const yiq = (r * 299 + g * 587 + b * 114) / 1e3;
+    return yiq >= 128 ? "black" : "white";
   }
   rgbToHex(rgb) {
     try {
+      if (rgb.startsWith("#")) {
+        return rgb.slice(1);
+      }
       const [r, g, b] = this.extractRgbComponents(rgb);
       return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     } catch (error) {
@@ -536,6 +550,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     }
     const match = rgbString.match(/\d+/g);
     if (!match || match.length < 3) {
+      console.error("Invalid RGB string:", rgbString);
       return [0, 0, 0];
     }
     return match.slice(0, 3).map(Number);
