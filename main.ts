@@ -4,7 +4,7 @@ import { RangeSetBuilder, EditorState } from '@codemirror/state';
 import { ColorHighlighterSettings, DEFAULT_SETTINGS, ColorHighlighterSettingTab } from './settings';
 import { syntaxTree } from '@codemirror/language';
 
-const COLOR_REGEX = /#([0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})\b|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
+const COLOR_REGEX = /#([0-9A-Fa-f]{3}){1,2}([0-9A-Fa-f]{2})?|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
 
 export default class ColorHighlighterPlugin extends Plugin {
     settings: ColorHighlighterSettings;
@@ -97,7 +97,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 buildDecorations(view: EditorView) {
                     const builder = new RangeSetBuilder<Decoration>();
                     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = plugin.settings;
-    
+
                     for (const { from, to } of view.visibleRanges) {
                         const text = view.state.doc.sliceString(from, to);
                         let match;
@@ -106,11 +106,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                             const end = start + match[0].length;
                             
                             if (this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks)) {
-                                const color = match[0];
-                                const editorBackground = getComputedStyle(view.dom).backgroundColor;
-                                const effectiveColor = plugin.getEffectiveBackgroundColor(color, editorBackground);
-                                const textColor = plugin.getContrastColor(effectiveColor, editorBackground);
-                                this.addDecoration(builder, start, end, color, effectiveColor, textColor, view, highlightStyle);
+                                this.addDecoration(builder, start, end, match[0], view, highlightStyle);
                             }
                         }
                     }
@@ -172,28 +168,31 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return false;
                 }
             
-                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, originalColor: string, effectiveColor: string, textColor: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
+                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
+                    const editorBackground = getComputedStyle(view.dom).backgroundColor;
+                    
                     let decorationAttributes: { [key: string]: string } = {
                         class: "color-highlighter-inline-code",
                     };
-    
+
                     switch (highlightStyle) {
                         case 'background':
-                            decorationAttributes.style = `background-color: ${effectiveColor}; color: ${textColor};`;
+                            const contrastColor = this.getContrastColor(color, editorBackground);
+                            decorationAttributes.style = `background-color: ${color}; color: ${contrastColor};`;
                             break;
                         case 'underline':
                             decorationAttributes.class += " color-highlighter-underline";
-                            decorationAttributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
+                            decorationAttributes.style = `border-bottom: 2px solid ${color}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
                             break;
                         case 'square':
                             // No additional style for the text itself
                             break;
                         case 'border':
                             decorationAttributes.class += " color-highlighter-border";
-                            decorationAttributes.style = `border: 2px solid ${effectiveColor};`;
+                            decorationAttributes.style = `border: 2px solid ${color};`;
                             break;
                     }
-    
+
                     builder.add(start, end, Decoration.mark({
                         attributes: decorationAttributes
                     }));
@@ -244,7 +243,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                                 destroy() {
                                     // No cleanup needed for this simple widget
                                 }
-                            }(effectiveColor)
+                            }(color)
                         }));
                     }
                 }
@@ -340,19 +339,19 @@ export default class ColorHighlighterPlugin extends Plugin {
                         const span = document.createElement('span');
                         span.textContent = colorCode;
                         const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
-                        const textColor = this.getContrastColor(backgroundColor, window.getComputedStyle(el).backgroundColor);
-
-                        span.classList.add('color-highlighter-inline-code');
-
+    
+                        span.classList.add('color-highlighter');
+    
                         switch (highlightStyle) {
                             case 'background':
+                                span.classList.add('background');
+                                const contrastColor = this.getContrastColor(backgroundColor, 'white');
                                 span.style.backgroundColor = backgroundColor;
-                                span.style.color = textColor;
+                                span.style.color = contrastColor;
                                 break;
                             case 'underline':
-                                span.classList.add('color-highlighter-underline');
+                                span.classList.add('underline');
                                 span.style.borderBottomColor = backgroundColor;
-                                span.style.borderRadius = '0';
                                 break;
                             case 'square':
                                 const square = document.createElement('span');
@@ -361,11 +360,11 @@ export default class ColorHighlighterPlugin extends Plugin {
                                 span.appendChild(square);
                                 break;
                             case 'border':
-                                span.classList.add('color-highlighter-border');
+                                span.classList.add('border');
                                 span.style.borderColor = backgroundColor;
                                 break;
                         }
-
+    
                         fragment.appendChild(span);
         
                         lastIndex = endIndex;
@@ -414,18 +413,12 @@ export default class ColorHighlighterPlugin extends Plugin {
         try {
             color = this.convertNamedColor(color);
             background = this.convertNamedColor(background);
-    
-            if (color.startsWith('#')) {
-                // Convert shorthand hex to full hex
-                if (color.length === 4) {
-                    color = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
-                }
-            } else if (color.startsWith('hsl')) {
+
+            if (color.startsWith('hsl')) {
                 color = this.hslToRgb(color);
             } else if (color.startsWith('rgba')) {
                 color = this.blendRgbaWithBackground(color, background);
             }
-    
             const hex = color.startsWith('#') ? color.slice(1) : this.rgbToHex(color);
             const r = parseInt(hex.slice(0, 2), 16);
             const g = parseInt(hex.slice(2, 4), 16);
@@ -486,18 +479,14 @@ export default class ColorHighlighterPlugin extends Plugin {
             return this.blendRgbaWithBackground(color, background);
         } else if (color.startsWith('hsla')) {
             return this.blendHslaWithBackground(color, background);
-        } else if (color.startsWith('#')) {
+        } else if (color.length === 9 && color.startsWith('#')) {
+            // Handle 8-digit HEX
             const hex = color.slice(1);
-            if (hex.length === 4) {
-                // Convert 4-digit hex to 8-digit hex
-                const r = hex[0], g = hex[1], b = hex[2], a = hex[3];
-                const fullHex = `${r}${r}${g}${g}${b}${b}${a}${a}`;
-                const rgba = this.hexToRgba(fullHex);
-                return this.blendRgbaWithBackground(rgba, background);
-            } else if (hex.length === 8) {
-                const rgba = this.hexToRgba(hex);
-                return this.blendRgbaWithBackground(rgba, background);
-            }
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+            const a = parseInt(hex.slice(6, 8), 16) / 255;
+            return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
         }
         return color;
     }
@@ -506,12 +495,16 @@ export default class ColorHighlighterPlugin extends Plugin {
         rgbString = this.convertNamedColor(rgbString);
         if (rgbString.startsWith('#')) {
             // Handle hex color
-            let hex = rgbString.slice(1);
-            if (hex.length === 3 || hex.length === 4) {
-                // Convert shorthand hex to full form
-                hex = hex.split('').map(char => char + char).join('');
-            }
-            if (hex.length === 6 || hex.length === 8) {
+            const hex = rgbString.slice(1);
+            if (hex.length === 3) {
+                // Handle shorthand hex
+                return [
+                    parseInt(hex[0] + hex[0], 16),
+                    parseInt(hex[1] + hex[1], 16),
+                    parseInt(hex[2] + hex[2], 16)
+                ];
+            } else if (hex.length === 6 || hex.length === 8) {
+                // Handle 6-digit and 8-digit hex
                 return [
                     parseInt(hex.slice(0, 2), 16),
                     parseInt(hex.slice(2, 4), 16),
@@ -538,14 +531,6 @@ export default class ColorHighlighterPlugin extends Plugin {
         return [h, s, l, a];
     }
 
-    hexToRgba(hex: string): string {
-        const r = parseInt(hex.slice(0, 2), 16);
-        const g = parseInt(hex.slice(2, 4), 16);
-        const b = parseInt(hex.slice(4, 6), 16);
-        const a = parseInt(hex.slice(6, 8), 16) / 255;
-        return `rgba(${r},${g},${b},${a})`;
-    }
-    
     hslToRgb(hsl: string): string {
         try {
             const [h, s, l] = hsl.match(/\d+%?/g)?.map(val => {
