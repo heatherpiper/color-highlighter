@@ -65,8 +65,9 @@ Once installed and enabled, the plugin will automatically highlight color codes 
 2. Find Color Highlighter in the list and select the gear icon to access its settings.
 3. Choose your preferred highlighting location(s):
    - **Highlight everywhere**: Highlights all color codes anywhere in your notes.
-   - **Highlight in inline code**: Only highlights color codes within single backticks.
-   - **Highlight in code blocks**: Only highlights color codes within triple backticks.
+   - **Highlight only in code**:
+       - **Highlight in inline code**: Only highlights color codes within single backticks.
+       - **Highlight in code blocks**: Only highlights color codes within triple backticks.
 4. Choose your preferred highlighting style:
    - **Background**: Highlights color codes by changing their background color
    - **Border**: Highlights color codes by adding a solid color border
