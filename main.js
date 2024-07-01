@@ -242,7 +242,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           switch (highlightStyle) {
             case "background":
               const contrastColor = this.getContrastColor(color, editorBackground);
-              decorationAttributes.style = `background-color: ${color}; color: ${contrastColor};`;
+              decorationAttributes.style = `background-color: ${color}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
               break;
             case "underline":
               decorationAttributes.class += " color-highlighter-underline";
@@ -252,7 +252,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
               break;
             case "border":
               decorationAttributes.class += " color-highlighter-border";
-              decorationAttributes.style = `border: 2px solid ${color};`;
+              decorationAttributes.style = `border: 2px solid ${color}; border-radius: 3px;`;
               break;
           }
           builder.add(start, end, import_view.Decoration.mark({
