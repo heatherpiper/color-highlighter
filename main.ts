@@ -78,6 +78,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         this.app.workspace.updateOptions();
     }
 
+    // Highlight colors in Source Mode
     createEditorExtension() {
         const plugin = this;
         return ViewPlugin.fromClass(
@@ -113,6 +114,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return builder.finish();
                 }
 
+                // Check where colors should be highlighted based on the settings
                 shouldHighlight(state: EditorState, start: number, end: number, highlightEverywhere: boolean, highlightInBackticks: boolean, highlightInCodeblocks: boolean): boolean {
                     if (highlightEverywhere) {
                         return true;
@@ -168,6 +170,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return false;
                 }
             
+                // Add highlight to the specified range of text based on the selected style
                 addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
                     const editorBackground = getComputedStyle(view.dom).backgroundColor;
                     
@@ -200,6 +203,8 @@ export default class ColorHighlighterPlugin extends Plugin {
                         attributes: decorationAttributes
                     }));
 
+
+                    // Add a square widget for the 'square' highlight style
                     if (highlightStyle === 'square') {
                         builder.add(end, end, Decoration.widget({
                             widget: new class extends WidgetType {
@@ -251,6 +256,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     }
                 }
             
+                // Get the most effective color for the text based on the background color
                 getContrastColor(color: string, background: string): string {
                     if (color.startsWith('hsl')) {
                         color = this.hslToRgb(color);
@@ -270,6 +276,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
                 }
     
+                // Blend RGBA color with the background color
                 blendRgbaWithBackground(rgba: string, background: string): string {
                     const [r, g, b, a] = rgba.match(/[\d.]+/g)!.map(Number);
                     const [bgR, bgG, bgB] = this.extractRgbComponents(background);
@@ -307,6 +314,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return `rgb(${r},${g},${b})`;
                 }
 
+                // Get the blended color based on the background color
                 getEffectiveColor(color: string, background: string): string {
                     if (color.startsWith('#')) {
                         if (color.length === 4) {
@@ -337,9 +345,11 @@ export default class ColorHighlighterPlugin extends Plugin {
         );
     }
 
+    // Highlight colors in Live Preview and Reading Mode
     postProcessor(el: HTMLElement, ctx: MarkdownPostProcessorContext) {
         const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
     
+        // Skip processing of Dataview inline queries
         const isDataviewInline = (node: Node): boolean => {
             let parent = node.parentElement;
             while (parent) {
@@ -351,6 +361,7 @@ export default class ColorHighlighterPlugin extends Plugin {
             return false;
         };
     
+        // Process each node in the tree
         const processNode = (node: Node): void => {
             if (node.nodeType === Node.TEXT_NODE && node.textContent) {
                 const parent = node.parentElement;
@@ -360,6 +371,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return;
                 }
     
+                // Check if the color should be highlighted based on the settings
                 if (
                     (highlightEverywhere) ||
                     (highlightInBackticks && parent?.tagName === 'CODE' && parent.parentElement?.tagName !== 'PRE') ||
@@ -377,10 +389,12 @@ export default class ColorHighlighterPlugin extends Plugin {
                         const startIndex = match.index;
                         const endIndex = startIndex + colorCode.length;
         
+                        // Add the text before the color code
                         if (startIndex > lastIndex) {
                             fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex, startIndex)));
                         }
         
+                        // Add highlighted color code
                         const span = document.createElement('span');
                         span.textContent = colorCode;
                         const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
@@ -415,6 +429,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                         lastIndex = endIndex;
                     }
     
+                    // Add any remaining text
                     if (lastIndex < node.textContent.length) {
                         fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
                     }
@@ -424,17 +439,20 @@ export default class ColorHighlighterPlugin extends Plugin {
                     }
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
+                // Make sure Dataview inline queries are displayed inline
                 if (isDataviewInline(node)) {
                     handleDataviewInline(node as HTMLElement);
                     return;
                 }
     
+                // Skip processing of SVG elements
                 if ((node as Element).tagName.toLowerCase() !== 'svg') {
                     Array.from(node.childNodes).forEach(processNode);
                 }
             }
         };
     
+        // Make sure Dataview inline queries are displayed inline
         const handleDataviewInline = (element: HTMLElement) => {
             element.querySelectorAll('p, div').forEach(el => {
                 const span = document.createElement('span');

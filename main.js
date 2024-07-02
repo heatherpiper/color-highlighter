@@ -166,6 +166,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     await this.saveData(this.settings);
     this.app.workspace.updateOptions();
   }
+  // Highlight colors in Source Mode
   createEditorExtension() {
     const plugin = this;
     return import_view.ViewPlugin.fromClass(
@@ -194,6 +195,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           }
           return builder.finish();
         }
+        // Check where colors should be highlighted based on the settings
         shouldHighlight(state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks) {
           if (highlightEverywhere) {
             return true;
@@ -234,6 +236,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           }
           return false;
         }
+        // Add highlight to the specified range of text based on the selected style
         addDecoration(builder, start, end, color, view, highlightStyle) {
           const editorBackground = getComputedStyle(view.dom).backgroundColor;
           let decorationAttributes = {
@@ -301,6 +304,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
             }));
           }
         }
+        // Get the most effective color for the text based on the background color
         getContrastColor(color, background) {
           if (color.startsWith("hsl")) {
             color = this.hslToRgb(color);
@@ -318,6 +322,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           const [r, g, b] = rgb.match(/\d+/g).map(Number);
           return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
         }
+        // Blend RGBA color with the background color
         blendRgbaWithBackground(rgba, background) {
           const [r, g, b, a] = rgba.match(/[\d.]+/g).map(Number);
           const [bgR, bgG, bgB] = this.extractRgbComponents(background);
@@ -369,6 +374,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           b = Math.round((b + m) * 255);
           return `rgb(${r},${g},${b})`;
         }
+        // Get the blended color based on the background color
         getEffectiveColor(color, background) {
           if (color.startsWith("#")) {
             if (color.length === 4) {
@@ -395,6 +401,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
       }
     );
   }
+  // Highlight colors in Live Preview and Reading Mode
   postProcessor(el, ctx) {
     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
     const isDataviewInline = (node) => {
