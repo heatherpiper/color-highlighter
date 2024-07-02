@@ -398,7 +398,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
   postProcessor(el, ctx) {
     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
     const processNode = (node) => {
-      var _a, _b;
+      var _a, _b, _c;
       if (node.nodeType === Node.TEXT_NODE && node.textContent) {
         const parent = node.parentElement;
         if (highlightEverywhere || highlightInBackticks && (parent == null ? void 0 : parent.tagName) === "CODE" && ((_a = parent.parentElement) == null ? void 0 : _a.tagName) !== "PRE" || highlightInCodeblocks && (parent == null ? void 0 : parent.tagName) === "CODE" && ((_b = parent.parentElement) == null ? void 0 : _b.tagName) === "PRE") {
@@ -444,29 +444,18 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           if (lastIndex < node.textContent.length) {
             fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
           }
-          return fragment;
+          if (fragment.childNodes.length > 0) {
+            (_c = node.parentNode) == null ? void 0 : _c.replaceChild(fragment, node);
+          }
         }
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const newElement = node.cloneNode(false);
-        Array.from(node.childNodes).forEach((child) => {
-          const processedChild = processNode(child);
-          newElement.appendChild(processedChild);
-        });
-        return newElement;
+        if (node.tagName.toLowerCase() === "svg") {
+          return;
+        }
+        Array.from(node.childNodes).forEach(processNode);
       }
-      return node.cloneNode(true);
     };
-    try {
-      const fragment = document.createDocumentFragment();
-      Array.from(el.childNodes).forEach((node) => {
-        const processedNode = processNode(node);
-        fragment.appendChild(processedNode);
-      });
-      el.innerHTML = "";
-      el.appendChild(fragment);
-    } catch (error) {
-      console.error("Error in postProcessor:", error);
-    }
+    processNode(el);
   }
   convertNamedColor(color) {
     return this.namedColors[color.toLowerCase()] || color;

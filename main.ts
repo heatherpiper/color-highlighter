@@ -340,7 +340,7 @@ export default class ColorHighlighterPlugin extends Plugin {
     postProcessor(el: HTMLElement, ctx: MarkdownPostProcessorContext) {
         const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
     
-        const processNode = (node: Node): DocumentFragment | Node => {
+        const processNode = (node: Node): void => {
             if (node.nodeType === Node.TEXT_NODE && node.textContent) {
                 const parent = node.parentElement;
                 if (
@@ -396,37 +396,26 @@ export default class ColorHighlighterPlugin extends Plugin {
         
                         lastIndex = endIndex;
                     }
-    
+
                     // Add any remaining text
                     if (lastIndex < node.textContent.length) {
                         fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
                     }
     
-                    return fragment;
+                    if (fragment.childNodes.length > 0) {
+                        node.parentNode?.replaceChild(fragment, node);
+                    }
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
-                const newElement = node.cloneNode(false) as HTMLElement;
-                Array.from(node.childNodes).forEach(child => {
-                    const processedChild = processNode(child);
-                    newElement.appendChild(processedChild);
-                });
-                return newElement;
+                // Skip processing SVG elements
+                if ((node as Element).tagName.toLowerCase() === 'svg') {
+                    return;
+                }
+                // Process childe nodes
+                Array.from(node.childNodes).forEach(processNode);
             }
-            
-            return node.cloneNode(true);
         };
-    
-        try {
-            const fragment = document.createDocumentFragment();
-            Array.from(el.childNodes).forEach(node => {
-                const processedNode = processNode(node);
-                fragment.appendChild(processedNode);
-            });
-            el.innerHTML = '';
-            el.appendChild(fragment);
-        } catch (error) {
-            console.error('Error in postProcessor:', error);
-        }
+        processNode(el);
     }
 
     namedColors: { [key: string]: string } = {
