@@ -414,34 +414,29 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
             }
             const span = document.createElement("span");
             span.textContent = colorCode;
-            try {
-              const editorBackgroundColor = window.getComputedStyle(el).backgroundColor || "rgb(255, 255, 255)";
-              const highlightColor = this.getEffectiveBackgroundColor(colorCode, editorBackgroundColor);
-              span.classList.add("color-highlighter");
-              switch (highlightStyle) {
-                case "background":
-                  span.classList.add("background");
-                  const contrastColor = this.getContrastColor(highlightColor, editorBackgroundColor);
-                  span.style.backgroundColor = highlightColor;
-                  span.style.color = contrastColor;
-                  break;
-                case "underline":
-                  span.classList.add("underline");
-                  span.style.borderBottomColor = highlightColor;
-                  break;
-                case "square":
-                  const square = document.createElement("span");
-                  square.classList.add("color-highlighter-square");
-                  square.style.backgroundColor = highlightColor;
-                  span.appendChild(square);
-                  break;
-                case "border":
-                  span.classList.add("border");
-                  span.style.borderColor = highlightColor;
-                  break;
-              }
-            } catch (error) {
-              console.error("Color Highlighter - Error processing color:", colorCode, error);
+            const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
+            span.classList.add("color-highlighter");
+            switch (highlightStyle) {
+              case "background":
+                span.classList.add("background");
+                const contrastColor = this.getContrastColor(backgroundColor, "white");
+                span.style.backgroundColor = backgroundColor;
+                span.style.color = contrastColor;
+                break;
+              case "underline":
+                span.classList.add("underline");
+                span.style.borderBottomColor = backgroundColor;
+                break;
+              case "square":
+                const square = document.createElement("span");
+                square.classList.add("color-highlighter-square");
+                square.style.backgroundColor = backgroundColor;
+                span.appendChild(square);
+                break;
+              case "border":
+                span.classList.add("border");
+                span.style.borderColor = backgroundColor;
+                break;
             }
             fragment.appendChild(span);
             lastIndex = endIndex;
@@ -470,7 +465,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
       el.innerHTML = "";
       el.appendChild(fragment);
     } catch (error) {
-      console.error("Color Highlighter - Error in postProcessor:", error);
+      console.error("Error in postProcessor:", error);
     }
   }
   convertNamedColor(color) {
@@ -519,20 +514,16 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     }
   }
   blendRgbaWithBackground(rgba, background) {
+    var _a;
     try {
-      const rgbaMatch = rgba.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)/);
-      if (!rgbaMatch) {
-        throw new Error("Invalid RGBA string");
-      }
-      const [, r, g, b, a] = rgbaMatch.map(Number);
-      const alpha = a !== void 0 ? a : 1;
+      const [r, g, b, a] = ((_a = rgba.match(/[\d.]+/g)) == null ? void 0 : _a.map(Number)) || [];
       const [bgR, bgG, bgB] = this.extractRgbComponents(background);
+      const alpha = a !== void 0 ? a : 1;
       const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
       const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
       const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
       return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
     } catch (error) {
-      console.error("Color Highlighter - Error in blendRgbaWithBackground:", error, "RGBA:", rgba, "Background:", background);
       return background;
     }
   }
@@ -549,33 +540,28 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
       return background;
     }
   }
-  getEffectiveBackgroundColor(color, editorBackground) {
-    try {
-      if (color.startsWith("rgba")) {
-        return this.blendRgbaWithBackground(color, editorBackground);
-      } else if (color.startsWith("hsla")) {
-        return this.blendHslaWithBackground(color, editorBackground);
-      } else if (color.startsWith("#")) {
-        if (color.length === 9) {
-          const hex = color.slice(1);
-          const r = parseInt(hex.slice(0, 2), 16);
-          const g = parseInt(hex.slice(2, 4), 16);
-          const b = parseInt(hex.slice(4, 6), 16);
-          const a = parseInt(hex.slice(6, 8), 16) / 255;
-          return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, editorBackground);
-        } else if (color.length === 5) {
-          const r = parseInt(color[1] + color[1], 16);
-          const g = parseInt(color[2] + color[2], 16);
-          const b = parseInt(color[3] + color[3], 16);
-          const a = parseInt(color[4] + color[4], 16) / 255;
-          return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, editorBackground);
-        }
+  getEffectiveBackgroundColor(color, background) {
+    if (color.startsWith("rgba")) {
+      return this.blendRgbaWithBackground(color, background);
+    } else if (color.startsWith("hsla")) {
+      return this.blendHslaWithBackground(color, background);
+    } else if (color.startsWith("#")) {
+      if (color.length === 9) {
+        const hex = color.slice(1);
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        const a = parseInt(hex.slice(6, 8), 16) / 255;
+        return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+      } else if (color.length === 5) {
+        const r = parseInt(color[1] + color[1], 16);
+        const g = parseInt(color[2] + color[2], 16);
+        const b = parseInt(color[3] + color[3], 16);
+        const a = parseInt(color[4] + color[4], 16) / 255;
+        return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
       }
-      return color;
-    } catch (error) {
-      console.error("Color Highlighter - Error getting effective background color:", error, "Color:", color, "EditorBackground:", editorBackground);
-      return color;
     }
+    return color;
   }
   extractRgbComponents(rgbString) {
     rgbString = this.convertNamedColor(rgbString);
@@ -597,7 +583,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     }
     const match = rgbString.match(/\d+/g);
     if (!match || match.length < 3) {
-      console.error("Color Highlighter - Invalid RGB string:", rgbString);
+      console.error("Invalid RGB string:", rgbString);
       return [0, 0, 0];
     }
     return match.slice(0, 3).map(Number);
