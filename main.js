@@ -398,9 +398,10 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
   postProcessor(el, ctx) {
     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
     const processNode = (node) => {
+      var _a, _b;
       if (node.nodeType === Node.TEXT_NODE && node.textContent) {
         const parent = node.parentElement;
-        if (highlightEverywhere || highlightInBackticks && parent && parent.tagName === "CODE" && parent.parentElement && parent.parentElement.tagName !== "PRE" || highlightInCodeblocks && parent && parent.tagName === "CODE" && parent.parentElement && parent.parentElement.tagName === "PRE") {
+        if (highlightEverywhere || highlightInBackticks && (parent == null ? void 0 : parent.tagName) === "CODE" && ((_a = parent.parentElement) == null ? void 0 : _a.tagName) !== "PRE" || highlightInCodeblocks && (parent == null ? void 0 : parent.tagName) === "CODE" && ((_b = parent.parentElement) == null ? void 0 : _b.tagName) === "PRE") {
           const fragment = document.createDocumentFragment();
           let lastIndex = 0;
           let match;
@@ -443,16 +444,26 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           if (lastIndex < node.textContent.length) {
             fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
           }
-          if (node.parentNode) {
-            node.parentNode.replaceChild(fragment, node);
-          }
+          return fragment;
         }
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        Array.from(node.childNodes).forEach(processNode);
+        const newElement = node.cloneNode(false);
+        Array.from(node.childNodes).forEach((child) => {
+          const processedChild = processNode(child);
+          newElement.appendChild(processedChild);
+        });
+        return newElement;
       }
+      return node.cloneNode(true);
     };
     try {
-      processNode(el);
+      const fragment = document.createDocumentFragment();
+      Array.from(el.childNodes).forEach((node) => {
+        const processedNode = processNode(node);
+        fragment.appendChild(processedNode);
+      });
+      el.innerHTML = "";
+      el.appendChild(fragment);
     } catch (error) {
       console.error("Error in postProcessor:", error);
     }

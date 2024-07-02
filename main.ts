@@ -340,13 +340,13 @@ export default class ColorHighlighterPlugin extends Plugin {
     postProcessor(el: HTMLElement, ctx: MarkdownPostProcessorContext) {
         const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
     
-        const processNode = (node: Node) => {
+        const processNode = (node: Node): DocumentFragment | Node => {
             if (node.nodeType === Node.TEXT_NODE && node.textContent) {
                 const parent = node.parentElement;
                 if (
                     (highlightEverywhere) ||
-                    (highlightInBackticks && parent && parent.tagName === 'CODE' && parent.parentElement && parent.parentElement.tagName !== 'PRE') ||
-                    (highlightInCodeblocks && parent && parent.tagName === 'CODE' && parent.parentElement && parent.parentElement.tagName === 'PRE')
+                    (highlightInBackticks && parent?.tagName === 'CODE' && parent.parentElement?.tagName !== 'PRE') ||
+                    (highlightInCodeblocks && parent?.tagName === 'CODE' && parent.parentElement?.tagName === 'PRE')
                 ) {
                     const fragment = document.createDocumentFragment();
                     let lastIndex = 0;
@@ -402,17 +402,28 @@ export default class ColorHighlighterPlugin extends Plugin {
                         fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
                     }
     
-                    if (node.parentNode) {
-                        node.parentNode.replaceChild(fragment, node);
-                    }
+                    return fragment;
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
-                Array.from(node.childNodes).forEach(processNode);
+                const newElement = node.cloneNode(false) as HTMLElement;
+                Array.from(node.childNodes).forEach(child => {
+                    const processedChild = processNode(child);
+                    newElement.appendChild(processedChild);
+                });
+                return newElement;
             }
+            
+            return node.cloneNode(true);
         };
     
         try {
-            processNode(el);
+            const fragment = document.createDocumentFragment();
+            Array.from(el.childNodes).forEach(node => {
+                const processedNode = processNode(node);
+                fragment.appendChild(processedNode);
+            });
+            el.innerHTML = '';
+            el.appendChild(fragment);
         } catch (error) {
             console.error('Error in postProcessor:', error);
         }
