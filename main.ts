@@ -365,31 +365,38 @@ export default class ColorHighlighterPlugin extends Plugin {
                         // Add highlighted color code
                         const span = document.createElement('span');
                         span.textContent = colorCode;
-                        const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
+                        
+                        try {
+                            const editorBackgroundColor = window.getComputedStyle(el).backgroundColor || 'rgb(255, 255, 255)'; // Fallback to white
+                            const highlightColor = this.getEffectiveBackgroundColor(colorCode, editorBackgroundColor);
     
-                        span.classList.add('color-highlighter');
-    
-                        switch (highlightStyle) {
-                            case 'background':
-                                span.classList.add('background');
-                                const contrastColor = this.getContrastColor(backgroundColor, 'white');
-                                span.style.backgroundColor = backgroundColor;
-                                span.style.color = contrastColor;
-                                break;
-                            case 'underline':
-                                span.classList.add('underline');
-                                span.style.borderBottomColor = backgroundColor;
-                                break;
-                            case 'square':
-                                const square = document.createElement('span');
-                                square.classList.add('color-highlighter-square');
-                                square.style.backgroundColor = backgroundColor;
-                                span.appendChild(square);
-                                break;
-                            case 'border':
-                                span.classList.add('border');
-                                span.style.borderColor = backgroundColor;
-                                break;
+                            span.classList.add('color-highlighter');
+        
+                            switch (highlightStyle) {
+                                case 'background':
+                                    span.classList.add('background');
+                                    const contrastColor = this.getContrastColor(highlightColor, editorBackgroundColor);
+                                    span.style.backgroundColor = highlightColor;
+                                    span.style.color = contrastColor;
+                                    break;
+                                case 'underline':
+                                    span.classList.add('underline');
+                                    span.style.borderBottomColor = highlightColor;
+                                    break;
+                                case 'square':
+                                    const square = document.createElement('span');
+                                    square.classList.add('color-highlighter-square');
+                                    square.style.backgroundColor = highlightColor;
+                                    span.appendChild(square);
+                                    break;
+                                case 'border':
+                                    span.classList.add('border');
+                                    span.style.borderColor = highlightColor;
+                                    break;
+                            }
+                        } catch (error) {
+                            console.error('Color Highlighter - Error processing color:', colorCode, error);
+                            // If there's an error, just add the span without styling
                         }
     
                         fragment.appendChild(span);
@@ -425,7 +432,7 @@ export default class ColorHighlighterPlugin extends Plugin {
             el.innerHTML = '';
             el.appendChild(fragment);
         } catch (error) {
-            console.error('Error in postProcessor:', error);
+            console.error('Color Highlighter - Error in postProcessor:', error);
         }
     }
 
@@ -489,9 +496,15 @@ export default class ColorHighlighterPlugin extends Plugin {
 
     blendRgbaWithBackground(rgba: string, background: string): string {
         try {
-            const [r, g, b, a] = rgba.match(/[\d.]+/g)?.map(Number) || [];
-            const [bgR, bgG, bgB] = this.extractRgbComponents(background);
+            const rgbaMatch = rgba.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)/);
+            if (!rgbaMatch) {
+                throw new Error('Invalid RGBA string');
+            }
+            
+            const [, r, g, b, a] = rgbaMatch.map(Number);
             const alpha = a !== undefined ? a : 1;
+    
+            const [bgR, bgG, bgB] = this.extractRgbComponents(background);
     
             const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
             const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
@@ -499,6 +512,7 @@ export default class ColorHighlighterPlugin extends Plugin {
     
             return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
         } catch (error) {
+            console.error('Color Highlighter - Error in blendRgbaWithBackground:', error, 'RGBA:', rgba, 'Background:', background);
             return background; // Fallback to background color if there's an error
         }
     }
@@ -522,30 +536,35 @@ export default class ColorHighlighterPlugin extends Plugin {
         }
     }
 
-    getEffectiveBackgroundColor(color: string, background: string): string {
-        if (color.startsWith('rgba')) {
-            return this.blendRgbaWithBackground(color, background);
-        } else if (color.startsWith('hsla')) {
-            return this.blendHslaWithBackground(color, background);
-        } else if (color.startsWith('#')) {
-            if (color.length === 9) {
-                // Handle 8-digit HEX
-                const hex = color.slice(1);
-                const r = parseInt(hex.slice(0, 2), 16);
-                const g = parseInt(hex.slice(2, 4), 16);
-                const b = parseInt(hex.slice(4, 6), 16);
-                const a = parseInt(hex.slice(6, 8), 16) / 255;
-                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
-            } else if (color.length === 5) {
-                // Handle 4-digit HEX
-                const r = parseInt(color[1] + color[1], 16);
-                const g = parseInt(color[2] + color[2], 16);
-                const b = parseInt(color[3] + color[3], 16);
-                const a = parseInt(color[4] + color[4], 16) / 255;
-                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+    getEffectiveBackgroundColor(color: string, editorBackground: string): string {
+        try {
+            if (color.startsWith('rgba')) {
+                return this.blendRgbaWithBackground(color, editorBackground);
+            } else if (color.startsWith('hsla')) {
+                return this.blendHslaWithBackground(color, editorBackground);
+            } else if (color.startsWith('#')) {
+                if (color.length === 9) {
+                    // Handle 8-digit HEX
+                    const hex = color.slice(1);
+                    const r = parseInt(hex.slice(0, 2), 16);
+                    const g = parseInt(hex.slice(2, 4), 16);
+                    const b = parseInt(hex.slice(4, 6), 16);
+                    const a = parseInt(hex.slice(6, 8), 16) / 255;
+                    return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, editorBackground);
+                } else if (color.length === 5) {
+                    // Handle 4-digit HEX
+                    const r = parseInt(color[1] + color[1], 16);
+                    const g = parseInt(color[2] + color[2], 16);
+                    const b = parseInt(color[3] + color[3], 16);
+                    const a = parseInt(color[4] + color[4], 16) / 255;
+                    return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, editorBackground);
+                }
             }
+            return color;
+        } catch (error) {
+            console.error('Color Highlighter - Error getting effective background color:', error, 'Color:', color, 'EditorBackground:', editorBackground);
+            return color;
         }
-        return color;
     }
 
     extractRgbComponents(rgbString: string): [number, number, number] {
@@ -571,7 +590,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         }
         const match = rgbString.match(/\d+/g);
         if (!match || match.length < 3) {
-            console.error('Invalid RGB string:', rgbString);
+            console.error('Color Highlighter - Invalid RGB string:', rgbString);
             return [0, 0, 0]; // Fallback to black if the string is invalid
         }
         return match.slice(0, 3).map(Number) as [number, number, number];
