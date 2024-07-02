@@ -397,15 +397,31 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
   }
   postProcessor(el, ctx) {
     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
+    const isDataviewInline = (node) => {
+      let parent = node.parentElement;
+      while (parent) {
+        if (parent.classList.contains("dataview-inline-query") || parent.classList.contains("dataview-result-inline-query") || parent.classList.contains("dataview-inline")) {
+          return true;
+        }
+        parent = parent.parentElement;
+      }
+      return false;
+    };
     const processNode = (node) => {
       var _a, _b, _c;
       if (node.nodeType === Node.TEXT_NODE && node.textContent) {
         const parent = node.parentElement;
+        if (isDataviewInline(node)) {
+          handleDataviewInline(parent);
+          return;
+        }
         if (highlightEverywhere || highlightInBackticks && (parent == null ? void 0 : parent.tagName) === "CODE" && ((_a = parent.parentElement) == null ? void 0 : _a.tagName) !== "PRE" || highlightInCodeblocks && (parent == null ? void 0 : parent.tagName) === "CODE" && ((_b = parent.parentElement) == null ? void 0 : _b.tagName) === "PRE") {
           const fragment = document.createDocumentFragment();
           let lastIndex = 0;
           let match;
+          let hasColorMatch = false;
           while ((match = COLOR_REGEX.exec(node.textContent)) !== null) {
+            hasColorMatch = true;
             const colorCode = match[0];
             const startIndex = match.index;
             const endIndex = startIndex + colorCode.length;
@@ -444,16 +460,29 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
           if (lastIndex < node.textContent.length) {
             fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
           }
-          if (fragment.childNodes.length > 0) {
+          if (hasColorMatch) {
             (_c = node.parentNode) == null ? void 0 : _c.replaceChild(fragment, node);
           }
         }
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        if (node.tagName.toLowerCase() === "svg") {
+        if (isDataviewInline(node)) {
+          handleDataviewInline(node);
           return;
         }
-        Array.from(node.childNodes).forEach(processNode);
+        if (node.tagName.toLowerCase() !== "svg") {
+          Array.from(node.childNodes).forEach(processNode);
+        }
       }
+    };
+    const handleDataviewInline = (element) => {
+      element.querySelectorAll("p, div").forEach((el2) => {
+        var _a;
+        const span = document.createElement("span");
+        span.innerHTML = el2.innerHTML;
+        (_a = el2.parentNode) == null ? void 0 : _a.replaceChild(span, el2);
+      });
+      element.innerHTML = element.innerHTML.replace(/\n/g, " ");
+      element.style.display = "inline";
     };
     processNode(el);
   }

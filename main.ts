@@ -340,9 +340,26 @@ export default class ColorHighlighterPlugin extends Plugin {
     postProcessor(el: HTMLElement, ctx: MarkdownPostProcessorContext) {
         const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
     
+        const isDataviewInline = (node: Node): boolean => {
+            let parent = node.parentElement;
+            while (parent) {
+                if (parent.classList.contains('dataview-inline-query') || parent.classList.contains('dataview-result-inline-query') || parent.classList.contains('dataview-inline')) {
+                    return true;
+                }
+                parent = parent.parentElement;
+            }
+            return false;
+        };
+    
         const processNode = (node: Node): void => {
             if (node.nodeType === Node.TEXT_NODE && node.textContent) {
                 const parent = node.parentElement;
+    
+                if (isDataviewInline(node)) {
+                    handleDataviewInline(parent as HTMLElement);
+                    return;
+                }
+    
                 if (
                     (highlightEverywhere) ||
                     (highlightInBackticks && parent?.tagName === 'CODE' && parent.parentElement?.tagName !== 'PRE') ||
@@ -350,19 +367,20 @@ export default class ColorHighlighterPlugin extends Plugin {
                 ) {
                     const fragment = document.createDocumentFragment();
                     let lastIndex = 0;
-                    let match;    
+                    let match;
+                    let hasColorMatch = false;
     
                     while ((match = COLOR_REGEX.exec(node.textContent)) !== null) {
+                        hasColorMatch = true;
+    
                         const colorCode = match[0];
                         const startIndex = match.index;
                         const endIndex = startIndex + colorCode.length;
         
-                        // Add text before the color code
                         if (startIndex > lastIndex) {
                             fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex, startIndex)));
                         }
         
-                        // Add highlighted color code
                         const span = document.createElement('span');
                         span.textContent = colorCode;
                         const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
@@ -396,28 +414,41 @@ export default class ColorHighlighterPlugin extends Plugin {
         
                         lastIndex = endIndex;
                     }
-
-                    // Add any remaining text
+    
                     if (lastIndex < node.textContent.length) {
                         fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
                     }
     
-                    if (fragment.childNodes.length > 0) {
+                    if (hasColorMatch) {
                         node.parentNode?.replaceChild(fragment, node);
                     }
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
-                // Skip processing SVG elements
-                if ((node as Element).tagName.toLowerCase() === 'svg') {
+                if (isDataviewInline(node)) {
+                    handleDataviewInline(node as HTMLElement);
                     return;
                 }
-                // Process childe nodes
-                Array.from(node.childNodes).forEach(processNode);
+    
+                if ((node as Element).tagName.toLowerCase() !== 'svg') {
+                    Array.from(node.childNodes).forEach(processNode);
+                }
             }
         };
+    
+        const handleDataviewInline = (element: HTMLElement) => {
+            element.querySelectorAll('p, div').forEach(el => {
+                const span = document.createElement('span');
+                span.innerHTML = el.innerHTML;
+                el.parentNode?.replaceChild(span, el);
+            });
+    
+            element.innerHTML = element.innerHTML.replace(/\n/g, ' ');
+            element.style.display = 'inline';
+        };
+    
         processNode(el);
     }
-
+    
     namedColors: { [key: string]: string } = {
         white: '#FFFFFF',
         black: '#000000'
