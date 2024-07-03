@@ -539,16 +539,19 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     }
   }
   blendRgbaWithBackground(rgba, background) {
-    var _a;
     try {
-      const [r, g, b, a] = ((_a = rgba.match(/[\d.]+/g)) == null ? void 0 : _a.map(Number)) || [];
-      const [bgR, bgG, bgB] = this.extractRgbComponents(background);
-      const alpha = a !== void 0 ? a : 1;
-      const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
-      const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
-      const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
-      return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
+      const [r, g, b, a] = this.extractRgbComponents(rgba);
+      let [bgR, bgG, bgB, bgA] = this.extractRgbComponents(background);
+      if (bgA === 0) {
+        [bgR, bgG, bgB, bgA] = [255, 255, 255, 1];
+      }
+      const blendedA = 1 - (1 - a) * (1 - bgA);
+      const blendedR = Math.round((r * a + bgR * bgA * (1 - a)) / blendedA);
+      const blendedG = Math.round((g * a + bgG * bgA * (1 - a)) / blendedA);
+      const blendedB = Math.round((b * a + bgB * bgA * (1 - a)) / blendedA);
+      return `rgba(${blendedR}, ${blendedG}, ${blendedB}, ${blendedA.toFixed(2)})`;
     } catch (error) {
+      console.error("Error blending colors:", error);
       return background;
     }
   }
@@ -566,52 +569,59 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     }
   }
   getEffectiveBackgroundColor(color, background) {
-    if (color.startsWith("rgba")) {
-      return this.blendRgbaWithBackground(color, background);
-    } else if (color.startsWith("hsla")) {
-      return this.blendHslaWithBackground(color, background);
-    } else if (color.startsWith("#")) {
-      if (color.length === 9) {
-        const hex = color.slice(1);
-        const r = parseInt(hex.slice(0, 2), 16);
-        const g = parseInt(hex.slice(2, 4), 16);
-        const b = parseInt(hex.slice(4, 6), 16);
-        const a = parseInt(hex.slice(6, 8), 16) / 255;
-        return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
-      } else if (color.length === 5) {
-        const r = parseInt(color[1] + color[1], 16);
-        const g = parseInt(color[2] + color[2], 16);
-        const b = parseInt(color[3] + color[3], 16);
-        const a = parseInt(color[4] + color[4], 16) / 255;
-        return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
-      }
+    const [r, g, b, a] = this.extractRgbComponents(color);
+    if (a < 1) {
+      return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
     }
-    return color;
+    return `rgb(${r},${g},${b})`;
   }
-  extractRgbComponents(rgbString) {
-    rgbString = this.convertNamedColor(rgbString);
-    if (rgbString.startsWith("#")) {
-      const hex = rgbString.slice(1);
-      if (hex.length === 3) {
-        return [
-          parseInt(hex[0] + hex[0], 16),
-          parseInt(hex[1] + hex[1], 16),
-          parseInt(hex[2] + hex[2], 16)
-        ];
+  extractRgbComponents(colorString) {
+    console.log("Input color string:", colorString);
+    colorString = this.convertNamedColor(colorString);
+    let r = 0, g = 0, b = 0, a = 1;
+    if (colorString.startsWith("#")) {
+      const hex = colorString.slice(1);
+      if (hex.length === 3 || hex.length === 4) {
+        r = parseInt(hex[0] + hex[0], 16);
+        g = parseInt(hex[1] + hex[1], 16);
+        b = parseInt(hex[2] + hex[2], 16);
+        a = hex.length === 4 ? parseInt(hex[3] + hex[3], 16) / 255 : 1;
       } else if (hex.length === 6 || hex.length === 8) {
-        return [
-          parseInt(hex.slice(0, 2), 16),
-          parseInt(hex.slice(2, 4), 16),
-          parseInt(hex.slice(4, 6), 16)
-        ];
+        r = parseInt(hex.slice(0, 2), 16);
+        g = parseInt(hex.slice(2, 4), 16);
+        b = parseInt(hex.slice(4, 6), 16);
+        a = hex.length === 8 ? parseInt(hex.slice(6, 8), 16) / 255 : 1;
       }
+    } else if (colorString.startsWith("rgb")) {
+      const match = colorString.match(/\d+(\.\d+)?/g);
+      if (match) {
+        r = Number(match[0]) || 0;
+        g = Number(match[1]) || 0;
+        b = Number(match[2]) || 0;
+        a = match.length > 3 ? Number(match[3]) : 1;
+      }
+    } else if (colorString.startsWith("hsl")) {
+      const rgbColor = this.hslToRgb(colorString);
+      const match = rgbColor.match(/\d+/g);
+      if (match) {
+        r = Number(match[0]) || 0;
+        g = Number(match[1]) || 0;
+        b = Number(match[2]) || 0;
+      }
+      const alphaMatch = colorString.match(/hsla\(.*,\s*([\d.]+)\s*\)/);
+      if (alphaMatch) {
+        a = Number(alphaMatch[1]);
+      }
+    } else {
+      console.error("Invalid color string:", colorString);
     }
-    const match = rgbString.match(/\d+/g);
-    if (!match || match.length < 3) {
-      console.error("Invalid RGB string:", rgbString);
-      return [0, 0, 0];
-    }
-    return match.slice(0, 3).map(Number);
+    console.log("Extracted components:", [r, g, b, a]);
+    return [
+      Math.round(r),
+      Math.round(g),
+      Math.round(b),
+      Number(a.toFixed(2))
+    ];
   }
   extractHslaComponents(hsla) {
     const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
@@ -627,51 +637,34 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
   hslToRgb(hsl) {
     var _a;
     try {
-      const [h, s, l] = ((_a = hsl.match(/\d+%?/g)) == null ? void 0 : _a.map((val) => {
-        if (val.endsWith("%")) {
-          return parseFloat(val) / 100;
-        }
-        return parseFloat(val);
-      })) || [];
+      const [h, s, l] = ((_a = hsl.match(/\d+(\.\d+)?/g)) == null ? void 0 : _a.map(Number)) || [];
       if (h === void 0 || s === void 0 || l === void 0) {
         throw new Error("Invalid HSL values");
       }
-      const sNorm = s;
-      const lNorm = l;
-      const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
-      const x = c * (1 - Math.abs(h / 60 % 2 - 1));
-      const m = lNorm - c / 2;
-      let r = 0, g = 0, b = 0;
-      if (h < 60) {
-        r = c;
-        g = x;
-        b = 0;
-      } else if (h < 120) {
-        r = x;
-        g = c;
-        b = 0;
-      } else if (h < 180) {
-        r = 0;
-        g = c;
-        b = x;
-      } else if (h < 240) {
-        r = 0;
-        g = x;
-        b = c;
-      } else if (h < 300) {
-        r = x;
-        g = 0;
-        b = c;
+      const hue = h / 360;
+      const saturation = s / 100;
+      const lightness = l / 100;
+      let r, g, b;
+      if (saturation === 0) {
+        r = g = b = lightness;
       } else {
-        r = c;
-        g = 0;
-        b = x;
+        const hue2rgb = (p2, q2, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1 / 6) return p2 + (q2 - p2) * 6 * t;
+          if (t < 1 / 2) return q2;
+          if (t < 2 / 3) return p2 + (q2 - p2) * (2 / 3 - t) * 6;
+          return p2;
+        };
+        const q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
+        const p = 2 * lightness - q;
+        r = hue2rgb(p, q, hue + 1 / 3);
+        g = hue2rgb(p, q, hue);
+        b = hue2rgb(p, q, hue - 1 / 3);
       }
-      r = Math.round((r + m) * 255);
-      g = Math.round((g + m) * 255);
-      b = Math.round((b + m) * 255);
-      return `rgb(${r},${g},${b})`;
+      return `rgb(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)})`;
     } catch (error) {
+      console.error("Error converting HSL to RGB:", error);
       return "rgb(0,0,0)";
     }
   }
