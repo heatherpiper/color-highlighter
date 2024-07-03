@@ -365,12 +365,12 @@ export default class ColorHighlighterPlugin extends Plugin {
         const processNode = (node: Node): void => {
             if (node.nodeType === Node.TEXT_NODE && node.textContent) {
                 const parent = node.parentElement;
-    
+        
                 if (isDataviewInline(node)) {
                     handleDataviewInline(parent as HTMLElement);
                     return;
                 }
-    
+        
                 // Check if the color should be highlighted based on the settings
                 if (
                     (highlightEverywhere) ||
@@ -381,10 +381,10 @@ export default class ColorHighlighterPlugin extends Plugin {
                     let lastIndex = 0;
                     let match;
                     let hasColorMatch = false;
-    
+        
                     while ((match = COLOR_REGEX.exec(node.textContent)) !== null) {
                         hasColorMatch = true;
-    
+        
                         const colorCode = match[0];
                         const startIndex = match.index;
                         const endIndex = startIndex + colorCode.length;
@@ -397,43 +397,45 @@ export default class ColorHighlighterPlugin extends Plugin {
                         // Add highlighted color code
                         const span = document.createElement('span');
                         span.textContent = colorCode;
-                        const backgroundColor = this.getEffectiveBackgroundColor(colorCode, window.getComputedStyle(el).backgroundColor);
-    
+        
+                        const backgroundColor = parent ? this.getEffectiveBackgroundColor(parent) : this.getThemeFallbackColor();
+                        const effectiveColor = backgroundColor ? this.blendColorWithBackground(colorCode, backgroundColor) : colorCode;
+        
                         span.classList.add('color-highlighter');
-    
+        
                         switch (highlightStyle) {
                             case 'background':
                                 span.classList.add('background');
-                                const contrastColor = this.getContrastColor(backgroundColor, 'white');
-                                span.style.backgroundColor = backgroundColor;
+                                const contrastColor = this.getContrastColor(effectiveColor, backgroundColor);
+                                span.style.backgroundColor = effectiveColor;
                                 span.style.color = contrastColor;
                                 break;
                             case 'underline':
                                 span.classList.add('underline');
-                                span.style.borderBottomColor = backgroundColor;
+                                span.style.borderBottomColor = effectiveColor;
                                 break;
                             case 'square':
                                 const square = document.createElement('span');
                                 square.classList.add('color-highlighter-square');
-                                square.style.backgroundColor = backgroundColor;
+                                square.style.backgroundColor = effectiveColor;
                                 span.appendChild(square);
                                 break;
                             case 'border':
                                 span.classList.add('border');
-                                span.style.borderColor = backgroundColor;
+                                span.style.borderColor = effectiveColor;
                                 break;
                         }
-    
+        
                         fragment.appendChild(span);
         
                         lastIndex = endIndex;
                     }
-    
+        
                     // Add any remaining text
                     if (lastIndex < node.textContent.length) {
                         fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
                     }
-    
+        
                     if (hasColorMatch) {
                         node.parentNode?.replaceChild(fragment, node);
                     }
@@ -444,7 +446,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     handleDataviewInline(node as HTMLElement);
                     return;
                 }
-    
+        
                 // Skip processing of SVG elements
                 if ((node as Element).tagName.toLowerCase() !== 'svg') {
                     Array.from(node.childNodes).forEach(processNode);
@@ -525,6 +527,32 @@ export default class ColorHighlighterPlugin extends Plugin {
         }
     }
 
+    blendColorWithBackground(color: string, background: string): string {
+        if (color.startsWith('rgba')) {
+            return this.blendRgbaWithBackground(color, background);
+        } else if (color.startsWith('hsla')) {
+            return this.blendHslaWithBackground(color, background);
+        } else if (color.startsWith('#')) {
+            if (color.length === 9) {
+                // Handle 8-digit HEX
+                const hex = color.slice(1);
+                const r = parseInt(hex.slice(0, 2), 16);
+                const g = parseInt(hex.slice(2, 4), 16);
+                const b = parseInt(hex.slice(4, 6), 16);
+                const a = parseInt(hex.slice(6, 8), 16) / 255;
+                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+            } else if (color.length === 5) {
+                // Handle 4-digit HEX
+                const r = parseInt(color[1] + color[1], 16);
+                const g = parseInt(color[2] + color[2], 16);
+                const b = parseInt(color[3] + color[3], 16);
+                const a = parseInt(color[4] + color[4], 16) / 255;
+                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+            }
+        }
+        return color;
+    }
+
     blendRgbaWithBackground(rgba: string, background: string): string {
         try {
             const [r, g, b, a] = rgba.match(/[\d.]+/g)?.map(Number) || [];
@@ -560,34 +588,38 @@ export default class ColorHighlighterPlugin extends Plugin {
         }
     }
 
-    getEffectiveBackgroundColor(color: string, background: string): string {
-        if (color.startsWith('rgba')) {
-            return this.blendRgbaWithBackground(color, background);
-        } else if (color.startsWith('hsla')) {
-            return this.blendHslaWithBackground(color, background);
-        } else if (color.startsWith('#')) {
-            if (color.length === 9) {
-                // Handle 8-digit HEX
-                const hex = color.slice(1);
-                const r = parseInt(hex.slice(0, 2), 16);
-                const g = parseInt(hex.slice(2, 4), 16);
-                const b = parseInt(hex.slice(4, 6), 16);
-                const a = parseInt(hex.slice(6, 8), 16) / 255;
-                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
-            } else if (color.length === 5) {
-                // Handle 4-digit HEX
-                const r = parseInt(color[1] + color[1], 16);
-                const g = parseInt(color[2] + color[2], 16);
-                const b = parseInt(color[3] + color[3], 16);
-                const a = parseInt(color[4] + color[4], 16) / 255;
-                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+    private getEffectiveBackgroundColor(element: HTMLElement): string {
+        let currentElement: HTMLElement | null = element;
+        let backgroundColor = '';
+    
+        while (currentElement) {
+            const style = window.getComputedStyle(currentElement);
+            backgroundColor = style.backgroundColor;
+    
+            if (backgroundColor && backgroundColor !== 'rgba(0, 0, 0, 0)' && backgroundColor !== 'transparent') {
+                break;
             }
+    
+            currentElement = currentElement.parentElement;
         }
-        return color;
+    
+        if (!backgroundColor || backgroundColor === 'rgba(0, 0, 0, 0)' || backgroundColor === 'transparent') {
+            backgroundColor = this.getThemeFallbackColor();
+        }
+    
+        return backgroundColor || 'rgb(255, 255, 255)'; // Ensure we always return a valid color
+    }
+
+    private getThemeFallbackColor(): string {
+        const isDarkTheme = document.body.classList.contains('theme-dark') || 
+                            document.documentElement.classList.contains('theme-dark');
+        return isDarkTheme ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)';
     }
 
     extractRgbComponents(rgbString: string): [number, number, number] {
-        rgbString = this.convertNamedColor(rgbString);
+        if (!rgbString) {
+            return [0, 0, 0];
+        }
         if (rgbString.startsWith('#')) {
             // Handle hex color
             const hex = rgbString.slice(1);
@@ -609,7 +641,6 @@ export default class ColorHighlighterPlugin extends Plugin {
         }
         const match = rgbString.match(/\d+/g);
         if (!match || match.length < 3) {
-            console.error('Invalid RGB string:', rgbString);
             return [0, 0, 0]; // Fallback to black if the string is invalid
         }
         return match.slice(0, 3).map(Number) as [number, number, number];
