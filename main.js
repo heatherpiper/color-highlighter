@@ -438,7 +438,6 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
             const span = document.createElement("span");
             span.textContent = colorCode;
             const backgroundColor = parent ? this.getEffectiveBackgroundColor(parent) : this.getThemeFallbackColor();
-            console.log("Final background color:", backgroundColor);
             const effectiveColor = backgroundColor ? this.blendColorWithBackground(colorCode, backgroundColor) : colorCode;
             span.classList.add("color-highlighter");
             switch (highlightStyle) {
@@ -596,7 +595,6 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     while (currentElement) {
       const style = window.getComputedStyle(currentElement);
       backgroundColor = style.backgroundColor;
-      console.log("Current element:", currentElement.tagName, "Background color:", backgroundColor);
       if (backgroundColor && backgroundColor !== "rgba(0, 0, 0, 0)" && backgroundColor !== "transparent") {
         break;
       }
@@ -604,7 +602,6 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     }
     if (!backgroundColor || backgroundColor === "rgba(0, 0, 0, 0)" || backgroundColor === "transparent") {
       backgroundColor = this.getThemeFallbackColor();
-      console.log("Using theme fallback color:", backgroundColor);
     }
     return backgroundColor || "rgb(255, 255, 255)";
   }
@@ -613,9 +610,7 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     return isDarkTheme ? "rgb(30, 30, 30)" : "rgb(255, 255, 255)";
   }
   extractRgbComponents(rgbString) {
-    console.log("Attempting to extract RGB components from:", rgbString);
     if (!rgbString) {
-      console.warn("Empty color string, defaulting to black");
       return [0, 0, 0];
     }
     if (rgbString.startsWith("#")) {
@@ -636,7 +631,6 @@ var ColorHighlighterPlugin = class extends import_obsidian2.Plugin {
     }
     const match = rgbString.match(/\d+/g);
     if (!match || match.length < 3) {
-      console.error("Invalid RGB string:", rgbString);
       return [0, 0, 0];
     }
     return match.slice(0, 3).map(Number);
