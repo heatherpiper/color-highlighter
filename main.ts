@@ -7,8 +7,15 @@ import { syntaxTree } from '@codemirror/language';
 const COLOR_REGEX = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})(?![0-9A-Fa-f])|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
 
 export default class ColorHighlighterPlugin extends Plugin {
+    
+    // Properties
     settings: ColorHighlighterSettings;
+    namedColors: { [key: string]: string } = {
+        white: '#FFFFFF',
+        black: '#000000'
+    };
 
+    // Lifecycle methods
     async onload() {
         await this.loadSettings();
         this.addSettingTab(new ColorHighlighterSettingTab(this.app, this));
@@ -18,7 +25,8 @@ export default class ColorHighlighterPlugin extends Plugin {
         this.addStyles();
     }
 
-    addStyles() {
+    // Plugin setup methods
+    private addStyles() {
         const styles = `
             .color-highlighter {
                 box-decoration-break: clone;
@@ -69,14 +77,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         });
     }
 
-    async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    }
-
-    async saveSettings() {
-        await this.saveData(this.settings);
-        this.app.workspace.updateOptions();
-    }
+    // Main processing methods
 
     // Highlight colors in Source Mode
     createEditorExtension() {
@@ -347,9 +348,6 @@ export default class ColorHighlighterPlugin extends Plugin {
 
     // Highlight colors in Live Preview and Reading Mode
     postProcessor(el: HTMLElement, ctx: MarkdownPostProcessorContext) {
-        const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = this.settings;
-    
-        // Skip processing of Dataview inline queries
         const isDataviewInline = (node: Node): boolean => {
             let parent = node.parentElement;
             while (parent) {
@@ -361,123 +359,132 @@ export default class ColorHighlighterPlugin extends Plugin {
             return false;
         };
     
-        // Process each node in the tree
-        const processNode = (node: Node): void => {
-            if (node.nodeType === Node.TEXT_NODE && node.textContent) {
-                const parent = node.parentElement;
-        
-                if (isDataviewInline(node)) {
-                    handleDataviewInline(parent as HTMLElement);
-                    return;
-                }
-        
-                // Check if the color should be highlighted based on the settings
-                if (
-                    (highlightEverywhere) ||
-                    (highlightInBackticks && parent?.tagName === 'CODE' && parent.parentElement?.tagName !== 'PRE') ||
-                    (highlightInCodeblocks && parent?.tagName === 'CODE' && parent.parentElement?.tagName === 'PRE')
-                ) {
-                    const fragment = document.createDocumentFragment();
-                    let lastIndex = 0;
-                    let match;
-                    let hasColorMatch = false;
-        
-                    while ((match = COLOR_REGEX.exec(node.textContent)) !== null) {
-                        hasColorMatch = true;
-        
-                        const colorCode = match[0];
-                        const startIndex = match.index;
-                        const endIndex = startIndex + colorCode.length;
-        
-                        // Add the text before the color code
-                        if (startIndex > lastIndex) {
-                            fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex, startIndex)));
-                        }
-        
-                        // Add highlighted color code
-                        const span = document.createElement('span');
-                        span.textContent = colorCode;
-        
-                        const backgroundColor = parent ? this.getEffectiveBackgroundColor(parent) : this.getThemeFallbackColor();
-                        const effectiveColor = backgroundColor ? this.blendColorWithBackground(colorCode, backgroundColor) : colorCode;
-        
-                        span.classList.add('color-highlighter');
-        
-                        switch (highlightStyle) {
-                            case 'background':
-                                span.classList.add('background');
-                                const contrastColor = this.getContrastColor(effectiveColor, backgroundColor);
-                                span.style.backgroundColor = effectiveColor;
-                                span.style.color = contrastColor;
-                                break;
-                            case 'underline':
-                                span.classList.add('underline');
-                                span.style.borderBottomColor = effectiveColor;
-                                break;
-                            case 'square':
-                                const square = document.createElement('span');
-                                square.classList.add('color-highlighter-square');
-                                square.style.backgroundColor = effectiveColor;
-                                span.appendChild(square);
-                                break;
-                            case 'border':
-                                span.classList.add('border');
-                                span.style.borderColor = effectiveColor;
-                                break;
-                        }
-        
-                        fragment.appendChild(span);
-        
-                        lastIndex = endIndex;
-                    }
-        
-                    // Add any remaining text
-                    if (lastIndex < node.textContent.length) {
-                        fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
-                    }
-        
-                    if (hasColorMatch) {
-                        node.parentNode?.replaceChild(fragment, node);
-                    }
-                }
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-                // Make sure Dataview inline queries are displayed inline
-                if (isDataviewInline(node)) {
-                    handleDataviewInline(node as HTMLElement);
-                    return;
-                }
-        
-                // Skip processing of SVG elements
-                if ((node as Element).tagName.toLowerCase() !== 'svg') {
-                    Array.from(node.childNodes).forEach(processNode);
-                }
+        this.processNode(el, isDataviewInline);
+    }
+
+    // Helper methods for processing
+
+    // Recursively process the nodes in the DOM tree
+    private processNode(node: Node, isDataviewInline: (node: Node) => boolean): void {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+            const parent = node.parentElement;
+    
+            if (parent && isDataviewInline(node)) {
+                this.handleDataviewInline(parent);
+                return;
             }
-        };
     
-        // Make sure Dataview inline queries are displayed inline
-        const handleDataviewInline = (element: HTMLElement) => {
-            element.querySelectorAll('p, div').forEach(el => {
-                const span = document.createElement('span');
-                span.innerHTML = el.innerHTML;
-                el.parentNode?.replaceChild(span, el);
-            });
+            // Check if the color should be highlighted based on the settings
+            if (
+                (this.settings.highlightEverywhere) ||
+                (this.settings.highlightInBackticks && parent?.tagName === 'CODE' && parent.parentElement?.tagName !== 'PRE') ||
+                (this.settings.highlightInCodeblocks && parent?.tagName === 'CODE' && parent.parentElement?.tagName === 'PRE')
+            ) {
+                this.highlightColorInNode(node as Text);
+            }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            // Make sure Dataview inline queries are displayed inline
+            if (isDataviewInline(node)) {
+                this.handleDataviewInline(node as HTMLElement);
+                return;
+            }
     
-            element.innerHTML = element.innerHTML.replace(/\n/g, ' ');
-            element.style.display = 'inline';
-        };
-    
-        processNode(el);
-    }
-    
-    namedColors: { [key: string]: string } = {
-        white: '#FFFFFF',
-        black: '#000000'
-    };
-
-    convertNamedColor(color: string): string {
-        return this.namedColors[color.toLowerCase()] || color;
+            // Skip processing of SVG elements
+            if ((node as Element).tagName.toLowerCase() !== 'svg') {
+                Array.from(node.childNodes).forEach(childNode => this.processNode(childNode, isDataviewInline));
+            }
+        }
     }
 
+    // Make sure Dataview inline queries are displayed inline
+    private handleDataviewInline(element: HTMLElement) {
+        element.querySelectorAll('p, div').forEach(el => {
+            const span = document.createElement('span');
+            span.innerHTML = el.innerHTML;
+            el.parentNode?.replaceChild(span, el);
+        });
+
+        element.innerHTML = element.innerHTML.replace(/\n/g, ' ');
+        element.style.display = 'inline';
+    }
+
+    // Highlight colors in text nodes
+    private highlightColorInNode(node: Text) {
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+        let match;
+        let hasColorMatch = false;
+
+        if (node.textContent === null) return;
+
+        while ((match = COLOR_REGEX.exec(node.textContent)) !== null) {
+            hasColorMatch = true;
+
+            const colorCode = match[0];
+            const startIndex = match.index;
+            const endIndex = startIndex + colorCode.length;
+
+            // Add the text before the color code
+            if (startIndex > lastIndex) {
+                fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex, startIndex)));
+            }
+
+            // Add highlighted color code
+            const span = this.createHighlightedSpan(colorCode, node.parentElement);
+            fragment.appendChild(span);
+
+            lastIndex = endIndex;
+        }
+
+        // Add any remaining text
+        if (lastIndex < node.textContent.length) {
+            fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
+        }
+
+        if (hasColorMatch) {
+            node.parentNode?.replaceChild(fragment, node);
+        }
+    }
+
+    // Create a span element with the highlighted color
+    private createHighlightedSpan(colorCode: string, parent: Element | null): HTMLSpanElement {
+        const span = document.createElement('span');
+        span.textContent = colorCode;
+
+        const backgroundColor = parent && parent instanceof HTMLElement 
+            ? this.getEffectiveBackgroundColor(parent) 
+            : this.getThemeFallbackColor();
+        const effectiveColor = backgroundColor ? this.blendColorWithBackground(colorCode, backgroundColor) : colorCode;
+
+        span.classList.add('color-highlighter');
+
+        switch (this.settings.highlightStyle) {
+            case 'background':
+                span.classList.add('background');
+                const contrastColor = this.getContrastColor(effectiveColor, backgroundColor);
+                span.style.backgroundColor = effectiveColor;
+                span.style.color = contrastColor;
+                break;
+            case 'underline':
+                span.classList.add('underline');
+                span.style.borderBottomColor = effectiveColor;
+                break;
+            case 'square':
+                const square = document.createElement('span');
+                square.classList.add('color-highlighter-square');
+                square.style.backgroundColor = effectiveColor;
+                span.appendChild(square);
+                break;
+            case 'border':
+                span.classList.add('border');
+                span.style.borderColor = effectiveColor;
+                break;
+        }
+
+        return span;
+    }
+
+    // Highlight colors in text nodes
     highlightColors(text: string, wrapInBackticks: boolean): string {
         return text.replace(COLOR_REGEX, (match) => {
             const editorBackground = getComputedStyle(document.body).backgroundColor;
@@ -487,6 +494,73 @@ export default class ColorHighlighterPlugin extends Plugin {
         });
     }
 
+    // Color manipulation methods
+
+    // Blend color with background color
+    blendColorWithBackground(color: string, background: string): string {
+        if (color.startsWith('rgba')) {
+            return this.blendRgbaWithBackground(color, background);
+        } else if (color.startsWith('hsla')) {
+            return this.blendHslaWithBackground(color, background);
+        } else if (color.startsWith('#')) {
+            if (color.length === 9) {
+                // Handle 8-digit HEX
+                const hex = color.slice(1);
+                const r = parseInt(hex.slice(0, 2), 16);
+                const g = parseInt(hex.slice(2, 4), 16);
+                const b = parseInt(hex.slice(4, 6), 16);
+                const a = parseInt(hex.slice(6, 8), 16) / 255;
+                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+            } else if (color.length === 5) {
+                // Handle 4-digit HEX
+                const r = parseInt(color[1] + color[1], 16);
+                const g = parseInt(color[2] + color[2], 16);
+                const b = parseInt(color[3] + color[3], 16);
+                const a = parseInt(color[4] + color[4], 16) / 255;
+                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+            }
+        }
+        return color;
+    }
+
+    // Blend RGBA color with the background color
+    blendRgbaWithBackground(rgba: string, background: string): string {
+        try {
+            const [r, g, b, a] = rgba.match(/[\d.]+/g)?.map(Number) || [];
+            const [bgR, bgG, bgB] = this.extractRgbComponents(background);
+            const alpha = a !== undefined ? a : 1;
+    
+            const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
+            const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
+            const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
+    
+            return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
+        } catch (error) {
+            return background; // Fallback to background color if there's an error
+        }
+    }
+
+    // Blend HSLA color with the background color
+    blendHslaWithBackground(hsla: string, background: string): string {
+        try {
+            const [h, s, l, a] = this.extractHslaComponents(hsla);
+            const [bgR, bgG, bgB] = this.extractRgbComponents(background);
+            
+            // Convert HSLA to RGBA
+            const rgba = this.hslaToRgba(h, s, l, a);
+            
+            // Blend with background
+            const blendedR = Math.round((1 - a) * bgR + a * rgba[0]);
+            const blendedG = Math.round((1 - a) * bgG + a * rgba[1]);
+            const blendedB = Math.round((1 - a) * bgB + a * rgba[2]);
+    
+            return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
+        } catch (error) {
+            return background; // Fallback to background color if there's an error
+        }
+    }
+
+    // Get the most effective color for the text based on the background color
     getContrastColor(color: string, background: string): string {
         if (color.startsWith('hsl')) {
             color = this.hslToRgb(color);
@@ -514,80 +588,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         return (yiq >= 128) ? 'black' : 'white';
     }
 
-    rgbToHex(rgb: string): string {
-        try {
-            if (rgb.startsWith('#')) {
-                // If it's already a hex code, return it as is
-                return rgb.slice(1);
-            }
-            const [r, g, b] = this.extractRgbComponents(rgb);
-            return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        } catch (error) {
-            return '000000'; // Fallback to black if there's an error
-        }
-    }
-
-    blendColorWithBackground(color: string, background: string): string {
-        if (color.startsWith('rgba')) {
-            return this.blendRgbaWithBackground(color, background);
-        } else if (color.startsWith('hsla')) {
-            return this.blendHslaWithBackground(color, background);
-        } else if (color.startsWith('#')) {
-            if (color.length === 9) {
-                // Handle 8-digit HEX
-                const hex = color.slice(1);
-                const r = parseInt(hex.slice(0, 2), 16);
-                const g = parseInt(hex.slice(2, 4), 16);
-                const b = parseInt(hex.slice(4, 6), 16);
-                const a = parseInt(hex.slice(6, 8), 16) / 255;
-                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
-            } else if (color.length === 5) {
-                // Handle 4-digit HEX
-                const r = parseInt(color[1] + color[1], 16);
-                const g = parseInt(color[2] + color[2], 16);
-                const b = parseInt(color[3] + color[3], 16);
-                const a = parseInt(color[4] + color[4], 16) / 255;
-                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
-            }
-        }
-        return color;
-    }
-
-    blendRgbaWithBackground(rgba: string, background: string): string {
-        try {
-            const [r, g, b, a] = rgba.match(/[\d.]+/g)?.map(Number) || [];
-            const [bgR, bgG, bgB] = this.extractRgbComponents(background);
-            const alpha = a !== undefined ? a : 1;
-    
-            const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
-            const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
-            const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
-    
-            return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
-        } catch (error) {
-            return background; // Fallback to background color if there's an error
-        }
-    }
-
-    blendHslaWithBackground(hsla: string, background: string): string {
-        try {
-            const [h, s, l, a] = this.extractHslaComponents(hsla);
-            const [bgR, bgG, bgB] = this.extractRgbComponents(background);
-            
-            // Convert HSLA to RGBA
-            const rgba = this.hslaToRgba(h, s, l, a);
-            
-            // Blend with background
-            const blendedR = Math.round((1 - a) * bgR + a * rgba[0]);
-            const blendedG = Math.round((1 - a) * bgG + a * rgba[1]);
-            const blendedB = Math.round((1 - a) * bgB + a * rgba[2]);
-    
-            return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
-        } catch (error) {
-            return background; // Fallback to background color if there's an error
-        }
-    }
-
+    // Get the effective background color for the element
     private getEffectiveBackgroundColor(element: HTMLElement): string {
         let currentElement: HTMLElement | null = element;
         let backgroundColor = '';
@@ -610,52 +611,10 @@ export default class ColorHighlighterPlugin extends Plugin {
         return backgroundColor || 'rgb(255, 255, 255)'; // Ensure we always return a valid color
     }
 
-    private getThemeFallbackColor(): string {
-        const isDarkTheme = document.body.classList.contains('theme-dark') || 
-                            document.documentElement.classList.contains('theme-dark');
-        return isDarkTheme ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)';
-    }
+    // Color conversion methods
 
-    extractRgbComponents(rgbString: string): [number, number, number] {
-        if (!rgbString) {
-            return [0, 0, 0];
-        }
-        if (rgbString.startsWith('#')) {
-            // Handle hex color
-            const hex = rgbString.slice(1);
-            if (hex.length === 3) {
-                // Handle shorthand hex
-                return [
-                    parseInt(hex[0] + hex[0], 16),
-                    parseInt(hex[1] + hex[1], 16),
-                    parseInt(hex[2] + hex[2], 16)
-                ];
-            } else if (hex.length === 6 || hex.length === 8) {
-                // Handle 6-digit and 8-digit hex
-                return [
-                    parseInt(hex.slice(0, 2), 16),
-                    parseInt(hex.slice(2, 4), 16),
-                    parseInt(hex.slice(4, 6), 16)
-                ];
-            }
-        }
-        const match = rgbString.match(/\d+/g);
-        if (!match || match.length < 3) {
-            return [0, 0, 0]; // Fallback to black if the string is invalid
-        }
-        return match.slice(0, 3).map(Number) as [number, number, number];
-    }
-
-    extractHslaComponents(hsla: string): [number, number, number, number] {
-        const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
-        if (!match) {
-            throw new Error('Invalid HSLA string');
-        }
-        const h = parseInt(match[1], 10);
-        const s = parseInt(match[2], 10) / 100;
-        const l = parseInt(match[3], 10) / 100;
-        const a = match[4] ? parseFloat(match[4]) : 1;
-        return [h, s, l, a];
+    convertNamedColor(color: string): string {
+        return this.namedColors[color.toLowerCase()] || color;
     }
 
     hslToRgb(hsl: string): string {
@@ -714,5 +673,78 @@ export default class ColorHighlighterPlugin extends Plugin {
     
         return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), a];
     }
+
+    rgbToHex(rgb: string): string {
+        try {
+            if (rgb.startsWith('#')) {
+                // If it's already a hex code, return it as is
+                return rgb.slice(1);
+            }
+            const [r, g, b] = this.extractRgbComponents(rgb);
+            return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        } catch (error) {
+            return '000000'; // Fallback to black if there's an error
+        }
+    }
     
+    // Utility methods
+
+    private getThemeFallbackColor(): string {
+        const isDarkTheme = document.body.classList.contains('theme-dark') || 
+                            document.documentElement.classList.contains('theme-dark');
+        return isDarkTheme ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)';
+    }
+
+    extractRgbComponents(rgbString: string): [number, number, number] {
+        if (!rgbString) {
+            return [0, 0, 0];
+        }
+        if (rgbString.startsWith('#')) {
+            // Handle hex color
+            const hex = rgbString.slice(1);
+            if (hex.length === 3) {
+                // Handle shorthand hex
+                return [
+                    parseInt(hex[0] + hex[0], 16),
+                    parseInt(hex[1] + hex[1], 16),
+                    parseInt(hex[2] + hex[2], 16)
+                ];
+            } else if (hex.length === 6 || hex.length === 8) {
+                // Handle 6-digit and 8-digit hex
+                return [
+                    parseInt(hex.slice(0, 2), 16),
+                    parseInt(hex.slice(2, 4), 16),
+                    parseInt(hex.slice(4, 6), 16)
+                ];
+            }
+        }
+        const match = rgbString.match(/\d+/g);
+        if (!match || match.length < 3) {
+            return [0, 0, 0]; // Fallback to black if the string is invalid
+        }
+        return match.slice(0, 3).map(Number) as [number, number, number];
+    }
+
+    extractHslaComponents(hsla: string): [number, number, number, number] {
+        const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
+        if (!match) {
+            throw new Error('Invalid HSLA string');
+        }
+        const h = parseInt(match[1], 10);
+        const s = parseInt(match[2], 10) / 100;
+        const l = parseInt(match[3], 10) / 100;
+        const a = match[4] ? parseFloat(match[4]) : 1;
+        return [h, s, l, a];
+    }
+
+    // Settings methods
+
+    async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+    async saveSettings() {
+        await this.saveData(this.settings);
+        this.app.workspace.updateOptions();
+    }
 }
