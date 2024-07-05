@@ -200,6 +200,7 @@ export default class ColorHighlighterPlugin extends Plugin {
             
                 // Decoration methods
 
+                // Get the attributes for the decoration based on the selected style
                 getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string): { [key: string]: string } {
                     const attributes: { [key: string]: string } = {
                         class: "color-highlighter-inline-code",
@@ -225,6 +226,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return attributes;
                 }
 
+                // Add a square widget to the decoration for the 'square' highlight style
                 addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string) {
                     builder.add(end, end, Decoration.widget({
                         widget: new class extends WidgetType {
