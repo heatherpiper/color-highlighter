@@ -96,6 +96,9 @@ export default class ColorHighlighterPlugin extends Plugin {
                     }
                 }
 
+                // Main processing methods
+
+                // Build decorations for the visible ranges in the editor
                 buildDecorations(view: EditorView) {
                     const builder = new RangeSetBuilder<Decoration>();
                     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = plugin.settings;
@@ -115,6 +118,25 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return builder.finish();
                 }
 
+                // Add highlight to the specified range of text based on the selected style
+                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
+                    const editorBackground = getComputedStyle(view.dom).backgroundColor;
+                    const effectiveColor = this.getEffectiveColor(color, editorBackground);
+                    const contrastColor = this.getContrastColor(effectiveColor, editorBackground);
+
+                    const decorationAttributes = this.getDecorationAttributes(highlightStyle, effectiveColor, contrastColor);
+                        
+                    builder.add(start, end, Decoration.mark({
+                        attributes: decorationAttributes
+                    }));
+                    // Add a square widget for the 'square' highlight style
+                    if (highlightStyle === 'square') {
+                        this.addSquareWidget(builder, end, effectiveColor);
+                    }
+                }
+
+                // Highlighting decision methods
+
                 // Check where colors should be highlighted based on the settings
                 shouldHighlight(state: EditorState, start: number, end: number, highlightEverywhere: boolean, highlightInBackticks: boolean, highlightInCodeblocks: boolean): boolean {
                     if (highlightEverywhere) {
@@ -127,6 +149,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return (highlightInBackticks && isInBackticks) || (highlightInCodeblocks && isInCodeblock);
                 }
 
+                // Check if the specified range is within inline code (single backticks)
                 isWithinInlineCode(state: EditorState, start: number, end: number): boolean {
                     const line = state.doc.lineAt(start);
                     const lineText = line.text;
@@ -146,18 +169,14 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return false;
                 }
 
+                // Check if the specified position is within a code block (triple backticks)
                 isWithinCodeBlock(state: EditorState, pos: number): boolean {
                     const tree = syntaxTree(state);
                     let node = tree.resolveInner(pos, 1);
                     
                     while (node) {
                         
-                        if (
-                            node.type.name.includes('CodeBlock') ||
-                            node.type.name.includes('FencedCode') ||
-                            node.type.name.includes('hmd-codeblock') ||
-                            node.type.name.includes('HyperMD-codeblock')
-                        ) {
+                        if (this.isCodeBlockNode(node)) {
                             return true;
                         }
                         
@@ -170,150 +189,93 @@ export default class ColorHighlighterPlugin extends Plugin {
                     
                     return false;
                 }
+
+                // Check if the node is a code block node
+                isCodeBlockNode(node: any): boolean {
+                    return node.type.name.includes('CodeBlock') ||
+                           node.type.name.includes('FencedCode') ||
+                           node.type.name.includes('hmd-codeblock') ||
+                           node.type.name.includes('HyperMD-codeblock');
+                }
             
-                // Add highlight to the specified range of text based on the selected style
-                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
-                    const editorBackground = getComputedStyle(view.dom).backgroundColor;
-                    
-                    let decorationAttributes: { [key: string]: string } = {
+                // Decoration methods
+
+                getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string): { [key: string]: string } {
+                    const attributes: { [key: string]: string } = {
                         class: "color-highlighter-inline-code",
                     };
-    
-                    const effectiveColor = this.getEffectiveColor(color, editorBackground);
-                    const contrastColor = plugin.getContrastColor(effectiveColor, editorBackground);
-    
+
                     switch (highlightStyle) {
                         case 'background':
-                            decorationAttributes.style = `background-color: ${effectiveColor}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
+                            attributes.style = `background-color: ${effectiveColor}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
                             break;
                         case 'underline':
-                            decorationAttributes.class += " color-highlighter-underline";
-                            decorationAttributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
+                            attributes.class += " color-highlighter-underline";
+                            attributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
                             break;
                         case 'square':
                             // No additional style for the text itself
                             break;
                         case 'border':
-                            decorationAttributes.class += " color-highlighter-border";
-                            decorationAttributes.style = `border: 2px solid ${effectiveColor}; border-radius: 3px;`;
+                            attributes.class += " color-highlighter-border";
+                            attributes.style = `border: 2px solid ${effectiveColor}; border-radius: 3px;`;
                             break;
                     }
-    
-    
-                    builder.add(start, end, Decoration.mark({
-                        attributes: decorationAttributes
+
+                    return attributes;
+                }
+
+                addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string) {
+                    builder.add(end, end, Decoration.widget({
+                        widget: new class extends WidgetType {
+                            constructor(readonly color: string) {
+                                super();
+                            }
+                            
+                            toDOM() {
+                                const span = document.createElement('span');
+                                span.className = 'color-highlighter-square';
+                                span.style.display = 'inline-block';
+                                span.style.width = '10px';
+                                span.style.height = '10px';
+                                span.style.backgroundColor = this.color;
+                                span.style.marginLeft = '2px';
+                                span.style.verticalAlign = 'middle';
+                                return span;
+                            }
+
+                            eq(other: WidgetType): boolean {
+                                return other instanceof this.constructor && (other as any).color === this.color;
+                            }
+
+                            updateDOM(dom: HTMLElement): boolean {
+                                return false; // The widget is static, so no update is needed
+                            }
+
+                            ignoreEvent(): boolean {
+                                return false; // Allow events to pass through
+                            }
+
+                            get estimatedHeight(): number {
+                                return 10; // The square is 10px high
+                            }
+
+                            get lineBreaks(): number {
+                                return 0; // The square doesn't introduce any line breaks
+                            }
+
+                            coordsAt(dom: HTMLElement, pos: number, side: number): { top: number, right: number, bottom: number, left: number } | null {
+                                return null; // We don't need to implement custom coordinates
+                            }
+
+                            destroy() {
+                                // No cleanup needed for this simple widget
+                            }
+                        }(color)
                     }));
-
-
-                    // Add a square widget for the 'square' highlight style
-                    if (highlightStyle === 'square') {
-                        builder.add(end, end, Decoration.widget({
-                            widget: new class extends WidgetType {
-                                constructor(readonly color: string) {
-                                    super();
-                                }
-                                
-                                toDOM() {
-                                    const span = document.createElement('span');
-                                    span.className = 'color-highlighter-square';
-                                    span.style.display = 'inline-block';
-                                    span.style.width = '10px';
-                                    span.style.height = '10px';
-                                    span.style.backgroundColor = this.color;
-                                    span.style.marginLeft = '2px';
-                                    span.style.verticalAlign = 'middle';
-                                    return span;
-                                }
-
-                                eq(other: WidgetType): boolean {
-                                    return other instanceof this.constructor && (other as any).color === this.color;
-                                }
-
-                                updateDOM(dom: HTMLElement): boolean {
-                                    return false; // The widget is static, so no update is needed
-                                }
-
-                                ignoreEvent(): boolean {
-                                    return false; // Allow events to pass through
-                                }
-
-                                get estimatedHeight(): number {
-                                    return 10; // The square is 10px high
-                                }
-
-                                get lineBreaks(): number {
-                                    return 0; // The square doesn't introduce any line breaks
-                                }
-
-                                coordsAt(dom: HTMLElement, pos: number, side: number): { top: number, right: number, bottom: number, left: number } | null {
-                                    return null; // We don't need to implement custom coordinates
-                                }
-
-                                destroy() {
-                                    // No cleanup needed for this simple widget
-                                }
-                            }(color)
-                        }));
-                    }
                 }
             
-                // Get the most effective color for the text based on the background color
-                getContrastColor(color: string, background: string): string {
-                    if (color.startsWith('hsl')) {
-                        color = this.hslToRgb(color);
-                    } else if (color.startsWith('rgba')) {
-                        color = this.blendRgbaWithBackground(color, background);
-                    }
-                    const hex = color.startsWith('#') ? color.slice(1) : this.rgbToHex(color);
-                    const r = parseInt(hex.slice(0, 2), 16);
-                    const g = parseInt(hex.slice(2, 4), 16);
-                    const b = parseInt(hex.slice(4, 6), 16);
-                    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-                    return (yiq >= 128) ? 'black' : 'white';
-                }
-    
-                rgbToHex(rgb: string): string {
-                    const [r, g, b] = rgb.match(/\d+/g)!.map(Number);
-                    return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-                }
-    
-                // Blend RGBA color with the background color
-                blendRgbaWithBackground(rgba: string, background: string): string {
-                    const [r, g, b, a] = rgba.match(/[\d.]+/g)!.map(Number);
-                    const [bgR, bgG, bgB] = this.extractRgbComponents(background);
-                    const alpha = a !== undefined ? a : 1;
-    
-                    const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
-                    const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
-                    const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
-    
-                    return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
-                }
-    
-                extractRgbComponents(rgbString: string): [number, number, number] {
-                    const [r, g, b] = rgbString.match(/\d+/g)!.map(Number);
-                    return [r, g, b];
-                }
-    
-                hslToRgb(hsl: string): string {
-                    const [h, s, l] = hsl.match(/\d+/g)!.map(Number);
-                    const sNorm = s / 100;
-                    const lNorm = l / 100;
-                    const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
-                    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-                    const m = lNorm - c / 2;
-                    let r = 0, g = 0, b = 0;
-                    if (h < 60) { r = c; g = x; b = 0; }
-                    else if (h < 120) { r = x; g = c; b = 0; }
-                    else if (h < 180) { r = 0; g = c; b = x; }
-                    else if (h < 240) { r = 0; g = x; b = c; }
-                    else if (h < 300) { r = x; g = 0; b = c; }
-                    else { r = c; g = 0; b = x; }
-                    r = Math.round((r + m) * 255);
-                    g = Math.round((g + m) * 255);
-                    b = Math.round((b + m) * 255);
-                    return `rgb(${r},${g},${b})`;
-                }
+                // Color manipulation methods
 
                 // Get the blended color based on the background color
                 getEffectiveColor(color: string, background: string): string {
@@ -339,6 +301,66 @@ export default class ColorHighlighterPlugin extends Plugin {
                     }
                     return color;
                 }
+
+                // Get the most effective color for the text based on the background color
+                getContrastColor(color: string, background: string): string {
+                    if (color.startsWith('hsl')) {
+                        color = this.hslToRgb(color);
+                    } else if (color.startsWith('rgba')) {
+                        color = this.blendRgbaWithBackground(color, background);
+                    }
+                    const hex = color.startsWith('#') ? color.slice(1) : this.rgbToHex(color);
+                    const r = parseInt(hex.slice(0, 2), 16);
+                    const g = parseInt(hex.slice(2, 4), 16);
+                    const b = parseInt(hex.slice(4, 6), 16);
+                    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+                    return (yiq >= 128) ? 'black' : 'white';
+                }
+
+                // Blend RGBA color with the background color
+                blendRgbaWithBackground(rgba: string, background: string): string {
+                    const [r, g, b, a] = rgba.match(/[\d.]+/g)!.map(Number);
+                    const [bgR, bgG, bgB] = this.extractRgbComponents(background);
+                    const alpha = a !== undefined ? a : 1;
+    
+                    const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
+                    const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
+                    const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
+    
+                    return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
+                }
+
+                // Utility methods
+    
+                rgbToHex(rgb: string): string {
+                    const [r, g, b] = rgb.match(/\d+/g)!.map(Number);
+                    return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                }
+    
+                extractRgbComponents(rgbString: string): [number, number, number] {
+                    const [r, g, b] = rgbString.match(/\d+/g)!.map(Number);
+                    return [r, g, b];
+                }
+    
+                hslToRgb(hsl: string): string {
+                    const [h, s, l] = hsl.match(/\d+/g)!.map(Number);
+                    const sNorm = s / 100;
+                    const lNorm = l / 100;
+                    const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
+                    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+                    const m = lNorm - c / 2;
+                    let r = 0, g = 0, b = 0;
+                    if (h < 60) { r = c; g = x; b = 0; }
+                    else if (h < 120) { r = x; g = c; b = 0; }
+                    else if (h < 180) { r = 0; g = c; b = x; }
+                    else if (h < 240) { r = 0; g = x; b = c; }
+                    else if (h < 300) { r = x; g = 0; b = c; }
+                    else { r = c; g = 0; b = x; }
+                    r = Math.round((r + m) * 255);
+                    g = Math.round((g + m) * 255);
+                    b = Math.round((b + m) * 255);
+                    return `rgb(${r},${g},${b})`;
+                }           
             },
             {
                 decorations: v => v.decorations
