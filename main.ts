@@ -291,6 +291,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                             const g = parseInt(color[2] + color[2], 16);
                             const b = parseInt(color[3] + color[3], 16);
                             const a = parseInt(color[4] + color[4], 16) / 255;
+
                             return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
                         } else if (color.length === 9) {
                             // Handle 8-digit hex with alpha
@@ -298,6 +299,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                             const g = parseInt(color.slice(3, 5), 16);
                             const b = parseInt(color.slice(5, 7), 16);
                             const a = parseInt(color.slice(7, 9), 16) / 255;
+
                             return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
                         }
                     }
@@ -316,6 +318,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     const g = parseInt(hex.slice(2, 4), 16);
                     const b = parseInt(hex.slice(4, 6), 16);
                     const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+
                     return (yiq >= 128) ? 'black' : 'white';
                 }
 
@@ -336,22 +339,29 @@ export default class ColorHighlighterPlugin extends Plugin {
     
                 rgbToHex(rgb: string): string {
                     const [r, g, b] = rgb.match(/\d+/g)!.map(Number);
+
                     return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
                 }
     
                 extractRgbComponents(rgbString: string): [number, number, number] {
                     const [r, g, b] = rgbString.match(/\d+/g)!.map(Number);
+
                     return [r, g, b];
                 }
     
                 hslToRgb(hsl: string): string {
+                    // Extract HSL components
                     const [h, s, l] = hsl.match(/\d+/g)!.map(Number);
+
+                    // Normalize HSL values
                     const sNorm = s / 100;
                     const lNorm = l / 100;
                     const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
                     const x = c * (1 - Math.abs((h / 60) % 2 - 1));
                     const m = lNorm - c / 2;
                     let r = 0, g = 0, b = 0;
+
+                    // Calculate RGB values
                     if (h < 60) { r = c; g = x; b = 0; }
                     else if (h < 120) { r = x; g = c; b = 0; }
                     else if (h < 180) { r = 0; g = c; b = x; }
@@ -361,6 +371,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     r = Math.round((r + m) * 255);
                     g = Math.round((g + m) * 255);
                     b = Math.round((b + m) * 255);
+
                     return `rgb(${r},${g},${b})`;
                 }           
             },
@@ -465,6 +476,7 @@ export default class ColorHighlighterPlugin extends Plugin {
             fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
         }
 
+        // Replace the original text node with the fragment
         if (hasColorMatch) {
             node.parentNode?.replaceChild(fragment, node);
         }
@@ -472,14 +484,17 @@ export default class ColorHighlighterPlugin extends Plugin {
 
     // Create a span element with the highlighted color
     private createHighlightedSpan(colorCode: string, parent: Element | null): HTMLSpanElement {
+        // Create a span element with the color code
         const span = document.createElement('span');
         span.textContent = colorCode;
 
+        // Get the effective background color for the parent element
         const backgroundColor = parent && parent instanceof HTMLElement 
             ? this.getEffectiveBackgroundColor(parent) 
             : this.getThemeFallbackColor();
         const effectiveColor = backgroundColor ? this.blendColorWithBackground(colorCode, backgroundColor) : colorCode;
 
+        // Set the highlight style based on the settings
         span.classList.add('color-highlighter');
 
         switch (this.settings.highlightStyle) {
@@ -514,6 +529,7 @@ export default class ColorHighlighterPlugin extends Plugin {
             const editorBackground = getComputedStyle(document.body).backgroundColor;
             const contrastColor = this.getContrastColor(match, editorBackground);
             const highlighted = `<span style="background-color: ${match}; color: ${contrastColor}; border-radius: 3px; padding: 1px 3px;">${match}</span>`;
+            
             return wrapInBackticks ? `\`${highlighted}\`` : highlighted;
         });
     }
@@ -547,36 +563,49 @@ export default class ColorHighlighterPlugin extends Plugin {
         return color;
     }
 
-    // Blend RGBA color with the background color
-    blendRgbaWithBackground(rgba: string, background: string): string {
-        try {
-            const [r, g, b, a] = rgba.match(/[\d.]+/g)?.map(Number) || [];
-            const [bgR, bgG, bgB] = this.extractRgbComponents(background);
-            const alpha = a !== undefined ? a : 1;
-    
-            const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
-            const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
-            const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
-    
-            return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
-        } catch (error) {
-            return background; // Fallback to background color if there's an error
-        }
-    }
-
     // Blend HSLA color with the background color
     blendHslaWithBackground(hsla: string, background: string): string {
+        // Extract HSLA components
+        const components = this.extractHslaComponents(hsla);
+
+        if (components === null) {
+            console.warn('Invalid HSLA color:', hsla);
+            return background; // Return the background color if HSLA is invalid
+        }
+    
+        const [h, s, l, a] = components;
+        
         try {
-            const [h, s, l, a] = this.extractHslaComponents(hsla);
+            // Extract RGB components from the background color
             const [bgR, bgG, bgB] = this.extractRgbComponents(background);
             
             // Convert HSLA to RGBA
             const rgba = this.hslaToRgba(h, s, l, a);
             
-            // Blend with background
+            // Blend RGBA color with the background
             const blendedR = Math.round((1 - a) * bgR + a * rgba[0]);
             const blendedG = Math.round((1 - a) * bgG + a * rgba[1]);
             const blendedB = Math.round((1 - a) * bgB + a * rgba[2]);
+    
+            return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
+        } catch (error) {
+            console.error('Error in blendHslaWithBackground:', error);
+            return background; // Fallback to background color if there's an error
+        }
+    }
+
+    // Blend RGBA color with the background color
+    blendRgbaWithBackground(rgba: string, background: string): string {
+        try {
+            // Extract RGBA components
+            const [r, g, b, a] = rgba.match(/[\d.]+/g)?.map(Number) || [];
+            const [bgR, bgG, bgB] = this.extractRgbComponents(background);
+            const alpha = a !== undefined ? a : 1;
+    
+            // Blend with background
+            const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
+            const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
+            const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
     
             return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
         } catch (error) {
@@ -603,12 +632,13 @@ export default class ColorHighlighterPlugin extends Plugin {
                 color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
             }
         }
-    
+        // Get the contrast color based on the effective color
         const hex = color.startsWith('#') ? color.slice(1) : this.rgbToHex(color);
         const r = parseInt(hex.slice(0, 2), 16);
         const g = parseInt(hex.slice(2, 4), 16);
         const b = parseInt(hex.slice(4, 6), 16);
         const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+
         return (yiq >= 128) ? 'black' : 'white';
     }
 
@@ -618,6 +648,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         let backgroundColor = '';
     
         while (currentElement) {
+            // Get the background color
             const style = window.getComputedStyle(currentElement);
             backgroundColor = style.backgroundColor;
     
@@ -628,6 +659,7 @@ export default class ColorHighlighterPlugin extends Plugin {
             currentElement = currentElement.parentElement;
         }
     
+        // Fallback to the default theme background color
         if (!backgroundColor || backgroundColor === 'rgba(0, 0, 0, 0)' || backgroundColor === 'transparent') {
             backgroundColor = this.getThemeFallbackColor();
         }
@@ -643,21 +675,28 @@ export default class ColorHighlighterPlugin extends Plugin {
 
     hslToRgb(hsl: string): string {
         try {
+            // Extract HSL values
             const [h, s, l] = hsl.match(/\d+%?/g)?.map(val => {
                 if (val.endsWith('%')) {
                     return parseFloat(val) / 100;
                 }
                 return parseFloat(val);
             }) || [];
+
+            // Validate HSL values
             if (h === undefined || s === undefined || l === undefined) {
                 throw new Error('Invalid HSL values');
             }
+
+            // Normalize HSL values
             const sNorm = s;
             const lNorm = l;
             const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
             const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
             const m = lNorm - c / 2;
             let r = 0, g = 0, b = 0;
+
+            // Calculate RGB values
             if (h < 60) { r = c; g = x; b = 0; }
             else if (h < 120) { r = x; g = c; b = 0; }
             else if (h < 180) { r = 0; g = c; b = x; }
@@ -667,9 +706,11 @@ export default class ColorHighlighterPlugin extends Plugin {
             r = Math.round((r + m) * 255);
             g = Math.round((g + m) * 255);
             b = Math.round((b + m) * 255);
+            
             return `rgb(${r},${g},${b})`;
         } catch (error) {
-            return 'rgb(0,0,0)'; // Fallback to black if there's an error
+            // Fallback to black if there's an error
+            return 'rgb(0,0,0)'; 
         }
     }
 
@@ -679,6 +720,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         if (s === 0) {
             r = g = b = l; // achromatic
         } else {
+            // Helper function to convert hue to RGB
             const hue2rgb = (p: number, q: number, t: number) => {
                 if (t < 0) t += 1;
                 if (t > 1) t -= 1;
@@ -688,6 +730,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 return p;
             };
     
+            // Calculate RGB values
             const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
             const p = 2 * l - q;
             r = hue2rgb(p, q, h / 360 + 1/3);
@@ -705,9 +748,11 @@ export default class ColorHighlighterPlugin extends Plugin {
                 return rgb.slice(1);
             }
             const [r, g, b] = this.extractRgbComponents(rgb);
+
             return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
         } catch (error) {
-            return '000000'; // Fallback to black if there's an error
+            // Fallback to black if there's an error
+            return '000000'; 
         }
     }
     
@@ -721,6 +766,7 @@ export default class ColorHighlighterPlugin extends Plugin {
 
     extractRgbComponents(rgbString: string): [number, number, number] {
         if (!rgbString) {
+            // Fallback to black if the string is empty
             return [0, 0, 0];
         }
         if (rgbString.startsWith('#')) {
@@ -744,20 +790,38 @@ export default class ColorHighlighterPlugin extends Plugin {
         }
         const match = rgbString.match(/\d+/g);
         if (!match || match.length < 3) {
-            return [0, 0, 0]; // Fallback to black if the string is invalid
+            // Fallback to black if the string is invalid
+            return [0, 0, 0]; 
         }
         return match.slice(0, 3).map(Number) as [number, number, number];
     }
 
-    extractHslaComponents(hsla: string): [number, number, number, number] {
+    extractHslaComponents(hsla: string): [number, number, number, number] | null {
         const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
+
+        // Validate HSLA string format
         if (!match) {
-            throw new Error('Invalid HSLA string');
+            console.warn('Invalid HSLA string format:', hsla);
+            return null;
         }
+        
+        // Extract HSLA components
         const h = parseInt(match[1], 10);
         const s = parseInt(match[2], 10) / 100;
         const l = parseInt(match[3], 10) / 100;
         const a = match[4] ? parseFloat(match[4]) : 1;
+    
+        // Validate HSLA components
+        if (isNaN(h) || isNaN(s) || isNaN(l) || isNaN(a)) {
+            console.warn('Invalid HSLA component values:', { h, s, l, a });
+            return null;
+        }
+    
+        if (h < 0 || h > 360 || s < 0 || s > 1 || l < 0 || l > 1 || a < 0 || a > 1) {
+            console.warn('HSLA values out of valid range:', { h, s, l, a });
+            return null;
+        }
+    
         return [h, s, l, a];
     }
 
