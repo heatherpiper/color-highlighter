@@ -29,7 +29,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         const descEl = containerEl.createEl('p', {
-            text: 'NOTE: After changing any of these settings, you may need to reload any open notes in order to see the changes.',
+            text: 'NOTE: After changing any of these settings, you may need to reload any open notes in order to see the changes take effect.',
             cls: 'setting-item-description'
         });
 
@@ -65,8 +65,8 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName('Highlight in codeblocks')
-            .setDesc('Highlight color codes within codeblocks (triple backticks)')
+            .setName('Highlight in code blocks')
+            .setDesc('Highlight color codes within code blocks (triple backticks)')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.highlightInCodeblocks)
                 .onChange(async (value) => {
@@ -81,7 +81,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Highlight style')
-            .setDesc('Choose how to highlight color codes')
+            .setDesc('Choose how color codes are highlighted')
             .addDropdown(dropdown => dropdown
                 .addOption('background', 'Background color')
                 .addOption('border', 'Border')
