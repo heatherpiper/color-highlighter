@@ -41,7 +41,7 @@ As this plugin is currently in beta, it's not yet available in the Obsidian comm
 
 To install:
 
-1. Download the latest release files (`main.js` and `manifest.json`).
+1. Download the [latest release](https://github.com/heatherpiper/color-highlighter/releases) files (`main.js` and `manifest.json`).
 2. Create a new folder inside your Obsidian vault's plugin directory at `.obsidian/plugins/color-highlighter`.
 3. Move the downloaded files into the new directory.
 4. Reload Obsidian.
