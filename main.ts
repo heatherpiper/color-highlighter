@@ -1,8 +1,8 @@
-import { Plugin, MarkdownView, MarkdownPostProcessorContext } from 'obsidian';
-import { EditorView, ViewUpdate, ViewPlugin, Decoration, DecorationSet, WidgetType } from '@codemirror/view';
-import { RangeSetBuilder, EditorState } from '@codemirror/state';
-import { ColorHighlighterSettings, DEFAULT_SETTINGS, ColorHighlighterSettingTab } from './settings';
 import { syntaxTree } from '@codemirror/language';
+import { EditorState, RangeSetBuilder } from '@codemirror/state';
+import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
+import { MarkdownPostProcessorContext, Plugin } from 'obsidian';
+import { ColorHighlighterSettings, ColorHighlighterSettingTab, DEFAULT_SETTINGS } from './settings';
 
 const COLOR_REGEX = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})(?![0-9A-Fa-f])|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
 
