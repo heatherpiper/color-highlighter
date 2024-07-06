@@ -97,7 +97,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 // Main processing methods
 
                 // Build decorations for the visible ranges in the editor
-                buildDecorations(view: EditorView) {
+                private buildDecorations(view: EditorView) {
                     try {
                         const builder = new RangeSetBuilder<Decoration>();
                         const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = plugin.settings;
@@ -122,7 +122,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 }
 
                 // Add highlight to the specified range of text based on the selected style
-                addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
+                private addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
                     try {
                         // Get the background color of the editor
                         let editorBackground = getComputedStyle(view.dom).backgroundColor;
@@ -154,7 +154,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 // Highlighting decision methods
 
                 // Check where colors should be highlighted based on the settings
-                shouldHighlight(state: EditorState, start: number, end: number, highlightEverywhere: boolean, highlightInBackticks: boolean, highlightInCodeblocks: boolean): boolean {
+                private shouldHighlight(state: EditorState, start: number, end: number, highlightEverywhere: boolean, highlightInBackticks: boolean, highlightInCodeblocks: boolean): boolean {
                     if (highlightEverywhere) {
                         return true;
                     }
@@ -166,7 +166,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 }
 
                 // Check if the specified range is within inline code (single backticks)
-                isWithinInlineCode(state: EditorState, start: number, end: number): boolean {
+                private isWithinInlineCode(state: EditorState, start: number, end: number): boolean {
                     const line = state.doc.lineAt(start);
                     const lineText = line.text;
                     const startInLine = start - line.from;
@@ -186,7 +186,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 }
 
                 // Check if the specified position is within a code block (triple backticks)
-                isWithinCodeBlock(state: EditorState, pos: number): boolean {
+                private isWithinCodeBlock(state: EditorState, pos: number): boolean {
                     const tree = syntaxTree(state);
                     let node = tree.resolveInner(pos, 1);
                     
@@ -207,7 +207,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 }
 
                 // Check if the node is a code block node
-                isCodeBlockNode(node: any): boolean {
+                private isCodeBlockNode(node: any): boolean {
                     return node.type.name.includes('CodeBlock') ||
                            node.type.name.includes('FencedCode') ||
                            node.type.name.includes('hmd-codeblock') ||
@@ -217,7 +217,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 // Decoration methods
 
                 // Get the attributes for the decoration based on the selected style
-                getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string): { [key: string]: string } {
+                private getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string): { [key: string]: string } {
                     const attributes: { [key: string]: string } = {
                         class: "color-highlighter-inline-code",
                     };
@@ -243,7 +243,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 }
 
                 // Add a square widget to the decoration for the 'square' highlight style
-                addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string) {
+                private addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string) {
                     builder.add(end, end, Decoration.widget({
                         widget: new class extends WidgetType {
                             constructor(readonly color: string) {
@@ -296,7 +296,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 // Color manipulation methods
 
                 // Get the blended color based on the background color
-                getEffectiveColor(color: string, background: string): string {
+                private getEffectiveColor(color: string, background: string): string {
                     if (!color || !background) {
                         console.warn('Invalid input in getEffectiveColor:', { color, background });
                         return color || background || 'rgb(255, 255, 255)'; // Fallback to white if both are invalid
@@ -332,7 +332,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 }
 
                 // Get the most effective color for the text based on the background color
-                getContrastColor(color: string, background: string): string {
+                private getContrastColor(color: string, background: string): string {
                     if (!color || !background) {
                         console.warn('Invalid input in getContrastColor:', { color, background });
                         return 'black'; // Fallback to black if either input is invalid
@@ -357,7 +357,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                 }
 
                 // Blend RGBA color with the background color
-                blendRgbaWithBackground(rgba: string, background: string): string {
+                private blendRgbaWithBackground(rgba: string, background: string): string {
                     const [r, g, b, a] = rgba.match(/[\d.]+/g)!.map(Number);
                     const [bgR, bgG, bgB] = this.extractRgbComponents(background);
                     const alpha = a !== undefined ? a : 1;
@@ -377,7 +377,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                     return isDarkTheme ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)';
                 }
     
-                rgbToHex(rgb: string): string {
+                private rgbToHex(rgb: string): string {
                     try {
                         const [r, g, b] = rgb.match(/\d+/g)!.map(Number);
                         return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
@@ -387,13 +387,13 @@ export default class ColorHighlighterPlugin extends Plugin {
                     }
                 }
     
-                extractRgbComponents(rgbString: string): [number, number, number] {
+                private extractRgbComponents(rgbString: string): [number, number, number] {
                     const [r, g, b] = rgbString.match(/\d+/g)!.map(Number);
 
                     return [r, g, b];
                 }
     
-                hslToRgb(hsl: string): string {
+                private hslToRgb(hsl: string): string {
                     // Extract HSL components
                     const [h, s, l] = hsl.match(/\d+/g)!.map(Number);
 
@@ -599,7 +599,7 @@ export default class ColorHighlighterPlugin extends Plugin {
     // Color manipulation methods
 
     // Blend color with background color
-    blendColorWithBackground(color: string, background: string): string {
+    private blendColorWithBackground(color: string, background: string): string {
         if (color.startsWith('rgba')) {
             return this.blendRgbaWithBackground(color, background);
         } else if (color.startsWith('hsla')) {
@@ -629,7 +629,7 @@ export default class ColorHighlighterPlugin extends Plugin {
     }
 
     // Blend HSLA color with the background color
-    blendHslaWithBackground(hsla: string, background: string): string {
+    private blendHslaWithBackground(hsla: string, background: string): string {
         // Extract HSLA components
         const components = this.extractHslaComponents(hsla);
 
@@ -660,7 +660,7 @@ export default class ColorHighlighterPlugin extends Plugin {
     }
 
     // Blend RGBA color with the background color
-    blendRgbaWithBackground(rgba: string, background: string): string {
+    private blendRgbaWithBackground(rgba: string, background: string): string {
         if (!rgba || !background) {
             console.warn('Invalid input in blendRgbaWithBackground:', rgba, background);
             return background;  // Fallback to background color if RGBA is invalid
@@ -692,7 +692,7 @@ export default class ColorHighlighterPlugin extends Plugin {
     }
 
     // Get the most effective color for the text based on the background color
-    getContrastColor(color: string, background: string): string {
+    private getContrastColor(color: string, background: string): string {
         if (color.startsWith('hsl')) {
             color = this.hslToRgb(color);
         } else if (color.startsWith('rgba')) {
@@ -747,11 +747,11 @@ export default class ColorHighlighterPlugin extends Plugin {
 
     // Color conversion methods
 
-    convertNamedColor(color: string): string {
+    private convertNamedColor(color: string): string {
         return this.namedColors[color.toLowerCase()] || color;
     }
 
-    hslToRgb(hsl: string): string {
+    private hslToRgb(hsl: string): string {
         try {
             // Extract HSL values
             const [h, s, l] = hsl.match(/\d+%?/g)?.map(val => {
@@ -792,7 +792,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         }
     }
 
-    hslaToRgba(h: number, s: number, l: number, a: number): [number, number, number, number] {
+    private hslaToRgba(h: number, s: number, l: number, a: number): [number, number, number, number] {
         let r, g, b;
     
         if (s === 0) {
@@ -819,7 +819,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), a];
     }
 
-    rgbToHex(rgb: string): string {
+    private rgbToHex(rgb: string): string {
         try {
             if (rgb.startsWith('#')) {
                 // If it's already a hex code, return it as is
@@ -842,7 +842,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         return isDarkTheme ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)';
     }
 
-    extractRgbComponents(rgbString: string): [number, number, number] {
+    private extractRgbComponents(rgbString: string): [number, number, number] {
         if (!rgbString) {
             console.warn('Received null or undefined rgbString in extractRgbComponents')
             // Fallback to black if the string is empty
@@ -875,7 +875,7 @@ export default class ColorHighlighterPlugin extends Plugin {
         return match.slice(0, 3).map(Number) as [number, number, number];
     }
 
-    extractHslaComponents(hsla: string): [number, number, number, number] | null {
+    private extractHslaComponents(hsla: string): [number, number, number, number] | null {
         const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
 
         // Validate HSLA string format
