@@ -84,7 +84,7 @@ export default class ColorHighlighterPlugin extends Plugin {
             class ColorHighlighterView {
                 decorations: DecorationSet;
 
-                constructor(view: EditorView,) {
+                constructor(view: EditorView) {
                     this.decorations = this.buildDecorations(view);
                 }
 
