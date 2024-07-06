@@ -383,18 +383,22 @@ export default class ColorHighlighterPlugin extends Plugin {
 
     // Highlight colors in Live Preview and Reading Mode
     postProcessor(el: HTMLElement, ctx: MarkdownPostProcessorContext) {
-        const isDataviewInline = (node: Node): boolean => {
-            let parent = node.parentElement;
-            while (parent) {
-                if (parent.classList.contains('dataview-inline-query') || parent.classList.contains('dataview-result-inline-query') || parent.classList.contains('dataview-inline')) {
-                    return true;
+        try {
+            const isDataviewInline = (node: Node): boolean => {
+                let parent = node.parentElement;
+                while (parent) {
+                    if (parent.classList.contains('dataview-inline-query') || parent.classList.contains('dataview-result-inline-query') || parent.classList.contains('dataview-inline')) {
+                        return true;
+                    }
+                    parent = parent.parentElement;
                 }
-                parent = parent.parentElement;
-            }
-            return false;
-        };
-    
-        this.processNode(el, isDataviewInline);
+                return false;
+            };
+        
+            this.processNode(el, isDataviewInline);
+        } catch (error) {
+            console.error('Error in postProcessor:', error);
+        }
     }
 
     // Helper methods for processing
@@ -488,11 +492,25 @@ export default class ColorHighlighterPlugin extends Plugin {
         const span = document.createElement('span');
         span.textContent = colorCode;
 
-        // Get the effective background color for the parent element
-        const backgroundColor = parent && parent instanceof HTMLElement 
-            ? this.getEffectiveBackgroundColor(parent) 
-            : this.getThemeFallbackColor();
-        const effectiveColor = backgroundColor ? this.blendColorWithBackground(colorCode, backgroundColor) : colorCode;
+        // Get background color for the parent element
+        let backgroundColor;
+        try {
+            backgroundColor = parent && parent instanceof HTMLElement 
+                ? this.getEffectiveBackgroundColor(parent) 
+                : this.getThemeFallbackColor();
+        } catch (error) {
+            console.warn('Error getting background color:', error);
+            backgroundColor = this.getThemeFallbackColor();
+        }
+
+        // Get the effective color based on the background color
+        let effectiveColor;
+        try {
+            effectiveColor = backgroundColor ? this.blendColorWithBackground(colorCode, backgroundColor) : colorCode;
+        } catch (error) {
+            console.warn('Error blending color:', error);
+            effectiveColor = colorCode; // Fallback to original color if blending fails
+        }
 
         // Set the highlight style based on the settings
         span.classList.add('color-highlighter');
@@ -550,13 +568,16 @@ export default class ColorHighlighterPlugin extends Plugin {
                 const g = parseInt(hex.slice(2, 4), 16);
                 const b = parseInt(hex.slice(4, 6), 16);
                 const a = parseInt(hex.slice(6, 8), 16) / 255;
+
                 return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
+
             } else if (color.length === 5) {
                 // Handle 4-digit HEX
                 const r = parseInt(color[1] + color[1], 16);
                 const g = parseInt(color[2] + color[2], 16);
                 const b = parseInt(color[3] + color[3], 16);
                 const a = parseInt(color[4] + color[4], 16) / 255;
+
                 return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
             }
         }
@@ -599,7 +620,14 @@ export default class ColorHighlighterPlugin extends Plugin {
         try {
             // Extract RGBA components
             const [r, g, b, a] = rgba.match(/[\d.]+/g)?.map(Number) || [];
-            const [bgR, bgG, bgB] = this.extractRgbComponents(background);
+            if (r===undefined || g===undefined || b===undefined || a===undefined) {
+                throw new Error('Invalid RGBA string');
+            }
+            const bgComponents = this.extractRgbComponents(background);
+            if (bgComponents === null) {
+                throw new Error('Invalid background color');
+            }
+            const [bgR, bgG, bgB] = bgComponents;
             const alpha = a !== undefined ? a : 1;
     
             // Blend with background
@@ -609,6 +637,7 @@ export default class ColorHighlighterPlugin extends Plugin {
     
             return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
         } catch (error) {
+            console.warn('Error in blendRgbaWithBackground:', error);
             return background; // Fallback to background color if there's an error
         }
     }
@@ -709,8 +738,8 @@ export default class ColorHighlighterPlugin extends Plugin {
             
             return `rgb(${r},${g},${b})`;
         } catch (error) {
-            // Fallback to black if there's an error
-            return 'rgb(0,0,0)'; 
+            console.warn('Error converting HSL to RGB:', error, hsl)
+            return 'rgb(0,0,0)'; // Fallback to black if there's an error
         }
     }
 
