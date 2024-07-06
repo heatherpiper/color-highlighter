@@ -633,10 +633,6 @@ export default class ColorHighlighterPlugin extends Plugin {
    
     // Color conversion methods
 
-    private convertNamedColor(color: string): string {
-        return this.namedColors[color.toLowerCase()] || color;
-    }
-
     private hslToRgb(hsl: string): string {
         try {
             // Extract HSL values
