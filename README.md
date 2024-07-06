@@ -7,7 +7,7 @@
 Color Highlighter automatically detects and highlights color codes in your notes. It provides visual representation of colors directly in your text, making it easier to work with color-related information. Customizable options allow you to control where and how your highlights appear.
 
 > [!NOTE]
-> This plugin is currently in beta. Please report any issues or feedback to help improve it.
+> This plugin is currently in beta. Please report any issues or leave feedback to help improve it.
 
 ## Features
 
