@@ -84,7 +84,7 @@ export default class ColorHighlighterPlugin extends Plugin {
             class ColorHighlighterView {
                 decorations: DecorationSet;
 
-                constructor(view: EditorView) {
+                constructor(view: EditorView,) {
                     this.decorations = this.buildDecorations(view);
                 }
 
@@ -124,15 +124,9 @@ export default class ColorHighlighterPlugin extends Plugin {
                 // Add highlight to the specified range of text based on the selected style
                 private addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
                     try {
-                        // Get the background color of the editor
-                        let editorBackground = getComputedStyle(view.dom).backgroundColor;
+                        let editorBackground = this.getBackgroundColor();
 
-                        if (!editorBackground) {
-                            editorBackground = this.getThemeFallbackColor();
-                        }
-
-                        // Get the effective color and contrast color based on the background
-                        const effectiveColor = this.getEffectiveColor(color, editorBackground);
+                        const effectiveColor = this.blendColorWithBackground(color, editorBackground);
                         const contrastColor = this.getContrastColor(effectiveColor, editorBackground);
 
                         // Get the decoration attributes based on the selected style
@@ -295,129 +289,17 @@ export default class ColorHighlighterPlugin extends Plugin {
             
                 // Color manipulation methods
 
-                // Get the blended color based on the background color
-                private getEffectiveColor(color: string, background: string): string {
-                    if (!color || !background) {
-                        console.warn('Invalid input in getEffectiveColor:', { color, background });
-                        return color || background || 'rgb(255, 255, 255)'; // Fallback to white if both are invalid
-                    }
-                    try {
-                        if (color.startsWith('#')) {
-                            if (color.length === 4) {
-                                // Expand 3-digit hex to 6-digit hex
-                                color = `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
-                            } else if (color.length === 5) {
-                                // Handle 4-digit hex with alpha
-                                const r = parseInt(color[1] + color[1], 16);
-                                const g = parseInt(color[2] + color[2], 16);
-                                const b = parseInt(color[3] + color[3], 16);
-                                const a = parseInt(color[4] + color[4], 16) / 255;
-
-                                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
-                            } else if (color.length === 9) {
-                                // Handle 8-digit hex with alpha
-                                const r = parseInt(color.slice(1, 3), 16);
-                                const g = parseInt(color.slice(3, 5), 16);
-                                const b = parseInt(color.slice(5, 7), 16);
-                                const a = parseInt(color.slice(7, 9), 16) / 255;
-
-                                return this.blendRgbaWithBackground(`rgba(${r},${g},${b},${a})`, background);
-                            }
-                        }
-                    return color;
-                    } catch (error) {
-                        console.warn('Error in getEffectiveColor:', error);
-                        return color; // Fallback to original color if there's an error
-                    }
+                private getBackgroundColor(): string {
+                    return plugin.getBackgroundColor();
                 }
-
-                // Get the most effective color for the text based on the background color
+                
+                private blendColorWithBackground(color: string, background: string): string {
+                    return plugin.blendColorWithBackground(color, background);
+                }
+                
                 private getContrastColor(color: string, background: string): string {
-                    if (!color || !background) {
-                        console.warn('Invalid input in getContrastColor:', { color, background });
-                        return 'black'; // Fallback to black if either input is invalid
-                    }
-                    try {
-                        if (color.startsWith('hsl')) {
-                            color = this.hslToRgb(color);
-                        } else if (color.startsWith('rgba')) {
-                            color = this.blendRgbaWithBackground(color, background);
-                        }
-                        const hex = color.startsWith('#') ? color.slice(1) : this.rgbToHex(color);
-                        const r = parseInt(hex.slice(0, 2), 16);
-                        const g = parseInt(hex.slice(2, 4), 16);
-                        const b = parseInt(hex.slice(4, 6), 16);
-                        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-
-                        return (yiq >= 128) ? 'black' : 'white';
-                    } catch (error) {
-                        console.warn('Error in getContrastColor:', error);
-                        return 'black'; // Fallback to black if there's an error
-                    }
+                    return plugin.getContrastColor(color, background);
                 }
-
-                // Blend RGBA color with the background color
-                private blendRgbaWithBackground(rgba: string, background: string): string {
-                    const [r, g, b, a] = rgba.match(/[\d.]+/g)!.map(Number);
-                    const [bgR, bgG, bgB] = this.extractRgbComponents(background);
-                    const alpha = a !== undefined ? a : 1;
-    
-                    const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
-                    const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
-                    const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
-    
-                    return `rgb(${blendedR}, ${blendedG}, ${blendedB})`;
-                }
-
-                // Utility methods
-
-                private getThemeFallbackColor(): string {
-                    const isDarkTheme = document.body.classList.contains('theme-dark') || 
-                                        document.documentElement.classList.contains('theme-dark');
-                    return isDarkTheme ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)';
-                }
-    
-                private rgbToHex(rgb: string): string {
-                    try {
-                        const [r, g, b] = rgb.match(/\d+/g)!.map(Number);
-                        return ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-                    } catch (error) {
-                        console.warn('Error in rgbToHex:', error);
-                        return '000000'; // Fallback to black if there's an error
-                    }
-                }
-    
-                private extractRgbComponents(rgbString: string): [number, number, number] {
-                    const [r, g, b] = rgbString.match(/\d+/g)!.map(Number);
-
-                    return [r, g, b];
-                }
-    
-                private hslToRgb(hsl: string): string {
-                    // Extract HSL components
-                    const [h, s, l] = hsl.match(/\d+/g)!.map(Number);
-
-                    // Normalize HSL values
-                    const sNorm = s / 100;
-                    const lNorm = l / 100;
-                    const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
-                    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-                    const m = lNorm - c / 2;
-                    let r = 0, g = 0, b = 0;
-
-                    // Calculate RGB values
-                    if (h < 60) { r = c; g = x; b = 0; }
-                    else if (h < 120) { r = x; g = c; b = 0; }
-                    else if (h < 180) { r = 0; g = c; b = x; }
-                    else if (h < 240) { r = 0; g = x; b = c; }
-                    else if (h < 300) { r = x; g = 0; b = c; }
-                    else { r = c; g = 0; b = x; }
-                    r = Math.round((r + m) * 255);
-                    g = Math.round((g + m) * 255);
-                    b = Math.round((b + m) * 255);
-
-                    return `rgb(${r},${g},${b})`;
-                }           
             },
             {
                 decorations: v => v.decorations
