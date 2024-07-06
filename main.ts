@@ -29,7 +29,6 @@ export default class ColorHighlighterPlugin extends Plugin {
     private addStyles() {
         const styles = `
             .color-highlighter {
-                box-decoration-break: clone;
                 -webkit-box-decoration-break: clone;
             }
             .color-highlighter.background {
@@ -43,7 +42,6 @@ export default class ColorHighlighterPlugin extends Plugin {
                 padding: 0 2px;
             }
             .color-highlighter.underline {
-                text-decoration: none !important;
                 border-bottom-width: 2px;
                 border-bottom-style: solid;
                 padding-bottom: 1px;
@@ -212,7 +210,7 @@ export default class ColorHighlighterPlugin extends Plugin {
                             break;
                         case 'underline':
                             attributes.class += " color-highlighter-underline";
-                            attributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration: none !important; text-decoration-skip-ink: none; border-radius: 0;`;
+                            attributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration-skip-ink: none; border-radius: 0;`;
                             break;
                         case 'square':
                             // No additional style for the text itself
