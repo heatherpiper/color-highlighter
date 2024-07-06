@@ -2,9 +2,11 @@
 
 ## Overview
 
+Automatically detect and highlight color codes in your notes.
+
 ![Color Highlighter in Obsidian](images/example.png)
 
-Color Highlighter automatically detects and highlights color codes in your notes. It provides visual representation of colors directly in your text, making it easier to work with color-related information. Customizable options allow you to control where and how your highlights appear.
+Color Highlighter provides a visual representation of colors directly in your text, making it easier to work with color-related information. Customizable options allow you to control where and how your highlights appear.
 
 > [!NOTE]
 > This plugin is currently in beta. Please report any issues or leave feedback to help improve it.
@@ -63,21 +65,21 @@ Once installed and enabled, the plugin will automatically highlight color codes 
 
 1. Go to **Settings → Community plugins**.
 2. Find Color Highlighter in the list and select the gear icon to access its settings.
-3. Choose your preferred highlighting location(s):
-   - **Highlight everywhere**: Highlights all color codes anywhere in your notes.
+3. Choose your preferred highlight location(s):
+   - **Highlight everywhere**: Highlight all color codes anywhere in your notes.
    - **Highlight only in code**:
-       - **Highlight in inline code**: Only highlights color codes within single backticks.
-       - **Highlight in code blocks**: Only highlights color codes within triple backticks.
-4. Choose your preferred highlighting style:
-   - **Background**: Highlights color codes by changing their background color
-   - **Border**: Highlights color codes by adding a solid color border
-   - **Colored Square**: Highlights color codes by adding a small colored square following the color code
-   - **Underline**: Highlights color codes by adding a solid color underline
+       - **Highlight in inline code**: Only highlight color codes within single backticks.
+       - **Highlight in code blocks**: Only highlight color codes within triple backticks.
+4. Choose your preferred highlight style:
+   - **Background**: Highlight color codes by changing their background color
+   - **Border**: Highlight color codes by adding a solid color border
+   - **Colored Square**: Highlight color codes by adding a small colored square following the color code
+   - **Underline**: Highlight color codes by adding a solid color underline
 
-![Color Highlighter highlighting styles](images/highlighting-styles.png)
+![Color Highlighter highlight styles](images/highlighting-styles.png)
 
 > [!NOTE]
-> After changing settings, you may need to reload any open notes in order to see the changes take effect.
+> After changing any of these settings, you may need to reload any open notes in order to see the changes take effect.
 
 ## Feedback and Contributions
 
