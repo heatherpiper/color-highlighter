@@ -1,7 +1,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
-import { MarkdownPostProcessorContext, Plugin } from 'obsidian';
+import { MarkdownPostProcessorContext, MarkdownView, Plugin } from 'obsidian';
 import { ColorHighlighterSettings, ColorHighlighterSettingTab, DEFAULT_SETTINGS } from './settings';
 
 const COLOR_REGEX = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})(?![0-9A-Fa-f])|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)|hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)|hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/g;
@@ -536,21 +536,12 @@ export default class ColorHighlighterPlugin extends Plugin {
         const span = document.createElement('span');
         span.textContent = colorCode;
 
-        // Get background color for the parent element
-        let backgroundColor;
-        try {
-            backgroundColor = parent && parent instanceof HTMLElement 
-                ? this.getEffectiveBackgroundColor(parent) 
-                : this.getThemeFallbackColor();
-        } catch (error) {
-            console.warn('Error getting background color:', error);
-            backgroundColor = this.getThemeFallbackColor();
-        }
+        const backgroundColor = this.getBackgroundColor();
 
         // Get the effective color based on the background color
         let effectiveColor;
         try {
-            effectiveColor = backgroundColor ? this.blendColorWithBackground(colorCode, backgroundColor) : colorCode;
+            effectiveColor = this.blendColorWithBackground(colorCode, backgroundColor);
         } catch (error) {
             console.warn('Error blending color:', error);
             effectiveColor = colorCode; // Fallback to original color if blending fails
@@ -600,6 +591,11 @@ export default class ColorHighlighterPlugin extends Plugin {
 
     // Blend color with background color
     private blendColorWithBackground(color: string, background: string): string {
+
+        if (background === 'rgba(0, 0, 0, 0)' || background === 'transparent') {
+            background = this.getBackgroundColor();
+        }
+
         if (color.startsWith('rgba')) {
             return this.blendRgbaWithBackground(color, background);
         } else if (color.startsWith('hsla')) {
@@ -720,31 +716,39 @@ export default class ColorHighlighterPlugin extends Plugin {
         return (yiq >= 128) ? 'black' : 'white';
     }
 
-    // Get the effective background color for the element
-    private getEffectiveBackgroundColor(element: HTMLElement): string {
-        let currentElement: HTMLElement | null = element;
-        let backgroundColor = '';
-    
-        while (currentElement) {
-            // Get the background color
-            const style = window.getComputedStyle(currentElement);
-            backgroundColor = style.backgroundColor;
-    
-            if (backgroundColor && backgroundColor !== 'rgba(0, 0, 0, 0)' && backgroundColor !== 'transparent') {
-                break;
+   private getBackgroundColor(): string {
+        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (view instanceof MarkdownView) {
+            // Try getting the background from the editor element
+            const editorEl = view.contentEl.querySelector('.cm-editor');
+            if (editorEl instanceof HTMLElement) {
+                const bgColor = window.getComputedStyle(editorEl).backgroundColor;
+                if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+                    return bgColor;
+                }
             }
-    
-            currentElement = currentElement.parentElement;
+            
+            // If that fails, try getting it from the content element
+            const contentEl = view.contentEl;
+            if (contentEl instanceof HTMLElement) {
+                const bgColor = window.getComputedStyle(contentEl).backgroundColor;
+                if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+                    return bgColor;
+                }
+            }
         }
-    
-        // Fallback to the default theme background color
-        if (!backgroundColor || backgroundColor === 'rgba(0, 0, 0, 0)' || backgroundColor === 'transparent') {
-            backgroundColor = this.getThemeFallbackColor();
+        
+        // If that fails, try to get the body background color
+        const bodyBgColor = window.getComputedStyle(document.body).backgroundColor;
+        if (bodyBgColor && bodyBgColor !== 'rgba(0, 0, 0, 0)' && bodyBgColor !== 'transparent') {
+            return bodyBgColor;
         }
-    
-        return backgroundColor || 'rgb(255, 255, 255)'; // Ensure we always return a valid color
-    }
 
+        // Only use fallback if all other methods fail
+        const fallbackColor = this.getThemeFallbackColor();
+        return fallbackColor;
+   }
+   
     // Color conversion methods
 
     private convertNamedColor(color: string): string {
