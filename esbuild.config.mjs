@@ -37,5 +37,5 @@ esbuild.build({
 	logLevel: "info",
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
-	outfile: 'main.js',
+	outfile: 'dist/main.js',  // Changed this line
 }).catch(() => process.exit(1));
