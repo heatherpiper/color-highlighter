@@ -103,17 +103,25 @@ export function createEditorExtension(plugin: Plugin) {
             private addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'underline' | 'square' | 'border') {
                 try {
                     let editorBackground = getBackgroundColor(plugin.app);
-
+                    
                     const effectiveColor = blendColorWithBackground(color, editorBackground, plugin.app);
                     const contrastColor = getContrastColor(effectiveColor, editorBackground, plugin.app);
-
+            
                     // Get the decoration attributes based on the selected style
                     const decorationAttributes = this.getDecorationAttributes(highlightStyle, effectiveColor, contrastColor);
                         
-                    // Add the decoration to the builder
-                    builder.add(start, end, Decoration.mark({
-                        attributes: decorationAttributes
-                    }));
+                    if (color.startsWith('#')) {
+                        // For hex colors, only style the part after the hash
+                        builder.add(start + 1, end, Decoration.mark({
+                            attributes: decorationAttributes
+                        }));
+                    } else {
+                        // For other color formats, use the original decoration
+                        builder.add(start, end, Decoration.mark({
+                            attributes: decorationAttributes
+                        }));
+                    }
+            
                     // Add a square widget for the 'square' highlight style
                     if (highlightStyle === 'square') {
                         this.addSquareWidget(builder, end, effectiveColor);
