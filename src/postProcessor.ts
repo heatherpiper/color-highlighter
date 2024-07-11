@@ -144,13 +144,3 @@ function handleDataviewInline(element: HTMLElement) {
     element.innerHTML = element.innerHTML.replace(/\n/g, ' ');
     element.style.display = 'inline';
 }
-
-function highlightColors(text: string, wrapInBackticks: boolean, plugin: ColorHighlighterPlugin): string {
-    return text.replace(COLOR_REGEX, (match) => {
-        const editorBackground = getBackgroundColor(plugin.app);
-        const contrastColor = getContrastColor(match, editorBackground, plugin.app);
-        const highlighted = `<span style="background-color: ${match}; color: ${contrastColor}; border-radius: 3px; padding: 1px 3px;">${match}</span>`;
-        
-        return wrapInBackticks ? `\`${highlighted}\`` : highlighted;
-    });
-}
