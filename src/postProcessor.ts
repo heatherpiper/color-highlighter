@@ -111,7 +111,7 @@ function createHighlightedSpan(colorCode: string, parent: Element | null, plugin
     switch (plugin.settings.highlightStyle) {
         case 'background':
             span.classList.add('background');
-            const contrastColor = getContrastColor(effectiveColor, backgroundColor, plugin.app);
+            const contrastColor = getContrastColor(effectiveColor, backgroundColor);
             span.style.backgroundColor = effectiveColor;
             span.style.color = contrastColor;
             break;

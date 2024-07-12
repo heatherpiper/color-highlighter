@@ -1,7 +1,15 @@
 import { getBackgroundColor, extractRgbComponents, extractHslaComponents } from './utils';
 import { App } from 'obsidian';
 
-// Blend color with background color
+
+/**
+ * Blends a color with the background color, handling various color formats.
+ *
+ * @param color - The color to blend, in RGBA, HSLA, or hexadecimal format.
+ * @param background - The background color, in the same format as the `color` parameter.
+ * @param app - The Obsidian app instance, used to get the default background color if the provided background is transparent.
+ * @returns The blended color in RGB format.
+ */
 export function blendColorWithBackground(color: string, background: string, app: App): string {
     if (background === 'rgba(0, 0, 0, 0)' || background === 'transparent') {
         background = getBackgroundColor(app);
@@ -35,11 +43,18 @@ export function blendColorWithBackground(color: string, background: string, app:
     return color;
 }
 
-// Blend RGBA color with the background color
+
+/**
+ * Blends an RGBA color with the background color.
+ *
+ * @param rgba - The RGBA color to blend, as a string in the format "rgba(r, g, b, a)".
+ * @param background - The background color, in the same format as the `rgba` parameter.
+ * @returns The blended color in RGB format.
+ */
 export function blendRgbaWithBackground(rgba: string, background: string): string {
     if (!rgba || !background) {
         console.warn('Invalid input in blendRgbaWithBackground:', rgba, background);
-        return background;  // Fallback to background color if RGBA is invalid
+        return background;  // Fallback to background color if highlighted color is invalid
     }
 
     try {
@@ -55,7 +70,7 @@ export function blendRgbaWithBackground(rgba: string, background: string): strin
         const [bgR, bgG, bgB] = bgComponents;
         const alpha = a !== undefined ? a : 1;
 
-        // Blend with background
+        // Blend color with the background
         const blendedR = Math.round((1 - alpha) * bgR + alpha * r);
         const blendedG = Math.round((1 - alpha) * bgG + alpha * g);
         const blendedB = Math.round((1 - alpha) * bgB + alpha * b);
@@ -67,14 +82,20 @@ export function blendRgbaWithBackground(rgba: string, background: string): strin
     }
 }
 
-// Blend HSLA color with the background color
+/**
+ * Blends an HSLA color with the background color.
+ *
+ * @param hsla - The HSLA color to blend, as a string in the format "hsla(h, s%, l%, a)".
+ * @param background - The background color, in the same format as the `hsla` parameter.
+ * @returns The blended color in RGB format.
+ */
 export function blendHslaWithBackground(hsla: string, background: string): string {
     // Extract HSLA components
     const components = extractHslaComponents(hsla);
 
     if (components === null) {
         console.warn('Invalid HSLA color:', hsla);
-        return background; // Return the background color if HSLA is invalid
+        return background; // Fallback to background color if highlighted color is invalid
     }
 
     const [h, s, l, a] = components;
@@ -83,10 +104,10 @@ export function blendHslaWithBackground(hsla: string, background: string): strin
         // Extract RGB components from the background color
         const [bgR, bgG, bgB] = extractRgbComponents(background);
         
-        // Convert HSLA to RGBA
+        // Convert HSLA color to RGBA
         const rgba = hslaToRgba(h, s, l, a);
         
-        // Blend RGBA color with the background
+        // Blend color with the background
         const blendedR = Math.round((1 - a) * bgR + a * rgba[0]);
         const blendedG = Math.round((1 - a) * bgG + a * rgba[1]);
         const blendedB = Math.round((1 - a) * bgB + a * rgba[2]);
@@ -98,8 +119,17 @@ export function blendHslaWithBackground(hsla: string, background: string): strin
     }
 }
 
-// Get the most effective color for the text based on the background color
-export function getContrastColor(color: string, background: string, app: App): string {
+/**
+ * Gets the most effective contrast color (either 'black' or 'white') based on the provided color and background color.
+ *
+ * This function handles various color formats, including HSL, RGBA, and hexadecimal colors with or without alpha channel.
+ *
+ * @param color - The color to get the contrast for, in any of the supported formats.
+ * @param background - The background color, in the same format as the `color` parameter.
+ * @returns The most effective contrast color, either 'black' or 'white'.
+ */
+export function getContrastColor(color: string, background: string): string {
+    // Convert color to RGB format
     if (color.startsWith('hsl')) {
         color = hslToRgb(color);
     } else if (color.startsWith('rgba')) {
@@ -129,6 +159,13 @@ export function getContrastColor(color: string, background: string, app: App): s
 
 // Color conversion methods
 
+/**
+ * Converts an HSL color string to an RGB color string.
+ *
+ * @param hsl - The HSL color string to be converted.
+ * @returns The RGB color string.
+ * @throws {Error} If the input HSL string is invalid.
+ */
 export function hslToRgb(hsl: string): string {
     try {
         // Extract HSL values
@@ -165,11 +202,20 @@ export function hslToRgb(hsl: string): string {
         
         return `rgb(${r},${g},${b})`;
     } catch (error) {
-        console.warn('Error converting HSL to RGB:', error, hsl)
+        console.error('Error converting HSL to RGB:', error, hsl)
         return 'rgb(0,0,0)'; // Fallback to black if there's an error
     }
 }
 
+/**
+ * Converts an HSLA color to an RGBA color.
+ *
+ * @param h - The hue value, between 0 and 360.
+ * @param s - The saturation value, between 0 and 1.
+ * @param l - The lightness value, between 0 and 1.
+ * @param a - The alpha value, between 0 and 1.
+ * @returns An array of the red, green, blue, and alpha values, each between 0 and 255.
+ */
 export function hslaToRgba(h: number, s: number, l: number, a: number): [number, number, number, number] {
     let r, g, b;
     
@@ -197,6 +243,14 @@ export function hslaToRgba(h: number, s: number, l: number, a: number): [number,
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), a];
 }
 
+
+/**
+ * Converts an RGB color string to a hexadecimal color code.
+ *
+ * @param rgb - An RGB color string in the format 'rgb(r,g,b)'.
+ * @returns The hexadecimal color code.
+ * @throws {Error} If the input string is not a valid RGB color.
+ */
 export function rgbToHex(rgb: string): string {
     try {
         if (rgb.startsWith('#')) {

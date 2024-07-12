@@ -180,7 +180,7 @@ export function createEditorExtension(plugin: Plugin) {
                     let editorBackground = getBackgroundColor(plugin.app);
                     
                     const effectiveColor = blendColorWithBackground(color, editorBackground, plugin.app);
-                    const contrastColor = getContrastColor(effectiveColor, editorBackground, plugin.app);
+                    const contrastColor = getContrastColor(effectiveColor, editorBackground);
             
                     // Get the decoration attributes based on the selected style
                     const decorationAttributes = this.getDecorationAttributes(highlightStyle, effectiveColor, contrastColor);
