@@ -4,6 +4,12 @@ import { COLOR_REGEX } from './utils';
 import { blendColorWithBackground, getContrastColor } from './colorProcessor';
 import ColorHighlighterPlugin from './main';
 
+/**
+ * Processes the DOM of a rendered Markdown note file, highlighting color codes within text nodes.
+ *
+ * @param plugin - The ColorHighlighterPlugin instance.
+ * @returns A post-processor function to be used in an Obsidian plugin.
+ */
 export function createPostProcessor(plugin: Plugin) {
     return (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
         const isDataviewInline = (node: Node): boolean => {
@@ -21,6 +27,13 @@ export function createPostProcessor(plugin: Plugin) {
     };
 }
 
+/**
+ * Processes a node in the DOM, highlighting color codes within text nodes and handling Dataview inline queries.
+ *
+ * @param node - The node to be processed.
+ * @param isDataviewInline - A function that checks if a node is part of a Dataview inline query.
+ * @param plugin - The ColorHighlighterPlugin instance.
+ */
 function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plugin: ColorHighlighterPlugin): void {
     if (node.nodeType === Node.TEXT_NODE && node.textContent) {
         const parent = node.parentElement;
@@ -52,6 +65,12 @@ function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plug
     }
 }
 
+/**
+ * Highlights color codes within a text node by creating highlighted span elements.
+ *
+ * @param node - The text node containing the color codes to be highlighted.
+ * @param plugin - The ColorHighlighterPlugin instance.
+ */
 function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin) {
     const fragment = document.createDocumentFragment();
     let lastIndex = 0;
@@ -90,6 +109,14 @@ function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin) {
     }
 }
 
+/**
+ * Creates a highlighted span element with the specified color code and applies the appropriate highlight style based on the plugin settings.
+ *
+ * @param colorCode - The color code to be highlighted.
+ * @param parent - The parent element of the color code.
+ * @param plugin - The ColorHighlighterPlugin instance.
+ * @returns A highlighted span element.
+ */
 function createHighlightedSpan(colorCode: string, parent: Element | null, plugin: ColorHighlighterPlugin): HTMLSpanElement {
     const span = document.createElement('span');
     span.textContent = colorCode;
@@ -134,6 +161,16 @@ function createHighlightedSpan(colorCode: string, parent: Element | null, plugin
     return span;
 }
 
+/**
+ * Handles the inline display of Dataview elements within the given HTML element.
+ * 
+ * This function processes all `p` and `div` elements within the provided `element`,
+ * replacing them with inline `span` elements that contain the original HTML content.
+ * It also removes any newline characters from the element's HTML and sets the
+ * element's display style to `inline`.
+ *
+ * @param element - The HTML element containing the Dataview elements to be processed.
+ */
 function handleDataviewInline(element: HTMLElement) {
     element.querySelectorAll('p, div').forEach(el => {
         const span = document.createElement('span');
