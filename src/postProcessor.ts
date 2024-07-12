@@ -10,7 +10,7 @@ import ColorHighlighterPlugin from './main';
  * @param plugin - The ColorHighlighterPlugin instance.
  * @returns A post-processor function to be used in an Obsidian plugin.
  */
-export function createPostProcessor(plugin: Plugin) {
+export function createPostProcessor(plugin: ColorHighlighterPlugin) {
     return (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
         const isDataviewInline = (node: Node): boolean => {
             let parent = node.parentElement;
@@ -23,7 +23,7 @@ export function createPostProcessor(plugin: Plugin) {
             return false;
         };
 
-        processNode(el, isDataviewInline, plugin as ColorHighlighterPlugin);
+        processNode(el, isDataviewInline, plugin);
     };
 }
 
