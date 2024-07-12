@@ -10,6 +10,15 @@ export const COLOR_PATTERNS = {
 
 export const COLOR_REGEX = new RegExp(Object.values(COLOR_PATTERNS).map(pattern => pattern.source).join('|'), 'g');
 
+
+/**
+ * Attempts to retrieve the background color of the active Markdown view. If the background color 
+ * cannot be determined from the editor or content elements, it falls back to the body background color, 
+ * and finally to a theme-dependent fallback color.
+ *
+ * @param app - The Obsidian app instance.
+ * @returns The background color in RGB format. 
+ */
 export function getBackgroundColor(app: App): string {
     const view = app.workspace.getActiveViewOfType(MarkdownView);
     if (view instanceof MarkdownView) {
@@ -42,12 +51,28 @@ export function getBackgroundColor(app: App): string {
     return getThemeFallbackColor();
 }
 
+/**
+ * Retrieves the fallback background color based on whether the current theme is a light or dark theme.
+ * 
+ * If the current theme is a dark theme, the fallback color is set to the default Obsidian dark theme's background color (rgb(30, 30, 30)).
+ * Otherwise, if the current theme is a light theme, the fallback color is set to white (rgb(255, 255, 255)).
+ * 
+ * This function is used as a last resort when the background color cannot be determined from the active Markdown view or the body element.
+ * 
+ * @returns The fallback background color in RGB format.
+ */
 export function getThemeFallbackColor(): string {
     const isDarkTheme = document.body.classList.contains('theme-dark') || 
                         document.documentElement.classList.contains('theme-dark');
     return isDarkTheme ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)';
 }
 
+/**
+ * Extracts the RGB components from a color string, formatted as either hexadecimal or RGB
+ * 
+ * @param rgbString - The color string to extract the components from.
+ * @returns An array containing the red, green, and blue components of the color string.
+ */
 export function extractRgbComponents(rgbString: string): [number, number, number] {
     if (!rgbString) {
         console.warn('Received null or undefined rgbString in extractRgbComponents')
@@ -81,6 +106,12 @@ export function extractRgbComponents(rgbString: string): [number, number, number
     return match.slice(0, 3).map(Number) as [number, number, number];
 }
 
+/**
+ * Extracts the HSLA components from a given HSLA string.
+ * 
+ * @param hsla - The HSLA string to extract components from.
+ * @returns An array containing the HSLA components [h, s, l, a], or null if the HSLA string is invalid.
+ */
 export function extractHslaComponents(hsla: string): [number, number, number, number] | null {
     const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
 
@@ -110,6 +141,13 @@ export function extractHslaComponents(hsla: string): [number, number, number, nu
     return [h, s, l, a];
 }
 
+
+/**
+ * Registers a Markdown post-processor that adds custom CSS styles to the plugin.
+ * The styles define the appearance of color highlights in the various highlight styles available in the settings.
+ *
+ * @param plugin - The plugin object that the styles are registered with.
+ */
 export function addStyles(plugin: any) {
     const styles = `
         .color-highlighter {
