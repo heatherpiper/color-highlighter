@@ -15,10 +15,6 @@ export class ColorPicker {
     private originalFormat: string = '';
     private isUserChange: boolean = false;
 
-    private debugLog(message: string, ...args: any[]) {
-        console.log(`[ColorPicker Debug] ${message}`, ...args);
-    }
-
     constructor(app: App) {
         this.app = app;
         this.containerEl = createDiv({ cls: 'color-highlighter-picker' });
@@ -26,7 +22,6 @@ export class ColorPicker {
     }
 
     show(view: EditorView, from: number, to: number, initialColor: string) {
-        this.debugLog('show called with initialColor', initialColor);
         this.hide(); // Hide any existing color picker
 
         this.currentFrom = from;
@@ -41,7 +36,6 @@ export class ColorPicker {
         if (!startCoords || !endCoords) return;
 
         const normalizedColor = this.normalizeColor(initialColor);
-        this.debugLog('Normalized color', normalizedColor);
         if (normalizedColor) {
             // Position the color picker
             const rect = view.dom.getBoundingClientRect();
@@ -53,10 +47,8 @@ export class ColorPicker {
             // Delay setting the initial color
             setTimeout(() => {
                 this.colorPicker.setValue(normalizedColor);
-                this.debugLog('Color picker value set to', normalizedColor);
                 
                 this.colorPicker.onChange(color => {
-                    this.debugLog('Color picker onChange triggered with', color);
                     if (this.isUserChange) {
                         this.updateColor(color);
                     }
@@ -65,7 +57,6 @@ export class ColorPicker {
                 // Set isUserChange to true after setting the initial color
                 setTimeout(() => {
                     this.isUserChange = true;
-                    this.debugLog('isUserChange set to true');
                 }, 50);
             }, 0);
 
@@ -81,7 +72,6 @@ export class ColorPicker {
 
             this.adjustPosition(view);
         } else {
-            this.debugLog('Failed to normalize color', initialColor);
         }
     }
     
@@ -108,12 +98,9 @@ export class ColorPicker {
     }
 
     private updateColor(newColor: string) {
-        this.debugLog('updateColor called with', newColor);
         if (this.view && this.currentFrom !== null && this.currentTo !== null) {
             const formattedColor = this.formatColor(newColor);
-            this.debugLog('Formatted color', formattedColor);
             if (this.originalColor !== formattedColor) {
-                this.debugLog('Updating color from', this.originalColor, 'to', formattedColor);
                 this.view.dispatch({
                     changes: { from: this.currentFrom, to: this.currentTo, insert: formattedColor },
                     selection: EditorSelection.single(this.currentFrom + formattedColor.length)
@@ -134,7 +121,6 @@ export class ColorPicker {
     }
 
     private normalizeColor(color: string): string {
-        this.debugLog('normalizeColor called with', color);
         try {
             if (color.startsWith('hsl')) {
                 return this.to6DigitHex(hslToRgb(color));
@@ -147,7 +133,6 @@ export class ColorPicker {
             }
             throw new Error('Unsupported color format');
         } catch (error) {
-            this.debugLog('Error in normalizeColor', error);
             return '#000000'; // Fallback to black if there's an error
         }
     }
