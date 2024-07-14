@@ -5,14 +5,16 @@ export interface ColorHighlighterSettings {
     highlightEverywhere: boolean;
     highlightInBackticks: boolean;
     highlightInCodeblocks: boolean;
-    highlightStyle: 'background' | 'underline' | 'square' | 'border';
+    highlightStyle: 'background' | 'border' | 'square' | 'underline';
+    enableColorPicker: boolean;
 }
 
 export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     highlightEverywhere: true,
     highlightInBackticks: false,
     highlightInCodeblocks: false,
-    highlightStyle: 'background'
+    highlightStyle: 'background',
+    enableColorPicker: true
 }
 
 export class ColorHighlighterSettingTab extends PluginSettingTab {
@@ -88,10 +90,21 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 .addOption('square', 'Colored square')
                 .addOption('underline', 'Underline')
                 .setValue(this.plugin.settings.highlightStyle)
-                .onChange(async (value: 'background' | 'underline' | 'square' | 'border') => {
+                .onChange(async (value: 'background' | 'border' | 'square' | 'underline') => {
                     this.plugin.settings.highlightStyle = value;
                     await this.plugin.saveSettings();
                     this.display();
+                })
+            );
+        
+        new Setting(containerEl)
+            .setName('Enable color picker')
+            .setDesc('Show color picker when hovering over highlighted color codes')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableColorPicker)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableColorPicker = value;
+                    await this.plugin.saveSettings();
                 })
             );
     }
