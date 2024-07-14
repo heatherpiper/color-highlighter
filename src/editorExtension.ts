@@ -4,11 +4,15 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetTy
 import { Plugin } from 'obsidian';
 import { blendColorWithBackground, getContrastColor } from './colorProcessor';
 import { COLOR_REGEX, getBackgroundColor } from './utils';
+import { ColorPicker } from './colorPicker';
+import ColorHighlighterPlugin from './main';
+import { ColorHighlighterSettings } from './settings';
 
-export function createEditorExtension(plugin: Plugin) {
+export function createEditorExtension(plugin: ColorHighlighterPlugin) {
     return ViewPlugin.fromClass(
         class ColorHighlighterView {
             decorations: DecorationSet;
+            colorPicker: ColorPicker;
 
 
             /**
@@ -20,7 +24,8 @@ export function createEditorExtension(plugin: Plugin) {
              * @param view - The EditorView instance for which the color highlight decorations should be created.
              */
             constructor(view: EditorView) {
-                this.decorations = this.buildDecorations(view);
+                this.decorations = this.buildDecorations(view, plugin.settings);
+                this.colorPicker = new ColorPicker(plugin.app);
             }
 
 
@@ -31,7 +36,7 @@ export function createEditorExtension(plugin: Plugin) {
              */
             update(update: ViewUpdate) {
                 if (update.docChanged || update.viewportChanged) {
-                    this.decorations = this.buildDecorations(update.view);
+                    this.decorations = this.buildDecorations(update.view, plugin.settings);
                 }
             }
 
@@ -41,10 +46,10 @@ export function createEditorExtension(plugin: Plugin) {
              * @param view - the EditorView instance.
              * @returns A DecorationSet containing all the color highlight decorations.
              */            
-            private buildDecorations(view: EditorView) {
+            private buildDecorations(view: EditorView, settings: ColorHighlighterSettings) {
                 try {
                     const builder = new RangeSetBuilder<Decoration>();
-                    const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = (plugin as any).settings;
+                    const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = settings;
     
                     for (const { from, to } of view.visibleRanges) {
                         const text = view.state.doc.sliceString(from, to);
@@ -54,7 +59,7 @@ export function createEditorExtension(plugin: Plugin) {
                             const end = start + match[0].length;
                             
                             if (this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks)) {
-                                this.addDecoration(builder, start, end, match[0], view, highlightStyle);
+                                this.addDecoration(builder, start, end, match[0], view, highlightStyle, settings);
                             }
                         }
                     }
@@ -175,7 +180,7 @@ export function createEditorExtension(plugin: Plugin) {
              * @param view - The EditorView instance.
              * @param highlightStyle - The highlight style to use ('background', 'border', 'square', or 'underline').
              */
-            private addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'border' | 'square' | 'underline') {
+            private addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'border' | 'square' | 'underline', settings: ColorHighlighterSettings) {
                 try {
                     let editorBackground = getBackgroundColor(plugin.app);
                     
@@ -184,18 +189,27 @@ export function createEditorExtension(plugin: Plugin) {
             
                     // Get the decoration attributes based on the selected style
                     const decorationAttributes = this.getDecorationAttributes(highlightStyle, effectiveColor, contrastColor);
-                        
+                    
+                    // Add data-decoration-id attribute
+                    decorationAttributes['data-decoration-id'] = `${start}-${end}`;
+            
+                    let decoration: Decoration;
                     if (color.startsWith('#')) {
                         // For hex colors, only style the part after the hash
-                        builder.add(start + 1, end, Decoration.mark({
+                        decoration = Decoration.mark({
                             attributes: decorationAttributes
-                        }));
+                        });
+                        builder.add(start + 1, end, decoration);
                     } else {
                         // For other color formats, use the original decoration
-                        builder.add(start, end, Decoration.mark({
+                        decoration = Decoration.mark({
                             attributes: decorationAttributes
-                        }));
+                        });
+                        builder.add(start, end, decoration);
                     }
+            
+                    // Add hover listeners
+                    this.addHoverListeners(view, start, end, color, settings);
             
                     // Add a square widget for the 'square' highlight style
                     if (highlightStyle === 'square') {
@@ -297,6 +311,56 @@ export function createEditorExtension(plugin: Plugin) {
                         }
                     }(color)
                 }));
+            }
+
+            private addHoverListeners(view: EditorView, from: number, to: number, color: string, settings: ColorHighlighterSettings) {
+                const { enableColorPicker } = settings;
+                if (!enableColorPicker) return;
+            
+                let showTimeout: number | null = null;
+            
+                const showColorPicker = (event: MouseEvent) => {
+                    if (showTimeout) {
+                        clearTimeout(showTimeout);
+                    }
+                    showTimeout = window.setTimeout(() => {
+                        const currentColor = view.state.doc.sliceString(from, to);
+                        this.colorPicker.show(view, from, to, currentColor);
+                    }, 200);
+                };
+            
+                const hideColorPicker = (event: MouseEvent) => {
+                    if (showTimeout) {
+                        clearTimeout(showTimeout);
+                        showTimeout = null;
+                    }
+                    this.colorPicker.scheduleHide();
+                };
+            
+                // Use mouseover and mouseout instead of mouseenter and mouseleave
+                view.dom.addEventListener('mouseover', (event) => {
+                    const target = event.target as HTMLElement;
+                    if (target.hasAttribute('data-decoration-id') && target.getAttribute('data-decoration-id') === `${from}-${to}`) {
+                        showColorPicker(event);
+                    }
+                });
+            
+                view.dom.addEventListener('mouseout', (event) => {
+                    const target = event.target as HTMLElement;
+                    if (target.hasAttribute('data-decoration-id') && target.getAttribute('data-decoration-id') === `${from}-${to}`) {
+                        hideColorPicker(event);
+                    }
+                });
+            
+                // No need to return a cleanup function as we're attaching listeners to the view.dom
+            }
+
+            private showColorPicker(view: EditorView, from: number, to: number, color: string) {
+                this.colorPicker.show(view, from, to, color);
+            }
+
+            private hideColorPicker() {
+                this.colorPicker.hide();
             }
         },
         {
