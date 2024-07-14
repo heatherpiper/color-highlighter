@@ -98,8 +98,8 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             );
         
         new Setting(containerEl)
-            .setName('Enable color picker')
-            .setDesc('Show color picker when hovering over highlighted color codes')
+            .setName('Enable color picker on hover')
+            .setDesc('Show color picker when hovering over highlighted color codes. If disabled, you can still show the color picker tool from the command palette.')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.enableColorPicker)
                 .onChange(async (value) => {
