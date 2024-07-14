@@ -1,7 +1,6 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
-import { Plugin } from 'obsidian';
 import { blendColorWithBackground, getContrastColor } from './colorProcessor';
 import { COLOR_REGEX, getBackgroundColor } from './utils';
 import { ColorPicker } from './colorPicker';

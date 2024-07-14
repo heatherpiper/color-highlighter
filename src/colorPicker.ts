@@ -177,10 +177,6 @@ export class ColorPicker {
         return hex.length === 1 ? "0" + hex : hex;
     }
 
-    private expandShorthandHex(hex: string): string {
-        return '#' + hex.slice(1).split('').map(char => char + char).join('');
-    }
-
     private formatColor(color: string): string {
         const [r, g, b] = this.hexToRgb(color);
         switch (this.originalFormat) {
@@ -228,28 +224,6 @@ export class ColorPicker {
             parseInt(result[2], 16),
             parseInt(result[3], 16)
         ] : [0, 0, 0];
-    }
-
-    private rgbToHexPreserveFormat(rgb: string, originalColor: string): string {
-        const [r, g, b] = extractRgbComponents(rgb);
-        let hex = '#' + [r, g, b].map(x => {
-            const hex = x.toString(16);
-            return hex.length === 1 ? '0' + hex : hex;
-        }).join('');
-        
-        // Preserve the original format (3, 4, 6, or 8 characters)
-        if (originalColor.startsWith('#')) {
-            if (originalColor.length === 4 || originalColor.length === 5) {
-                hex = '#' + hex[1] + hex[3] + hex[5];
-                if (originalColor.length === 5) {
-                    hex += originalColor[4];  // Preserve alpha
-                }
-            } else if (originalColor.length === 9) {
-                hex += originalColor.slice(7);  // Preserve alpha
-            }
-        }
-        
-        return hex;
     }
 
     private rgbToHsl(r: number, g: number, b: number): [number, number, number] {
