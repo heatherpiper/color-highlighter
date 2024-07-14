@@ -94,7 +94,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             .addDropdown(dropdown => dropdown
                 .addOption('background', 'Background color')
                 .addOption('border', 'Border')
-                .addOption('square', 'Colored square')
+                .addOption('square', 'Square')
                 .addOption('underline', 'Underline')
                 .setValue(this.plugin.settings.highlightStyle)
                 .onChange(async (value: 'background' | 'border' | 'square' | 'underline') => {
