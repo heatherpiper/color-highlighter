@@ -36,51 +36,58 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
         });
 
         new Setting(containerEl)
-            .setName('Highlight everywhere')
-            .setDesc('Highlight color codes everywhere in notes')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.highlightEverywhere)
+            .setName('Highlight mode')
+            .setDesc('Choose where to highlight color codes')
+            .addDropdown(dropdown => dropdown
+                .addOption('everywhere', 'Highlight everywhere')
+                .addOption('code', 'Highlight only in code')
+                .setValue(this.plugin.settings.highlightEverywhere ? 'everywhere' : 'code')
                 .onChange(async (value) => {
-                    this.plugin.settings.highlightEverywhere = value;
-                    if (value) {
-                        this.plugin.settings.highlightInBackticks = false;
-                        this.plugin.settings.highlightInCodeblocks = false;
+                    this.plugin.settings.highlightEverywhere = (value === 'everywhere');
+                    if (value === 'code') {
+                        this.plugin.settings.highlightInBackticks = true;
+                        this.plugin.settings.highlightInCodeblocks = true;
                     }
                     await this.plugin.saveSettings();
                     this.display();
                 })
             );
 
-        new Setting(containerEl)
-            .setName('Highlight in inline code')
-            .setDesc('Highlight color codes within inline code (single backticks)')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.highlightInBackticks)
-                .onChange(async (value) => {
-                    this.plugin.settings.highlightInBackticks = value;
-                    if (value) {
-                        this.plugin.settings.highlightEverywhere = false;
-                    }
-                    await this.plugin.saveSettings();
-                    this.display();
-                })
-            );
-
-        new Setting(containerEl)
-            .setName('Highlight in code blocks')
-            .setDesc('Highlight color codes within code blocks (triple backticks)')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.highlightInCodeblocks)
-                .onChange(async (value) => {
-                    this.plugin.settings.highlightInCodeblocks = value;
-                    if (value) {
-                        this.plugin.settings.highlightEverywhere = false;
-                    }
-                    await this.plugin.saveSettings();
-                    this.display();
-                })
-            );
-
+            if (!this.plugin.settings.highlightEverywhere) {
+                const codeHighlightSettings = containerEl.createDiv('code-highlight-settings');
+                codeHighlightSettings.style.paddingLeft = '20px';
+    
+                new Setting(codeHighlightSettings)
+                    .setName('Highlight in inline code')
+                    .setDesc('Highlight color codes within inline code (single backticks)')
+                    .addToggle(toggle => toggle
+                        .setValue(this.plugin.settings.highlightInBackticks)
+                        .onChange(async (value) => {
+                            this.plugin.settings.highlightInBackticks = value;
+                            if (!value && !this.plugin.settings.highlightInCodeblocks) {
+                                this.plugin.settings.highlightInCodeblocks = true;
+                            }
+                            await this.plugin.saveSettings();
+                            this.display();
+                        })
+                    );
+    
+                new Setting(codeHighlightSettings)
+                    .setName('Highlight in code blocks')
+                    .setDesc('Highlight color codes within code blocks (triple backticks)')
+                    .addToggle(toggle => toggle
+                        .setValue(this.plugin.settings.highlightInCodeblocks)
+                        .onChange(async (value) => {
+                            this.plugin.settings.highlightInCodeblocks = value;
+                            if (!value && !this.plugin.settings.highlightInBackticks) {
+                                this.plugin.settings.highlightInBackticks = true;
+                            }
+                            await this.plugin.saveSettings();
+                            this.display();
+                        })
+                    );
+            }
+            
         new Setting(containerEl)
             .setName('Highlight style')
             .setDesc('Choose how color codes are highlighted')
