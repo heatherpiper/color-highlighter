@@ -22,7 +22,7 @@ Color Highlighter provides a visual representation of colors directly in your te
     - RGB and RBGA
     - HSL and HSLA
 - Customize where colors are highlighted:
-    - Everywhere
+    - Anywhere
     - Within inline code (single backticks)
     - Within code blocks (triple backticks)
 - Customize highlighting style:
@@ -67,7 +67,7 @@ Once installed and enabled, the plugin will automatically highlight color codes 
 1. Go to **Settings → Community plugins**.
 2. Find Color Highlighter in the list and select the gear icon to access its settings.
 3. Choose your preferred highlight location(s):
-   - **Highlight everywhere**: Highlight all color codes anywhere in your notes.
+   - **Highlight anywhere**: Highlight all color codes anywhere in your notes.
    - **Highlight only in code**:
        - **Highlight in inline code**: Only highlight color codes within single backticks.
        - **Highlight in code blocks**: Only highlight color codes within triple backticks.
