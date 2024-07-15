@@ -36,14 +36,14 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
         });
 
         new Setting(containerEl)
-            .setName('Highlight mode')
+            .setName('Highlight locations')
             .setDesc('Choose where to highlight color codes')
             .addDropdown(dropdown => dropdown
-                .addOption('everywhere', 'Highlight everywhere')
+                .addOption('anywhere', 'Highlight anywhere')
                 .addOption('code', 'Highlight only in code')
-                .setValue(this.plugin.settings.highlightEverywhere ? 'everywhere' : 'code')
+                .setValue(this.plugin.settings.highlightEverywhere ? 'anywhere' : 'code')
                 .onChange(async (value) => {
-                    this.plugin.settings.highlightEverywhere = (value === 'everywhere');
+                    this.plugin.settings.highlightEverywhere = (value === 'anywhere');
                     if (value === 'code') {
                         this.plugin.settings.highlightInBackticks = true;
                         this.plugin.settings.highlightInCodeblocks = true;
@@ -90,7 +90,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             
         new Setting(containerEl)
             .setName('Highlight style')
-            .setDesc('Choose how color codes are highlighted')
+            .setDesc('Choose how color code highlights are displayed')
             .addDropdown(dropdown => dropdown
                 .addOption('background', 'Background color')
                 .addOption('border', 'Border')
@@ -106,7 +106,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
         
         new Setting(containerEl)
             .setName('Enable color picker on hover')
-            .setDesc('Show color picker when hovering over highlighted color codes. If disabled, you can still show the color picker tool from the command palette.')
+            .setDesc('Show color picker when hovering over highlighted color codes. If disabled, you may still show the color picker by using the command palette.')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.enableColorPicker)
                 .onChange(async (value) => {
