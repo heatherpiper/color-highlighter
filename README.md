@@ -28,10 +28,11 @@ Color Highlighter provides a visual representation of colors directly in your te
 - Customize highlighting style:
     - Background color
     - Border
-    - Colored square
+    - Square
     - Underline
 - Works in Source Mode, Reading Mode, and Live Preview
-- Automatically adjusts text color for optimal contrast with the highlighted background
+- Automatically adjusts text color for optimal contrast with highlighted background
+- Optionally shows a color picker tool when hovering over highlighted color codes
 
 ## Installation
 
@@ -73,10 +74,13 @@ Once installed and enabled, the plugin will automatically highlight color codes 
 4. Choose your preferred highlight style:
    - **Background**: Highlight color codes by changing their background color
    - **Border**: Highlight color codes by adding a solid color border
-   - **Colored Square**: Highlight color codes by adding a small colored square following the color code
+   - **Square**: Highlight color codes by adding a small colored square following the color code
    - **Underline**: Highlight color codes by adding a solid color underline
 
 ![Color Highlighter highlight styles](images/highlighting-styles.png)
+
+5. By default, the color picker is displayed when hovering over highlighted color codes. You may choose to disable this behavior.
+    - If disabled, the color picker can still be displayed using the command **Color Highlighter: Show color picker** in the command palette.
 
 > [!NOTE]
 > After changing any of these settings, you may need to reload any open notes in order to see the changes take effect.
