@@ -312,6 +312,15 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                 }));
             }
 
+            /**
+             * Adds hover listeners to the editor view to show and hide the color picker when the user hovers over a highlighted region.
+             *
+             * @param view - The editor view.
+             * @param from - The start position of the highlighted region.
+             * @param to - The end position of the highlighted region.
+             * @param color - The color of the highlighted region.
+             * @param settings - The Color Highlighter settings, including whether the color picker is enabled.
+             */
             private addHoverListeners(view: EditorView, from: number, to: number, color: string, settings: ColorHighlighterSettings) {
                 const { enableColorPicker } = settings;
                 if (!enableColorPicker) return;
@@ -336,7 +345,6 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     this.colorPicker.scheduleHide();
                 };
             
-                // Use mouseover and mouseout instead of mouseenter and mouseleave
                 view.dom.addEventListener('mouseover', (event) => {
                     const target = event.target as HTMLElement;
                     if (target.hasAttribute('data-decoration-id') && target.getAttribute('data-decoration-id') === `${from}-${to}`) {
@@ -354,13 +362,6 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                 // No need to return a cleanup function as we're attaching listeners to the view.dom
             }
 
-            private showColorPicker(view: EditorView, from: number, to: number, color: string) {
-                this.colorPicker.show(view, from, to, color);
-            }
-
-            private hideColorPicker() {
-                this.colorPicker.hide();
-            }
         },
         {
             decorations: v => v.decorations
