@@ -229,9 +229,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * @returns The decoration attributes to apply to the highlighted text.
              */
             private getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string): { [key: string]: string } {
-                const attributes: { [key: string]: string } = {
-                    class: "color-highlighter-inline-code",
-                };
+                const attributes: { [key: string]: string } = {};
 
                 switch (highlightStyle) {
                     case 'background':
