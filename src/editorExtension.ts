@@ -1,11 +1,11 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
-import { blendColorWithBackground, getContrastColor } from './colorProcessor';
-import { COLOR_REGEX, getBackgroundColor } from './utils';
 import { ColorPicker } from './colorPicker';
+import { blendColorWithBackground, getContrastColor } from './colorProcessor';
 import ColorHighlighterPlugin from './main';
 import { ColorHighlighterSettings } from './settings';
+import { COLOR_REGEX, getBackgroundColor } from './utils';
 
 export function createEditorExtension(plugin: ColorHighlighterPlugin) {
     return ViewPlugin.fromClass(
