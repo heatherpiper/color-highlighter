@@ -13,15 +13,6 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             decorations: DecorationSet;
             colorPicker: ColorPicker;
 
-
-            /**
-             * Initializes the color highlight decorations for the given editor view.
-             *
-             * This constructor is called when the ColorHighlighterView plugin is created. It builds the initial set of
-             * color highlight decorations to be displayed in the editor view.
-             *
-             * @param view - The EditorView instance for which the color highlight decorations should be created.
-             */
             constructor(view: EditorView) {
                 this.decorations = this.buildDecorations(view, plugin.settings);
                 this.colorPicker = new ColorPicker(plugin.app);
@@ -31,7 +22,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             /**
              * Updates the color highlight decorations in the editor view when the document or viewport changes.
              *
-             * @param update - The ViewUpdate object containing information about the changes to the editor view.
+             * @param update The ViewUpdate object containing information about the changes to the editor view.
              */
             update(update: ViewUpdate) {
                 if (update.docChanged || update.viewportChanged) {
@@ -42,7 +33,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             /**
              * Builds decorations for color highlighting in the editor view.
              * 
-             * @param view - the EditorView instance.
+             * @param view The EditorView instance.
              * @returns A DecorationSet containing all the color highlight decorations.
              */            
             private buildDecorations(view: EditorView, settings: ColorHighlighterSettings) {
@@ -75,12 +66,12 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * The function checks if the range is within inline code (backticks) or a code block, and
              * whether the user has enabled highlighting for those cases.
              *
-             * @param state - The current EditorState.
-             * @param start - The start position of the text range.
-             * @param end - The end position of the text range.
-             * @param highlightEverywhere - Whether to highlight colors everywhere, regardless of code context.
-             * @param highlightInBackticks - Whether to highlight colors within inline code (backticks).
-             * @param highlightInCodeblocks - Whether to highlight colors within code blocks.
+             * @param state The current EditorState.
+             * @param start The start position of the text range.
+             * @param end The end position of the text range.
+             * @param highlightEverywhere Whether to highlight colors everywhere, regardless of code context.
+             * @param highlightInBackticks Whether to highlight colors within inline code (backticks).
+             * @param highlightInCodeblocks Whether to highlight colors within code blocks.
              * @returns True if the text range should be highlighted, false otherwise.
              */
             private shouldHighlight(state: EditorState, start: number, end: number, highlightEverywhere: boolean, highlightInBackticks: boolean, highlightInCodeblocks: boolean): boolean {
@@ -100,9 +91,9 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * This function checks the text around the given start and end positions to see if they are
              * enclosed within backticks, which indicates an inline code block.
              *
-             * @param state - The current EditorState.
-             * @param start - The start position of the text range.
-             * @param end - The end position of the text range.
+             * @param state The current EditorState.
+             * @param start The start position of the text range.
+             * @param end The end position of the text range.
              * @returns True if the text range is within an inline code block, false otherwise.
              */
             private isWithinInlineCode(state: EditorState, start: number, end: number): boolean {
@@ -130,8 +121,8 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * This function recursively traverses the syntax tree to check if the given position
              * is contained within a code block node.
              *
-             * @param state - The current EditorState.
-             * @param pos - The position to check for being within a code block.
+             * @param state The current EditorState.
+             * @param pos The position to check for being within a code block.
              * @returns True if the position is within a code block, false otherwise.
              */
             private isWithinCodeBlock(state: EditorState, pos: number): boolean {
@@ -157,7 +148,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * Determines whether the given syntax tree node represents a code block by checking 
              * if the node's type name includes certain keywords.
              *
-             * @param node - The syntax tree node to check.
+             * @param node The syntax tree node to check.
              * @returns True if the node represents a code block, false otherwise.
              */
             private isCodeBlockNode(node: any): boolean {
@@ -172,12 +163,12 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * Applies the appropriate styles and attributes based on the selected highlight style. It
              * adds a square widget for the 'square' highlight style.
              *
-             * @param builder - The RangeSetBuilder instance to add the decoration to.
-             * @param start - The starting position of the decoration.
-             * @param end - The ending position of the decoration.
-             * @param color - The color to use for the decoration.
-             * @param view - The EditorView instance.
-             * @param highlightStyle - The highlight style to use ('background', 'border', 'square', or 'underline').
+             * @param builder The RangeSetBuilder instance to add the decoration to.
+             * @param start The starting position of the decoration.
+             * @param end The ending position of the decoration.
+             * @param color The color to use for the decoration.
+             * @param view The EditorView instance.
+             * @param highlightStyle The highlight style to use ('background', 'border', 'square', or 'underline').
              */
             private addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'border' | 'square' | 'underline', settings: ColorHighlighterSettings) {
                 try {
@@ -223,9 +214,9 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             /**
              * Generates the appropriate decoration attributes based on the selected highlight style.
              *
-             * @param highlightStyle - The highlight style to use ('background', 'border', 'square', or 'underline').
-             * @param effectiveColor - The color to use for the decoration, blended with the editor background.
-             * @param contrastColor - The contrasting color to use for the text, based on the effective color.
+             * @param highlightStyle The highlight style to use ('background', 'border', 'square', or 'underline').
+             * @param effectiveColor The color to use for the decoration, blended with the editor background.
+             * @param contrastColor The contrasting color to use for the text, based on the effective color.
              * @returns The decoration attributes to apply to the highlighted text.
              */
             private getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string): { [key: string]: string } {
@@ -256,9 +247,9 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              *
              * The square widget is a 10x10 pixel square with the provided color, displayed inline with the text.
              *
-             * @param builder - The RangeSetBuilder to add the decoration to.
-             * @param end - The position in the editor where the square widget should be added.
-             * @param color - The color to use for the square widget.
+             * @param builder The RangeSetBuilder to add the decoration to.
+             * @param end The position in the editor where the square widget should be added.
+             * @param color The color to use for the square widget.
              */
             private addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string) {
                 builder.add(end, end, Decoration.widget({
@@ -313,11 +304,11 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             /**
              * Adds hover listeners to the editor view to show and hide the color picker when the user hovers over a highlighted region.
              *
-             * @param view - The editor view.
-             * @param from - The start position of the highlighted region.
-             * @param to - The end position of the highlighted region.
-             * @param color - The color of the highlighted region.
-             * @param settings - The Color Highlighter settings, including whether the color picker is enabled.
+             * @param view The editor view.
+             * @param from The start position of the highlighted region.
+             * @param to The end position of the highlighted region.
+             * @param color The color of the highlighted region.
+             * @param settings The Color Highlighter settings, including whether the color picker is enabled.
              */
             private addHoverListeners(view: EditorView, from: number, to: number, color: string, settings: ColorHighlighterSettings) {
                 const { enableColorPicker } = settings;

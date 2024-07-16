@@ -16,7 +16,7 @@ export const COLOR_REGEX = new RegExp(Object.values(COLOR_PATTERNS).map(pattern 
  * cannot be determined from the editor or content elements, it falls back to the body background color, 
  * and finally to a theme-dependent fallback color.
  *
- * @param app - The Obsidian app instance.
+ * @param app The Obsidian app instance.
  * @returns The background color in RGB format. 
  */
 export function getBackgroundColor(app: App): string {
@@ -70,7 +70,7 @@ export function getThemeFallbackColor(): string {
 /**
  * Extracts the RGB components from a color string, formatted as either hexadecimal or RGB
  * 
- * @param rgbString - The color string to extract the components from.
+ * @param rgbString The color string to extract the components from.
  * @returns An array containing the red, green, and blue components of the color string.
  */
 export function extractRgbComponents(rgbString: string): [number, number, number] {
@@ -109,7 +109,7 @@ export function extractRgbComponents(rgbString: string): [number, number, number
 /**
  * Extracts the HSLA components from a given HSLA string.
  * 
- * @param hsla - The HSLA string to extract components from.
+ * @param hsla The HSLA string to extract components from.
  * @returns An array containing the HSLA components [h, s, l, a], or null if the HSLA string is invalid.
  */
 export function extractHslaComponents(hsla: string): [number, number, number, number] | null {
@@ -146,7 +146,7 @@ export function extractHslaComponents(hsla: string): [number, number, number, nu
  * Registers a Markdown post-processor that adds custom CSS styles to the plugin.
  * The styles define the appearance of color highlights in the various highlight styles available in the settings.
  *
- * @param plugin - The plugin object that the styles are registered with.
+ * @param plugin The plugin object that the styles are registered with.
  */
 export function addStyles(plugin: any) {
     const styles = `

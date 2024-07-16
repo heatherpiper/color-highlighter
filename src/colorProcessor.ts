@@ -1,13 +1,13 @@
-import { getBackgroundColor, extractRgbComponents, extractHslaComponents } from './utils';
 import { App } from 'obsidian';
+import { extractHslaComponents, extractRgbComponents, getBackgroundColor } from './utils';
 
 
 /**
  * Blends a color with the background color, handling various color formats.
  *
- * @param color - The color to blend, in RGBA, HSLA, or hexadecimal format.
- * @param background - The background color, in the same format as the `color` parameter.
- * @param app - The Obsidian app instance, used to get the default background color if the provided background is transparent.
+ * @param color The color to blend, in RGBA, HSLA, or hexadecimal format.
+ * @param background The background color, in the same format as the `color` parameter.
+ * @param app The Obsidian app instance, used to get the default background color if the provided background is transparent.
  * @returns The blended color in RGB format.
  */
 export function blendColorWithBackground(color: string, background: string, app: App): string {
@@ -47,8 +47,8 @@ export function blendColorWithBackground(color: string, background: string, app:
 /**
  * Blends an RGBA color with the background color.
  *
- * @param rgba - The RGBA color to blend, as a string in the format "rgba(r, g, b, a)".
- * @param background - The background color, in the same format as the `rgba` parameter.
+ * @param rgba The RGBA color to blend, as a string in the format "rgba(r, g, b, a)".
+ * @param background The background color, in the same format as the `rgba` parameter.
  * @returns The blended color in RGB format.
  */
 export function blendRgbaWithBackground(rgba: string, background: string): string {
@@ -85,8 +85,8 @@ export function blendRgbaWithBackground(rgba: string, background: string): strin
 /**
  * Blends an HSLA color with the background color.
  *
- * @param hsla - The HSLA color to blend, as a string in the format "hsla(h, s%, l%, a)".
- * @param background - The background color, in the same format as the `hsla` parameter.
+ * @param hsla The HSLA color to blend, as a string in the format "hsla(h, s%, l%, a)".
+ * @param background The background color, in the same format as the `hsla` parameter.
  * @returns The blended color in RGB format.
  */
 export function blendHslaWithBackground(hsla: string, background: string): string {
@@ -124,8 +124,8 @@ export function blendHslaWithBackground(hsla: string, background: string): strin
  *
  * This function handles various color formats, including HSL, RGBA, and hexadecimal colors with or without alpha channel.
  *
- * @param color - The color to get the contrast for, in any of the supported formats.
- * @param background - The background color, in the same format as the `color` parameter.
+ * @param color The color to get the contrast for, in any of the supported formats.
+ * @param background The background color, in the same format as the `color` parameter.
  * @returns The most effective contrast color, either 'black' or 'white'.
  */
 export function getContrastColor(color: string, background: string): string {
@@ -162,7 +162,7 @@ export function getContrastColor(color: string, background: string): string {
 /**
  * Converts an HSL color string to an RGB color string.
  *
- * @param hsl - The HSL color string to be converted.
+ * @param hsl The HSL color string to be converted.
  * @returns The RGB color string.
  * @throws {Error} If the input HSL string is invalid.
  */
@@ -210,10 +210,10 @@ export function hslToRgb(hsl: string): string {
 /**
  * Converts an HSLA color to an RGBA color.
  *
- * @param h - The hue value, between 0 and 360.
- * @param s - The saturation value, between 0 and 1.
- * @param l - The lightness value, between 0 and 1.
- * @param a - The alpha value, between 0 and 1.
+ * @param h The hue value, between 0 and 360.
+ * @param s The saturation value, between 0 and 1.
+ * @param l The lightness value, between 0 and 1.
+ * @param a The alpha value, between 0 and 1.
  * @returns An array of the red, green, blue, and alpha values, each between 0 and 255.
  */
 export function hslaToRgba(h: number, s: number, l: number, a: number): [number, number, number, number] {
@@ -247,7 +247,7 @@ export function hslaToRgba(h: number, s: number, l: number, a: number): [number,
 /**
  * Converts an RGB color string to a hexadecimal color code.
  *
- * @param rgb - An RGB color string in the format 'rgb(r,g,b)'.
+ * @param rgb An RGB color string in the format 'rgb(r,g,b)'.
  * @returns The hexadecimal color code.
  * @throws {Error} If the input string is not a valid RGB color.
  */

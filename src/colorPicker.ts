@@ -1,5 +1,5 @@
-import { EditorView } from '@codemirror/view';
 import { EditorSelection } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
 import { App, ColorComponent } from 'obsidian';
 import { hslToRgb } from './colorProcessor';
 import { extractRgbComponents } from './utils';
@@ -36,10 +36,10 @@ export class ColorPicker {
      * range. Finally, it sets up event handlers for the color picker component to handle user interactions and update the
      * color in the editor view accordingly.
      *
-     * @param view - The current editor view.
-     * @param from - The start position of the current selection range.
-     * @param to - The end position of the current selection range.
-     * @param initialColor - The initial color to be displayed in the color picker.
+     * @param view The current editor view.
+     * @param from The start position of the current selection range.
+     * @param to The end position of the current selection range.
+     * @param initialColor The initial color to be displayed in the color picker.
      */
     show(view: EditorView, from: number, to: number, initialColor: string) {
         this.hide(); // Hide any existing color picker
@@ -99,10 +99,6 @@ export class ColorPicker {
 
     /**
      * Schedules the hiding of the color picker container element after a 300 millisecond delay.
-     *
-     * This method is responsible for clearing any existing hide timeout and setting a new timeout to call the `hide()`
-     * method after 300 milliseconds. This allows the color picker to remain visible for a short period of time after the
-     * user's cursor leaves the container, preventing the color picker from disappearing too quickly.
      */
     scheduleHide() {
         if (this.hideTimeout) {
@@ -113,9 +109,6 @@ export class ColorPicker {
 
     /**
      * Hides the color picker container element and resets the associated state.
-     *
-     * This method is responsible for removing the color picker container element from the DOM, clearing any scheduled
-     * hide timeout, and resetting the current selection range and editor view references.
      */
     hide() {
         if (this.containerEl.parentNode) {
@@ -133,12 +126,12 @@ export class ColorPicker {
     /**
      * Updates the color in the editor view with the provided new color.
      *
-     * This method is responsible for updating the editor view with the new color. It first formats the new color to a
-     * 6-digit hexadecimal representation, and then checks if the formatted color is different from the original color.
+     * This method first formats the new color to a 6-digit hexadecimal representation, 
+     * and then checks if the formatted color is different from the original color.
      * If the colors are different, it dispatches a change to the editor view to update the color at the current selection
      * range.
      *
-     * @param newColor - The new color to be applied in the editor view.
+     * @param newColor The new color to be applied in the editor view.
      */
     private updateColor(newColor: string) {
         if (this.view && this.currentFrom !== null && this.currentTo !== null) {
@@ -160,7 +153,7 @@ export class ColorPicker {
      * editor view. If the color picker container would extend beyond the right edge of the editor view, this method
      * adjusts the left position of the container to keep it fully visible.
      *
-     * @param view - The EditorView instance associated with the current editor.
+     * @param view The EditorView instance associated with the current editor.
      */
     private adjustPosition(view: EditorView) {
         const rect = this.containerEl.getBoundingClientRect();
@@ -178,7 +171,7 @@ export class ColorPicker {
      * This method handles various color formats, including hexadecimal, RGB, and HSL. If the
      * provided color string is in an unsupported format, it will fallback to black (#000000).
      *
-     * @param color - The color string to normalize.
+     * @param color The color string to normalize.
      * @returns The 6-digit hexadecimal color representation.
      */
     private normalizeColor(color: string): string {
@@ -201,7 +194,7 @@ export class ColorPicker {
     /**
      * Converts the provided color string to a 6-digit hexadecimal color representation.
      *
-     * @param color - The color string to convert.
+     * @param color The color string to convert.
      * @returns The 6-digit hexadecimal color representation.
      */
     private to6DigitHex(color: string): string {
@@ -227,7 +220,7 @@ export class ColorPicker {
     /**
      * Converts a numeric color component to a 2-digit hexadecimal string.
      *
-     * @param c - The numeric color component to convert.
+     * @param c The numeric color component to convert.
      * @returns The 2-digit hexadecimal string representation of the color component.
      */
     private componentToHex(c: number): string {
@@ -238,7 +231,7 @@ export class ColorPicker {
     /**
      * Formats the provided color string based on the original color format.
      *
-     * @param color - The color string to format.
+     * @param color The color string to format.
      * @returns The formatted color string.
      */
     private formatColor(color: string): string {
@@ -275,7 +268,7 @@ export class ColorPicker {
     /**
      * Determines the color format of the provided color string.
      *
-     * @param color - The color string to analyze.
+     * @param color The color string to analyze.
      * @returns The color format as a string, one of 'hex', 'rgb', 'rgba', 'hsl', 'hsla', or 'unknown' if the format is not recognized.
      */
     private getColorFormat(color: string): string {
@@ -290,7 +283,7 @@ export class ColorPicker {
     /**
      * Converts a hexadecimal color string to an RGB tuple.
      *
-     * @param hex - The hexadecimal color string to convert, with or without a leading '#'.
+     * @param hex The hexadecimal color string to convert, with or without a leading '#'.
      * @returns An array containing the red, green, and blue components of the color, each as a number between 0 and 255.
      */
     private hexToRgb(hex: string): [number, number, number] {
@@ -305,9 +298,9 @@ export class ColorPicker {
     /**
      * Converts an RGB color to an HSL color.
      * 
-     * @param r - The red component of the RGB color, between 0 and 255.
-     * @param g - The green component of the RGB color, between 0 and 255.
-     * @param b - The blue component of the RGB color, between 0 and 255.
+     * @param r The red component of the RGB color, between 0 and 255.
+     * @param g The green component of the RGB color, between 0 and 255.
+     * @param b The blue component of the RGB color, between 0 and 255.
      * @returns An array containing the hue, saturation, and lightness components of the HSL color.
      */
     private rgbToHsl(r: number, g: number, b: number): [number, number, number] {

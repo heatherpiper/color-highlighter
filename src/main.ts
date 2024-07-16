@@ -1,9 +1,9 @@
-import { Plugin, Editor, Notice } from 'obsidian';
-import { ColorHighlighterSettings, ColorHighlighterSettingTab, DEFAULT_SETTINGS } from './settings';
+import { Editor, Notice, Plugin } from 'obsidian';
+import { ColorPicker } from './colorPicker';
 import { createEditorExtension } from './editorExtension';
 import { createPostProcessor } from './postProcessor';
+import { ColorHighlighterSettings, ColorHighlighterSettingTab, DEFAULT_SETTINGS } from './settings';
 import { addStyles, COLOR_REGEX } from './utils';
-import { ColorPicker } from './colorPicker';
 
 class ColorHighlighterPlugin extends Plugin {
     settings: ColorHighlighterSettings;
@@ -45,11 +45,9 @@ class ColorHighlighterPlugin extends Plugin {
             const from = editor.posToOffset({ line: cursor.line, ch: colorMatch.index });
             const to = editor.posToOffset({ line: cursor.line, ch: colorMatch.index + colorMatch[0].length });
             
-            // Get the EditorView instance
             const view = (editor as any).cm;
             
             if (view) {
-                // Use the existing show method of ColorPicker
                 this.colorPicker.show(view, from, to, colorMatch[0]);
             } else {
                 new Notice('Unable to show color picker for this editor');
@@ -60,7 +58,7 @@ class ColorHighlighterPlugin extends Plugin {
     }
 
     private findColorAtCursor(line: string, cursorCh: number): RegExpExecArray | null {
-        COLOR_REGEX.lastIndex = 0; // Reset lastIndex to ensure we start from the beginning of the line
+        COLOR_REGEX.lastIndex = 0;
         let match;
         while ((match = COLOR_REGEX.exec(line)) !== null) {
             if (cursorCh >= match.index && cursorCh <= match.index + match[0].length) {
