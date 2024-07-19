@@ -190,18 +190,6 @@ export function addStyles(plugin: any) {
             margin-left: 2px;
             vertical-align: middle;
         }
-        .color-highlighter-picker {
-            z-index: 1000;
-            background-color: var(--background-primary);
-            border: 1px solid var(--background-modifier-border);
-            border-radius: 4px;
-            padding: 5px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            font-size: 14px;
-            font-weight: normal;
-            line-height: normal;
-            text-transform: none;
-        }
     `;
 
     plugin.registerMarkdownPostProcessor((el: HTMLElement) => {
