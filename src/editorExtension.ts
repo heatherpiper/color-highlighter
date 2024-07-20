@@ -2,7 +2,7 @@ import { syntaxTree } from '@codemirror/language';
 import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
 import { ColorPicker } from './colorPicker';
-import { blendColorWithBackground, getContrastColor } from './colorProcessor';
+import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
 import ColorHighlighterPlugin from './main';
 import { ColorHighlighterSettings } from './settings';
 import { COLOR_REGEX, getBackgroundColor } from './utils';
@@ -178,7 +178,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     const contrastColor = getContrastColor(effectiveColor, editorBackground);
             
                     // Get the decoration attributes based on the selected style
-                    const decorationAttributes = this.getDecorationAttributes(highlightStyle, effectiveColor, contrastColor);
+                    const decorationAttributes = this.getDecorationAttributes(highlightStyle, effectiveColor, contrastColor, editorBackground, settings);
                     
                     // Add data-decoration-id attribute
                     decorationAttributes['data-decoration-id'] = `${start}-${end}`;
@@ -219,12 +219,21 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * @param contrastColor The contrasting color to use for the text, based on the effective color.
              * @returns The decoration attributes to apply to the highlighted text.
              */
-            private getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string): { [key: string]: string } {
+            private getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string, backgroundColor: string, settings: ColorHighlighterSettings): { [key: string]: string } {
                 const attributes: { [key: string]: string } = {};
 
                 switch (highlightStyle) {
                     case 'background':
                         attributes.style = `background-color: ${effectiveColor}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
+                        
+                        if (settings.useContrastingBorder) {
+                            const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
+                            if (contrastRatio < 1.33) {
+                                attributes['data-contrast-border'] = 'true';
+                                attributes.style += ' border: 1px solid var(--text-faint);';
+                                attributes.style += ' padding: calc(0.1em - 1px) calc(0.2em - 1px);';
+                            }
+                        }
                         break;
                     case 'underline':
                         attributes.class += " color-highlighter-underline";

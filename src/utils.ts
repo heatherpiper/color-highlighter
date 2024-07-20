@@ -157,6 +157,10 @@ export function addStyles(plugin: any) {
             border-radius: 3px;
             padding: 0.1em 0.2em;
         }
+        .color-highlighter.background[data-contrast-border="true"] {
+            border: 1px solid var(--text-faint);
+            padding: calc(0.1em - 1px) calc(0.2em - 1px);
+        }
         .color-highlighter.border {
             border-radius: 3px;
             border-width: 2px;
