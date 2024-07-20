@@ -156,6 +156,13 @@ function createHighlightedSpan(colorCode: string, parent: Element | null, plugin
             square.classList.add('color-highlighter-square');
             square.style.backgroundColor = effectiveColor;
             span.appendChild(square);
+
+            if (plugin.settings.useContrastingBorder) {
+                const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
+                if (contrastRatio < 1.33) {
+                    square.dataset.contrastBorder = 'true';
+                }
+            }
             break;
         case 'border':
             span.classList.add('border');

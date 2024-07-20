@@ -203,7 +203,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             
                     // Add a square widget for the 'square' highlight style
                     if (highlightStyle === 'square') {
-                        this.addSquareWidget(builder, end, effectiveColor);
+                        this.addSquareWidget(builder, end, effectiveColor, editorBackground, settings);
                     }
                 } catch (error) {
                     console.warn('Error adding decoration:', error, { color, highlightStyle });
@@ -240,7 +240,12 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         attributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration-skip-ink: none; border-radius: 0;`;
                         break;
                     case 'square':
-                        // No additional style for the text itself
+                        if (settings.useContrastingBorder) {
+                            const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
+                            if (contrastRatio < 1.5) {
+                                attributes['data-contrast-border'] = 'true';
+                            }
+                        }
                         break;
                     case 'border':
                         attributes.class += " color-highlighter-border";
@@ -260,10 +265,10 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * @param end The position in the editor where the square widget should be added.
              * @param color The color to use for the square widget.
              */
-            private addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string) {
+            private addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string, backgroundColor: string, settings: ColorHighlighterSettings) {
                 builder.add(end, end, Decoration.widget({
                     widget: new class extends WidgetType {
-                        constructor(readonly color: string) {
+                        constructor(readonly color: string, readonly backgroundColor: string, readonly settings: ColorHighlighterSettings) {
                             super();
                         }
                         
@@ -271,11 +276,19 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             const span = document.createElement('span');
                             span.className = 'color-highlighter-square';
                             span.style.display = 'inline-block';
-                            span.style.width = '10px';
-                            span.style.height = '10px';
+                            span.style.width = '1em';
+                            span.style.height = '1em';
                             span.style.backgroundColor = this.color;
-                            span.style.marginLeft = '2px';
-                            span.style.verticalAlign = 'middle';
+                            span.style.marginLeft = '0.25em';
+                            span.style.verticalAlign = 'baseline';
+            
+                            if (this.settings.useContrastingBorder) {
+                                const contrastRatio = getContrastRatio(this.color, this.backgroundColor);
+                                if (contrastRatio < 1.5) {
+                                    span.style.border = '1px solid var(--text-faint)';
+                                }
+                            }
+            
                             return span;
                         }
 
@@ -306,7 +319,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         destroy() {
                             // No cleanup needed for this simple widget
                         }
-                    }(color)
+                    }(color, backgroundColor, settings)
                 }));
             }
 

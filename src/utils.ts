@@ -189,10 +189,13 @@ export function addStyles(plugin: any) {
         }
         .color-highlighter-square {
             display: inline-block;
-            width: 10px;
-            height: 10px;
-            margin-left: 2px;
-            vertical-align: middle;
+            width: 1em;
+            height: 1em;
+            margin-left: 0.25em;
+            vertical-align: baseline;
+        }
+        .color-highlighter-square[data-contrast-border="true"] {
+            border: 1px solid var(--text-faint);
         }
     `;
 
