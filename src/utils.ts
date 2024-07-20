@@ -157,6 +157,10 @@ export function addStyles(plugin: any) {
             border-radius: 3px;
             padding: 0.1em 0.2em;
         }
+        .color-highlighter.background[data-contrast-border="true"] {
+            border: 1px solid var(--text-faint);
+            padding: calc(0.1em - 1px) calc(0.2em - 1px);
+        }
         .color-highlighter.border {
             border-radius: 3px;
             border-width: 2px;
@@ -185,10 +189,13 @@ export function addStyles(plugin: any) {
         }
         .color-highlighter-square {
             display: inline-block;
-            width: 10px;
-            height: 10px;
-            margin-left: 2px;
-            vertical-align: middle;
+            width: 1em;
+            height: 1em;
+            margin-left: 0.25em;
+            vertical-align: baseline;
+        }
+        .color-highlighter-square[data-contrast-border="true"] {
+            border: 1px solid var(--text-faint);
         }
     `;
 

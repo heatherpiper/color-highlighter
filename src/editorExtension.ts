@@ -2,7 +2,7 @@ import { syntaxTree } from '@codemirror/language';
 import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
 import { ColorPicker } from './colorPicker';
-import { blendColorWithBackground, getContrastColor } from './colorProcessor';
+import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
 import ColorHighlighterPlugin from './main';
 import { ColorHighlighterSettings } from './settings';
 import { COLOR_REGEX, getBackgroundColor } from './utils';
@@ -178,7 +178,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     const contrastColor = getContrastColor(effectiveColor, editorBackground);
             
                     // Get the decoration attributes based on the selected style
-                    const decorationAttributes = this.getDecorationAttributes(highlightStyle, effectiveColor, contrastColor);
+                    const decorationAttributes = this.getDecorationAttributes(highlightStyle, effectiveColor, contrastColor, editorBackground, settings);
                     
                     // Add data-decoration-id attribute
                     decorationAttributes['data-decoration-id'] = `${start}-${end}`;
@@ -203,7 +203,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             
                     // Add a square widget for the 'square' highlight style
                     if (highlightStyle === 'square') {
-                        this.addSquareWidget(builder, end, effectiveColor);
+                        this.addSquareWidget(builder, end, effectiveColor, editorBackground, settings);
                     }
                 } catch (error) {
                     console.warn('Error adding decoration:', error, { color, highlightStyle });
@@ -219,19 +219,33 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * @param contrastColor The contrasting color to use for the text, based on the effective color.
              * @returns The decoration attributes to apply to the highlighted text.
              */
-            private getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string): { [key: string]: string } {
+            private getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string, backgroundColor: string, settings: ColorHighlighterSettings): { [key: string]: string } {
                 const attributes: { [key: string]: string } = {};
 
                 switch (highlightStyle) {
                     case 'background':
                         attributes.style = `background-color: ${effectiveColor}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
+                        
+                        if (settings.useContrastingBorder) {
+                            const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
+                            if (contrastRatio < 1.33) {
+                                attributes['data-contrast-border'] = 'true';
+                                attributes.style += ' border: 1px solid var(--text-faint);';
+                                attributes.style += ' padding: calc(0.1em - 1px) calc(0.2em - 1px);';
+                            }
+                        }
                         break;
                     case 'underline':
                         attributes.class += " color-highlighter-underline";
                         attributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration-skip-ink: none; border-radius: 0;`;
                         break;
                     case 'square':
-                        // No additional style for the text itself
+                        if (settings.useContrastingBorder) {
+                            const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
+                            if (contrastRatio < 1.5) {
+                                attributes['data-contrast-border'] = 'true';
+                            }
+                        }
                         break;
                     case 'border':
                         attributes.class += " color-highlighter-border";
@@ -251,10 +265,10 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * @param end The position in the editor where the square widget should be added.
              * @param color The color to use for the square widget.
              */
-            private addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string) {
+            private addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string, backgroundColor: string, settings: ColorHighlighterSettings) {
                 builder.add(end, end, Decoration.widget({
                     widget: new class extends WidgetType {
-                        constructor(readonly color: string) {
+                        constructor(readonly color: string, readonly backgroundColor: string, readonly settings: ColorHighlighterSettings) {
                             super();
                         }
                         
@@ -262,11 +276,19 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             const span = document.createElement('span');
                             span.className = 'color-highlighter-square';
                             span.style.display = 'inline-block';
-                            span.style.width = '10px';
-                            span.style.height = '10px';
+                            span.style.width = '1em';
+                            span.style.height = '1em';
                             span.style.backgroundColor = this.color;
-                            span.style.marginLeft = '2px';
-                            span.style.verticalAlign = 'middle';
+                            span.style.marginLeft = '0.25em';
+                            span.style.verticalAlign = 'baseline';
+            
+                            if (this.settings.useContrastingBorder) {
+                                const contrastRatio = getContrastRatio(this.color, this.backgroundColor);
+                                if (contrastRatio < 1.5) {
+                                    span.style.border = '1px solid var(--text-faint)';
+                                }
+                            }
+            
                             return span;
                         }
 
@@ -297,7 +319,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         destroy() {
                             // No cleanup needed for this simple widget
                         }
-                    }(color)
+                    }(color, backgroundColor, settings)
                 }));
             }
 

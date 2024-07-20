@@ -1,5 +1,5 @@
 import { MarkdownPostProcessorContext } from 'obsidian';
-import { blendColorWithBackground, getContrastColor } from './colorProcessor';
+import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
 import ColorHighlighterPlugin from './main';
 import { COLOR_REGEX, getBackgroundColor } from './utils';
 
@@ -127,7 +127,6 @@ function createHighlightedSpan(colorCode: string, parent: Element | null, plugin
     try {
         effectiveColor = blendColorWithBackground(colorCode, backgroundColor, plugin.app);
     } catch (error) {
-        console.warn('Error blending color:', error);
         effectiveColor = colorCode; // Fallback to original color if blending fails
     }
 
@@ -140,6 +139,13 @@ function createHighlightedSpan(colorCode: string, parent: Element | null, plugin
             const contrastColor = getContrastColor(effectiveColor, backgroundColor);
             span.style.backgroundColor = effectiveColor;
             span.style.color = contrastColor;
+
+            if (plugin.settings.useContrastingBorder) {
+                const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
+                if (contrastRatio < 1.33) {
+                    span.dataset.contrastBorder = 'true';
+                }
+            }
             break;
         case 'underline':
             span.classList.add('underline');
@@ -150,6 +156,13 @@ function createHighlightedSpan(colorCode: string, parent: Element | null, plugin
             square.classList.add('color-highlighter-square');
             square.style.backgroundColor = effectiveColor;
             span.appendChild(square);
+
+            if (plugin.settings.useContrastingBorder) {
+                const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
+                if (contrastRatio < 1.33) {
+                    square.dataset.contrastBorder = 'true';
+                }
+            }
             break;
         case 'border':
             span.classList.add('border');

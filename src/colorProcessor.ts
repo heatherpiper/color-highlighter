@@ -157,7 +157,69 @@ export function getContrastColor(color: string, background: string): string {
     return (yiq >= 128) ? 'black' : 'white';
 }
 
+/**
+ * Calculates the contrast ratio between two colors.
+ *
+ * @param color1 The first color in any supported format (hex, rgb, rgba, hsl, hsla).
+ * @param color2 The second color in any supported format.
+ * @returns The contrast ratio between the two colors.
+ */
+export function getContrastRatio(color1: string, color2: string): number {
+    const lum1 = getLuminance(color1);
+    const lum2 = getLuminance(color2);
+    const brightest = Math.max(lum1, lum2);
+    const darkest = Math.min(lum1, lum2);
+    const ratio = (brightest + 0.05) / (darkest + 0.05);
+    return ratio;
+}
+
+/**
+ * Calculates the relative luminance of a color.
+ *
+ * @param color The color in any supported format (hex, rgb, rgba, hsl, hsla).
+ * @returns The relative luminance of the color.
+ */
+function getLuminance(color: string): number {
+    let rgb: [number, number, number];
+    
+    if (color.startsWith('rgb')) {
+        rgb = extractRgbComponents(color);
+    } else if (color.startsWith('hsl')) {
+        const hslValues = extractHslaComponents(color);
+        if (hslValues) {
+            const [h, s, l] = hslValues;
+            rgb = hslToRgbArray(h, s, l).map(c => Math.round(c * 255)) as [number, number, number];
+        } else {
+            rgb = [0, 0, 0]; // Fallback to black if extraction fails
+        }
+    } else if (color.startsWith('#')) {
+        rgb = hexToRgb(color);
+    } else {
+        rgb = [0, 0, 0]; // Fallback to black for unsupported formats
+    }
+    
+    return rgb.map((c: number): number => {
+        const channel = c / 255;
+        return channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+    }).reduce((acc, val, index) => acc + val * [0.2126, 0.7152, 0.0722][index], 0);
+}
+
 // Color conversion methods
+
+/**
+ * Converts a hex color string to RGB values.
+ * 
+ * @param hex The hex color string (with or without '#' prefix).
+ * @returns An array of RGB values [r, g, b].
+ */
+function hexToRgb(hex: string): [number, number, number] {
+    const cleanHex = hex.charAt(0) === '#' ? hex.substring(1) : hex;
+    const bigint = parseInt(cleanHex, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return [r, g, b];
+}
 
 /**
  * Converts an HSL color string to an RGB color string.
@@ -205,6 +267,30 @@ export function hslToRgb(hsl: string): string {
         console.error('Error converting HSL to RGB:', error, hsl)
         return 'rgb(0,0,0)'; // Fallback to black if there's an error
     }
+}
+
+/**
+ * Converts an HSL color to RGB values.
+ *
+ * @param h Hue (0-360)
+ * @param s Saturation (0-1)
+ * @param l Lightness (0-1)
+ * @returns An array of RGB values [r, g, b], each in the range 0-1.
+ */
+function hslToRgbArray(h: number, s: number, l: number): [number, number, number] {
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    let r, g, b;
+    
+    if (h < 60) { r = c; g = x; b = 0; }
+    else if (h < 120) { r = x; g = c; b = 0; }
+    else if (h < 180) { r = 0; g = c; b = x; }
+    else if (h < 240) { r = 0; g = x; b = c; }
+    else if (h < 300) { r = x; g = 0; b = c; }
+    else { r = c; g = 0; b = x; }
+
+    return [r + m, g + m, b + m];
 }
 
 /**
