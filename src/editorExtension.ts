@@ -334,7 +334,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * @param settings The Color Highlighter settings, including whether the color picker is enabled.
              */
             private addHoverListeners(view: EditorView, from: number, to: number, color: string, settings: ColorHighlighterSettings) {
-                const { enableColorPicker } = settings;
+                const { enableColorPicker, highlightStyle } = settings;
                 if (!enableColorPicker) return;
             
                 let showTimeout: number | null = null;
@@ -359,14 +359,24 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             
                 view.dom.addEventListener('mouseover', (event) => {
                     const target = event.target as HTMLElement;
-                    if (target.hasAttribute('data-decoration-id') && target.getAttribute('data-decoration-id') === `${from}-${to}`) {
+                    if (
+                        (target.hasAttribute('data-decoration-id') && target.getAttribute('data-decoration-id') === `${from}-${to}`) ||
+                        (highlightStyle === 'square' && 
+                         ((target.classList.contains('color-highlighter-square') && target.previousElementSibling?.getAttribute('data-decoration-id') === `${from}-${to}`) ||
+                          (target.classList.contains('color-highlighter-square') && target.getAttribute('data-decoration-id') === `${from}-${to}`)))
+                    ) {
                         showColorPicker(event);
                     }
                 });
             
                 view.dom.addEventListener('mouseout', (event) => {
                     const target = event.target as HTMLElement;
-                    if (target.hasAttribute('data-decoration-id') && target.getAttribute('data-decoration-id') === `${from}-${to}`) {
+                    if (
+                        (target.hasAttribute('data-decoration-id') && target.getAttribute('data-decoration-id') === `${from}-${to}`) ||
+                        (highlightStyle === 'square' && 
+                         ((target.classList.contains('color-highlighter-square') && target.previousElementSibling?.getAttribute('data-decoration-id') === `${from}-${to}`) ||
+                          (target.classList.contains('color-highlighter-square') && target.getAttribute('data-decoration-id') === `${from}-${to}`)))
+                    ) {
                         hideColorPicker(event);
                     }
                 });
