@@ -106,7 +106,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 })
             );
 
-        if (this.plugin.settings.highlightStyle === 'background') {
+        if (this.plugin.settings.highlightStyle === 'background' || this.plugin.settings.highlightStyle === 'square') {
             new Setting(containerEl)
                 .setName('Use contrasting border for low-contrast highlights')
                 .setDesc('Adds a faint border around highlights when there is not enough contrast with the background.')
