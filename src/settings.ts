@@ -7,6 +7,7 @@ export interface ColorHighlighterSettings {
     highlightInCodeblocks: boolean;
     highlightStyle: 'background' | 'border' | 'square' | 'underline';
     enableColorPicker: boolean;
+    useContrastingBorder: boolean;
 }
 
 export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
@@ -14,7 +15,8 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     highlightInBackticks: false,
     highlightInCodeblocks: false,
     highlightStyle: 'background',
-    enableColorPicker: true
+    enableColorPicker: true,
+    useContrastingBorder: false,
 }
 
 export class ColorHighlighterSettingTab extends PluginSettingTab {
@@ -111,6 +113,17 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.enableColorPicker)
                 .onChange(async (value) => {
                     this.plugin.settings.enableColorPicker = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        new Setting(containerEl)
+            .setName('Use contrasting border for low-contrast highlights')
+            .setDesc('Adds a faint border around highlights when there is not enough contrast with the background.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.useContrastingBorder)
+                .onChange(async (value) => {
+                    this.plugin.settings.useContrastingBorder = value;
                     await this.plugin.saveSettings();
                 })
             );
