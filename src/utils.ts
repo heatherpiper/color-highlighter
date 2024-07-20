@@ -193,6 +193,7 @@ export function addStyles(plugin: any) {
             height: 1em;
             margin-left: 0.25em;
             vertical-align: baseline;
+            border-radius: 2px;
         }
         .color-highlighter-square[data-contrast-border="true"] {
             border: 1px solid var(--text-faint);

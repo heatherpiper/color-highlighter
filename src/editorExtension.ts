@@ -281,6 +281,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             span.style.backgroundColor = this.color;
                             span.style.marginLeft = '0.25em';
                             span.style.verticalAlign = 'baseline';
+                            span.style.borderRadius = '2px';
             
                             if (this.settings.useContrastingBorder) {
                                 const contrastRatio = getContrastRatio(this.color, this.backgroundColor);
