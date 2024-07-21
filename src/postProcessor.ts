@@ -159,7 +159,7 @@ function createHighlightedSpan(colorCode: string, parent: Element | null, plugin
 
             if (plugin.settings.useContrastingBorder) {
                 const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
-                if (contrastRatio < 1.33) {
+                if (contrastRatio < 1.3) {
                     square.dataset.contrastBorder = 'true';
                 }
             }

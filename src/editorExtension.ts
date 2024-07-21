@@ -285,7 +285,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             
                             if (this.settings.useContrastingBorder) {
                                 const contrastRatio = getContrastRatio(this.color, this.backgroundColor);
-                                if (contrastRatio < 1.5) {
+                                if (contrastRatio < 1.3) {
                                     span.style.border = '1px solid var(--text-faint)';
                                 }
                             }
