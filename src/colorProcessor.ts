@@ -213,12 +213,26 @@ function getLuminance(color: string): number {
  * @returns An array of RGB values [r, g, b].
  */
 function hexToRgb(hex: string): [number, number, number] {
-    const cleanHex = hex.charAt(0) === '#' ? hex.substring(1) : hex;
-    const bigint = parseInt(cleanHex, 16);
-    const r = (bigint >> 16) & 255;
-    const g = (bigint >> 8) & 255;
-    const b = bigint & 255;
-    return [r, g, b];
+    const cleanHex = hex.charAt(0) === '#' ? hex.slice(1) : hex;
+    
+    if (cleanHex.length === 3) {
+        // 3-digit hex
+        return [
+            parseInt(cleanHex[0] + cleanHex[0], 16),
+            parseInt(cleanHex[1] + cleanHex[1], 16),
+            parseInt(cleanHex[2] + cleanHex[2], 16)
+        ];
+    } else if (cleanHex.length === 6) {
+        // 6-digit hex
+        return [
+            parseInt(cleanHex.slice(0, 2), 16),
+            parseInt(cleanHex.slice(2, 4), 16),
+            parseInt(cleanHex.slice(4, 6), 16)
+        ];
+    } else {
+        console.warn('Invalid hex color:', hex);
+        return [0, 0, 0]; // Fallback to black for invalid hex
+    }
 }
 
 /**
