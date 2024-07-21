@@ -163,29 +163,11 @@ export function addStyles(plugin: any) {
         }
         .color-highlighter.border {
             border-radius: 3px;
-            border-width: 2px;
-            border-style: solid;
-            padding: 0 2px;
+            border: 2px solid;
+            padding: 0 0.2em;
         }
         .color-highlighter.underline {
-            border-bottom-width: 2px;
-            border-bottom-style: solid;
-            padding-bottom: 1px;
-        }
-        .color-highlighter.underline::before,
-        .color-highlighter.underline::after {
-            content: "";
-            position: absolute;
-            bottom: -2px;
-            width: 0;
-            height: 2px;
-            background-color: inherit;
-        }
-        .color-highlighter.underline::before {
-            left: 0;
-        }
-        .color-highlighter.underline::after {
-            right: 0;
+            border-bottom: 2px solid;
         }
         .color-highlighter-square {
             display: inline-block;
@@ -193,7 +175,7 @@ export function addStyles(plugin: any) {
             height: 1em;
             margin-left: 0.25em;
             vertical-align: baseline;
-            border-radius: 2px;
+            border-radius: 1px;
         }
         .color-highlighter-square[data-contrast-border="true"] {
             border: 1px solid var(--text-faint);

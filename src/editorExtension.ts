@@ -237,7 +237,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         break;
                     case 'underline':
                         attributes.class += " color-highlighter-underline";
-                        attributes.style = `border-bottom: 2px solid ${effectiveColor}; text-decoration-skip-ink: none; border-radius: 0;`;
+                        attributes.style = `border-bottom: 2px solid ${effectiveColor};`;
                         break;
                     case 'square':
                         if (settings.useContrastingBorder) {
@@ -249,7 +249,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         break;
                     case 'border':
                         attributes.class += " color-highlighter-border";
-                        attributes.style = `border: 2px solid ${effectiveColor}; border-radius: 3px;`;
+                        attributes.style = `border: 2px solid ${effectiveColor}; border-radius: 3px; padding: 0 0.2em;`;
                         break;
                 }
 
@@ -281,7 +281,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             span.style.backgroundColor = this.color;
                             span.style.marginLeft = '0.25em';
                             span.style.verticalAlign = 'baseline';
-                            span.style.borderRadius = '2px';
+                            span.style.borderRadius = '1px';
             
                             if (this.settings.useContrastingBorder) {
                                 const contrastRatio = getContrastRatio(this.color, this.backgroundColor);
