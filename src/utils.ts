@@ -173,7 +173,7 @@ export function addStyles(plugin: any) {
             padding: 0.1em 0.2em;
         }
         .color-highlighter.background[data-contrast-border="true"] {
-            border: 1px solid var(--text-faint);
+            border: 1px solid var(--background-modifier-border);
             padding: calc(0.1em - 1px) calc(0.2em - 1px);
         }
         .color-highlighter.border {
@@ -193,7 +193,7 @@ export function addStyles(plugin: any) {
             border-radius: 1px;
         }
         .color-highlighter-square[data-contrast-border="true"] {
-            border: 1px solid var(--text-faint);
+            border: 1px solid var(--background-modifier-border);
         }
     `;
 
