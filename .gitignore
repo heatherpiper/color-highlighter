@@ -3,3 +3,6 @@ node_modules/
 
 # Ignore compiled JavaScript files
 *.js
+
+# Ignore IDE configuration files
+*.idea
