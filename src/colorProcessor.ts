@@ -1,5 +1,5 @@
 import { App } from 'obsidian';
-import { extractHslaComponents, extractRgbComponents, getBackgroundColor } from './utils';
+import { extractHslaComponents, extractRgbComponents, extractRgbaComponents, getBackgroundColor } from './utils';
 
 
 /**
@@ -183,14 +183,21 @@ function getLuminance(color: string): number {
     let rgb: [number, number, number];
     
     if (color.startsWith('rgb')) {
-        rgb = extractRgbComponents(color);
-    } else if (color.startsWith('hsl')) {
-        const hslValues = extractHslaComponents(color);
-        if (hslValues) {
-            const [h, s, l] = hslValues;
-            rgb = hslToRgbArray(h, s, l).map(c => Math.round(c * 255)) as [number, number, number];
+        const components = extractRgbaComponents(color);
+        if (components) {
+            const [r, g, b, a] = components;
+            rgb = [r, g, b].map(c => Math.round(c * a + (1 - a) * 255)) as [number, number, number];
         } else {
-            rgb = [0, 0, 0]; // Fallback to black if extraction fails
+            rgb = [0, 0, 0];
+        }
+    } else if (color.startsWith('hsl')) {
+        const components = extractHslaComponents(color);
+        if (components) {
+            const [h, s, l, a] = components;
+            const [r, g, b] = hslToRgbArray(h, s, l);
+            rgb = [r, g, b].map(c => Math.round(c * a * 255 + (1 - a) * 255)) as [number, number, number];
+        } else {
+            rgb = [0, 0, 0];
         }
     } else if (color.startsWith('#')) {
         rgb = hexToRgb(color);

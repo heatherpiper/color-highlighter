@@ -106,6 +106,21 @@ export function extractRgbComponents(rgbString: string): [number, number, number
     return match.slice(0, 3).map(Number) as [number, number, number];
 }
 
+export function extractRgbaComponents(rgbaString: string): [number, number, number, number] | null {
+    const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (!match) {
+        console.warn('Invalid RGBA string:', rgbaString);
+        return null;
+    }
+    
+    const r = parseInt(match[1], 10);
+    const g = parseInt(match[2], 10);
+    const b = parseInt(match[3], 10);
+    const a = match[4] ? parseFloat(match[4]) : 1;
+    
+    return [r, g, b, a];
+}
+
 /**
  * Extracts the HSLA components from a given HSLA string.
  * 
