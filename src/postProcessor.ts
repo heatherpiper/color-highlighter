@@ -136,47 +136,6 @@ function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin) {
     }
 }
 
-function highlightColorInCodeBlock(tokens: Node[], colorCode: string, plugin: ColorHighlighterPlugin) {
-    const span = document.createElement('span');
-    span.textContent = colorCode;
-    applyHighlightStyle(span, colorCode, plugin);
-
-    // Replace only the part of the tokens that make up the color code
-    let remainingColorCode = colorCode;
-    for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i];
-        const tokenContent = token.textContent || '';
-        
-        if (remainingColorCode.startsWith(tokenContent)) {
-            remainingColorCode = remainingColorCode.slice(tokenContent.length);
-            if (i === 0) {
-                token.parentNode?.insertBefore(span, token);
-            }
-            token.parentNode?.removeChild(token);
-        } else {
-            // Split the token
-            const splitIndex = tokenContent.indexOf(remainingColorCode);
-            if (splitIndex !== -1) {
-                const beforeText = tokenContent.slice(0, splitIndex);
-                const afterText = tokenContent.slice(splitIndex + remainingColorCode.length);
-                
-                const beforeNode = document.createTextNode(beforeText);
-                const afterNode = document.createTextNode(afterText);
-                
-                token.parentNode?.insertBefore(beforeNode, token);
-                token.parentNode?.insertBefore(span, token);
-                token.parentNode?.insertBefore(afterNode, token);
-                token.parentNode?.removeChild(token);
-                
-                break;
-            }
-        }
-        
-        if (remainingColorCode.length === 0) break;
-    }
-}
-
-
 function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: ColorHighlighterPlugin) {
     const backgroundColor = getBackgroundColor(plugin.app);
     let effectiveColor;
