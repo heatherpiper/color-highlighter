@@ -23,16 +23,16 @@ export function createPostProcessor(plugin: ColorHighlighterPlugin) {
         };
 
         processNode(el, isDataviewInline, plugin);
+
+        // Process code blocks after a short delay
+        setTimeout(() => {
+            el.querySelectorAll('pre code').forEach(codeBlock => {
+                processCodeBlock(codeBlock as HTMLElement, plugin);
+            });
+        }, 100);
     };
 }
 
-/**
- * Processes a node in the DOM, highlighting color codes within text nodes and handling Dataview inline queries.
- *
- * @param node The node to be processed.
- * @param isDataviewInline A function that checks if a node is part of a Dataview inline query.
- * @param plugin The ColorHighlighterPlugin instance.
- */
 function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plugin: ColorHighlighterPlugin): void {
     if (node.nodeType === Node.TEXT_NODE && node.textContent) {
         const parent = node.parentElement;
@@ -51,25 +51,55 @@ function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plug
             highlightColorInNode(node as Text, plugin);
         }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-        // Make sure Dataview inline queries are displayed inline
         if (isDataviewInline(node)) {
             handleDataviewInline(node as HTMLElement);
             return;
         }
 
-        // Skip processing of SVG elements
         if ((node as Element).tagName.toLowerCase() !== 'svg') {
             Array.from(node.childNodes).forEach(childNode => processNode(childNode, isDataviewInline, plugin));
         }
     }
 }
 
-/**
- * Highlights color codes within a text node by creating highlighted span elements.
- *
- * @param node The text node containing the color codes to be highlighted.
- * @param plugin The ColorHighlighterPlugin instance.
- */
+function processCodeBlock(codeBlock: HTMLElement, plugin: ColorHighlighterPlugin) {
+    const content = codeBlock.textContent || '';
+    const matches = Array.from(content.matchAll(COLOR_REGEX));
+
+    if (matches.length === 0) return;
+
+    const fragment = document.createDocumentFragment();
+    let lastIndex = 0;
+
+    matches.forEach(match => {
+        const colorCode = match[0];
+        const startIndex = match.index!;
+        const endIndex = startIndex + colorCode.length;
+
+        // Add text before the color code
+        if (startIndex > lastIndex) {
+            fragment.appendChild(document.createTextNode(content.slice(lastIndex, startIndex)));
+        }
+
+        // Add highlighted color code
+        const span = document.createElement('span');
+        span.textContent = colorCode;
+        applyHighlightStyle(span, colorCode, plugin);
+        fragment.appendChild(span);
+
+        lastIndex = endIndex;
+    });
+
+    // Add any remaining text
+    if (lastIndex < content.length) {
+        fragment.appendChild(document.createTextNode(content.slice(lastIndex)));
+    }
+
+    // Replace the content of the code block
+    codeBlock.textContent = '';
+    codeBlock.appendChild(fragment);
+}
+
 function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin) {
     const fragment = document.createDocumentFragment();
     let lastIndex = 0;
@@ -85,52 +115,77 @@ function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin) {
         const startIndex = match.index;
         const endIndex = startIndex + colorCode.length;
 
-        // Add the text before the color code
         if (startIndex > lastIndex) {
             fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex, startIndex)));
         }
 
-        // Add highlighted color code
-        const span = createHighlightedSpan(colorCode, node.parentElement, plugin);
+        const span = document.createElement('span');
+        span.textContent = colorCode;
+        applyHighlightStyle(span, colorCode, plugin);
         fragment.appendChild(span);
 
         lastIndex = endIndex;
     }
 
-    // Add any remaining text
     if (lastIndex < node.textContent.length) {
         fragment.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
     }
 
-    // Replace the original text node with the fragment
     if (hasColorMatch) {
         node.parentNode?.replaceChild(fragment, node);
     }
 }
 
-/**
- * Creates a highlighted span element with the specified color code and applies the appropriate highlight style based on the plugin settings.
- *
- * @param colorCode The color code to be highlighted.
- * @param parent The parent element of the color code.
- * @param plugin The ColorHighlighterPlugin instance.
- * @returns A highlighted span element.
- */
-function createHighlightedSpan(colorCode: string, parent: Element | null, plugin: ColorHighlighterPlugin): HTMLSpanElement {
+function highlightColorInCodeBlock(tokens: Node[], colorCode: string, plugin: ColorHighlighterPlugin) {
     const span = document.createElement('span');
     span.textContent = colorCode;
+    applyHighlightStyle(span, colorCode, plugin);
 
+    // Replace only the part of the tokens that make up the color code
+    let remainingColorCode = colorCode;
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        const tokenContent = token.textContent || '';
+        
+        if (remainingColorCode.startsWith(tokenContent)) {
+            remainingColorCode = remainingColorCode.slice(tokenContent.length);
+            if (i === 0) {
+                token.parentNode?.insertBefore(span, token);
+            }
+            token.parentNode?.removeChild(token);
+        } else {
+            // Split the token
+            const splitIndex = tokenContent.indexOf(remainingColorCode);
+            if (splitIndex !== -1) {
+                const beforeText = tokenContent.slice(0, splitIndex);
+                const afterText = tokenContent.slice(splitIndex + remainingColorCode.length);
+                
+                const beforeNode = document.createTextNode(beforeText);
+                const afterNode = document.createTextNode(afterText);
+                
+                token.parentNode?.insertBefore(beforeNode, token);
+                token.parentNode?.insertBefore(span, token);
+                token.parentNode?.insertBefore(afterNode, token);
+                token.parentNode?.removeChild(token);
+                
+                break;
+            }
+        }
+        
+        if (remainingColorCode.length === 0) break;
+    }
+}
+
+
+function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: ColorHighlighterPlugin) {
     const backgroundColor = getBackgroundColor(plugin.app);
-
-    // Get the effective color based on the background color
     let effectiveColor;
     try {
         effectiveColor = blendColorWithBackground(colorCode, backgroundColor, plugin.app);
     } catch (error) {
-        effectiveColor = colorCode; // Fallback to original color if blending fails
+        effectiveColor = colorCode;
     }
 
-    // Set the highlight style based on the settings
     span.classList.add('color-highlighter');
 
     switch (plugin.settings.highlightStyle) {
@@ -169,8 +224,6 @@ function createHighlightedSpan(colorCode: string, parent: Element | null, plugin
             span.style.borderColor = effectiveColor;
             break;
     }
-
-    return span;
 }
 
 /**
