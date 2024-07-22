@@ -230,7 +230,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
                             if (contrastRatio < 1.25) {
                                 attributes['data-contrast-border'] = 'true';
-                                attributes.style += ' border: 1px solid var(--background-modifier-border);';
+                                attributes.style += ' border: 1px solid var(--background-modifier-border-hover);';
                                 attributes.style += ' padding: calc(0.1em - 1px) calc(0.2em - 1px);';
                             }
                         }
@@ -286,7 +286,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             if (this.settings.useContrastingBorder) {
                                 const contrastRatio = getContrastRatio(this.color, this.backgroundColor);
                                 if (contrastRatio < 1.25) {
-                                    span.style.border = '1px solid var(--background-modifier-border)';
+                                    span.style.border = '1px solid var(--background-modifier-border-hover)';
                                 }
                             }
             
