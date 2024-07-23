@@ -189,7 +189,7 @@ export function addStyles(plugin: any) {
             width: 1em;
             height: 1em;
             margin-left: 0.25em;
-            vertical-align: baseline;
+            vertical-align: middle;
             border-radius: 1px;
         }
         .color-highlighter-square[data-contrast-border="true"] {

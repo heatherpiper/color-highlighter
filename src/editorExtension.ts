@@ -280,7 +280,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             span.style.height = '1em';
                             span.style.backgroundColor = this.color;
                             span.style.marginLeft = '0.25em';
-                            span.style.verticalAlign = 'baseline';
+                            span.style.verticalAlign = 'middle';
                             span.style.borderRadius = '1px';
             
                             if (this.settings.useContrastingBorder) {
