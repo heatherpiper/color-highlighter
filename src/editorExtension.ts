@@ -18,7 +18,6 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                 this.colorPicker = new ColorPicker(plugin.app);
             }
 
-
             /**
              * Updates the color highlight decorations in the editor view when the document or viewport changes.
              *
@@ -208,7 +207,6 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     console.warn('Error adding decoration:', error, { color, highlightStyle });
                 }
             }
-
 
             /**
              * Generates the appropriate decoration attributes based on the selected highlight style.
