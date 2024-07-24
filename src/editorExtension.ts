@@ -158,7 +158,6 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                        node.type.name.includes('HyperMD-codeblock');
             }
 
-
             /**
              * Applies the appropriate styles and attributes based on the selected highlight style. It
              * adds a square widget for the 'square' highlight style.
@@ -198,7 +197,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         builder.add(start, end, decoration);
                     }
             
-                    // Add hover listeners
+                    // Add hover listeners for color picker
                     this.addHoverListeners(view, start, end, color, settings);
             
                     // Add a square widget for the 'square' highlight style
@@ -295,7 +294,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             return other instanceof this.constructor && (other as any).color === this.color;
                         }
 
-                        updateDOM(dom: HTMLElement): boolean {
+                        updateDOM(): boolean {
                             return false; // The widget is static, so no update is needed
                         }
 
@@ -311,7 +310,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             return 0; // The square doesn't introduce any line breaks
                         }
 
-                        coordsAt(dom: HTMLElement, pos: number, side: number): { top: number, right: number, bottom: number, left: number } | null {
+                        coordsAt(): { top: number, right: number, bottom: number, left: number } | null {
                             return null; // We don't need to implement custom coordinates
                         }
 
@@ -376,8 +375,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         hideColorPicker(event);
                     }
                 });
-            
-                // No need to return a cleanup function as we're attaching listeners to the view.dom
+
             }
 
         },
