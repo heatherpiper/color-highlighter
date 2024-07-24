@@ -10,7 +10,7 @@ import { COLOR_REGEX, getBackgroundColor } from './utils';
  * @returns A post-processor function to be used in an Obsidian plugin.
  */
 export function createPostProcessor(plugin: ColorHighlighterPlugin) {
-    return (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+    return (el: HTMLElement) => {
         const isDataviewInline = (node: Node): boolean => {
             let parent = node.parentElement;
             while (parent) {
