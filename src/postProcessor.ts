@@ -1,4 +1,3 @@
-import { MarkdownPostProcessorContext } from 'obsidian';
 import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
 import ColorHighlighterPlugin from './main';
 import { COLOR_REGEX, getBackgroundColor } from './utils';
