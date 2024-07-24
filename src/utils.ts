@@ -186,8 +186,8 @@ export function addStyles(plugin: any) {
         }
         .color-highlighter-square {
             display: inline-block;
-            width: 1em;
-            height: 1em;
+            width: 10px;
+            height: 10px;
             margin-left: 0.25em;
             vertical-align: middle;
             border-radius: 1px;

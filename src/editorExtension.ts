@@ -259,8 +259,6 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             /**
              * Adds a square widget to the editor decoration at the specified position.
              *
-             * The square widget is a 10x10 pixel square with the provided color, displayed inline with the text.
-             *
              * @param builder The RangeSetBuilder to add the decoration to.
              * @param end The position in the editor where the square widget should be added.
              * @param color The color to use for the square widget.
@@ -276,8 +274,8 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             const span = document.createElement('span');
                             span.className = 'color-highlighter-square';
                             span.style.display = 'inline-block';
-                            span.style.width = '1em';
-                            span.style.height = '1em';
+                            span.style.width = '10px';
+                            span.style.height = '10px';
                             span.style.backgroundColor = this.color;
                             span.style.marginLeft = '0.25em';
                             span.style.verticalAlign = 'middle';
@@ -317,9 +315,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             return null; // We don't need to implement custom coordinates
                         }
 
-                        destroy() {
-                            // No cleanup needed for this simple widget
-                        }
+                        destroy() {}
                     }(color, backgroundColor, settings)
                 }));
             }
