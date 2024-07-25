@@ -5,7 +5,7 @@ import { ColorPicker } from './colorPicker';
 import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
 import ColorHighlighterPlugin from './main';
 import { ColorHighlighterSettings } from './settings';
-import { COLOR_REGEX, getBackgroundColor } from './utils';
+import { COLOR_REGEX, getBackgroundColor, hasAlphaChannel } from './utils';
 
 export function createEditorExtension(plugin: ColorHighlighterPlugin) {
     return ViewPlugin.fromClass(
@@ -172,7 +172,13 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                 try {
                     let editorBackground = getBackgroundColor(plugin.app);
                     
-                    const effectiveColor = blendColorWithBackground(color, editorBackground, plugin.app);
+                    let effectiveColor: string;
+                    if (!hasAlphaChannel(color)) {
+                        effectiveColor = color;
+                    } else {
+                        effectiveColor = blendColorWithBackground(color, editorBackground, plugin.app);
+                    }
+
                     const contrastColor = getContrastColor(effectiveColor, editorBackground);
             
                     // Get the decoration attributes based on the selected style

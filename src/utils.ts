@@ -156,6 +156,15 @@ export function extractHslaComponents(hsla: string): [number, number, number, nu
     return [h, s, l, a];
 }
 
+export function hasAlphaChannel(color: string): boolean {
+    if (color.startsWith('rgba') || color.startsWith('hsla')) {
+        return true;
+    }
+    if (color.startsWith('#')) {
+        return color.length === 5 || color.length === 9; // 4 digits (with alpha) or 8 digits (with alpha)
+    }
+    return false;
+}
 
 /**
  * Registers a Markdown post-processor that adds custom CSS styles to the plugin.
