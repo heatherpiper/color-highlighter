@@ -189,6 +189,23 @@ export function hasAlphaChannel(color: string): boolean {
     return false;
 }
 
+export function isValidColorContext(text: string, index: number): boolean {
+    // Check if the color is a value in a CSS property
+    const beforeText = text.slice(0, index).trim();
+    const cssPropertyRegex = /:\s*$/;
+    if (cssPropertyRegex.test(beforeText)) {
+        return true;
+    }
+
+    // Check if the color is a value in an HTML color attribute
+    const htmlColorAttributeRegex = /(?:color|background-color|border-color)=["']?$/i;
+    if (htmlColorAttributeRegex.test(beforeText)) {
+        return true;
+    }
+
+    return false;
+}
+
 /**
  * Registers a Markdown post-processor that adds custom CSS styles to the plugin.
  * The styles define the appearance of color highlights in the various highlight styles available in the settings.
