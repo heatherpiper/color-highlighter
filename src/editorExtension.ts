@@ -178,7 +178,6 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     // Get the decoration attributes based on the selected style
                     const decorationAttributes = this.getDecorationAttributes(highlightStyle, effectiveColor, contrastColor, editorBackground, settings);
                     
-                    // Add data-decoration-id attribute
                     decorationAttributes['data-decoration-id'] = `${start}-${end}`;
             
                     let decoration: Decoration;
@@ -196,12 +195,12 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         builder.add(start, end, decoration);
                     }
             
-                    // Add hover listeners for color picker
+                    // Add hover listeners
                     this.addHoverListeners(view, start, end, color, settings);
             
                     // Add a square widget for the 'square' highlight style
                     if (highlightStyle === 'square') {
-                        this.addSquareWidget(builder, end, effectiveColor, editorBackground, settings);
+                        this.addSquareWidget(builder, end, effectiveColor, editorBackground, settings, `${start}-${end}`);
                     }
                 } catch (error) {
                     console.warn('Error adding decoration:', error, { color, highlightStyle });
@@ -260,16 +259,17 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * @param end The position in the editor where the square widget should be added.
              * @param color The color to use for the square widget.
              */
-            private addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string, backgroundColor: string, settings: ColorHighlighterSettings) {
+            private addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string, backgroundColor: string, settings: ColorHighlighterSettings, decorationId: string) {
                 builder.add(end, end, Decoration.widget({
                     widget: new class extends WidgetType {
-                        constructor(readonly color: string, readonly backgroundColor: string, readonly settings: ColorHighlighterSettings) {
+                        constructor(readonly color: string, readonly backgroundColor: string, readonly settings: ColorHighlighterSettings, readonly decorationId: string) {
                             super();
                         }
                         
                         toDOM() {
                             const span = document.createElement('span');
                             span.className = 'color-highlighter-square';
+                            span.setAttribute('data-decoration-id', this.decorationId);
                             span.style.display = 'inline-block';
                             span.style.width = '10px';
                             span.style.height = '10px';
@@ -313,19 +313,21 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         }
 
                         destroy() {}
-                    }(color, backgroundColor, settings)
+                    }(color, backgroundColor, settings, decorationId)
                 }));
             }
 
-            /**
-             * Adds hover listeners to the editor view to show and hide the color picker when the user hovers over a highlighted region.
-             *
-             * @param view The editor view.
-             * @param from The start position of the highlighted region.
-             * @param to The end position of the highlighted region.
-             * @param color The color of the highlighted region.
-             * @param settings The Color Highlighter settings, including whether the color picker is enabled.
-             */
+           /**
+            * Adds hover listeners to color decorations to show the color picker.
+            * 
+            * @param view The EditorView instance where the decorations are applied.
+            * @param from The starting position of the color decoration in the document.
+            * @param to The ending position of the color decoration in the document.
+            * @param color The color string associated with this decoration.
+            * @param settings The plugin settings object, containing color highlighter options.
+            * 
+            * @returns A cleanup function that removes the added event listeners when called.
+            */
             private addHoverListeners(view: EditorView, from: number, to: number, color: string, settings: ColorHighlighterSettings) {
                 const { enableColorPicker, highlightStyle } = settings;
                 if (!enableColorPicker) return;
@@ -342,7 +344,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     }, 200);
                 };
             
-                const hideColorPicker = (event: MouseEvent) => {
+                const hideColorPicker = () => {
                     if (showTimeout) {
                         clearTimeout(showTimeout);
                         showTimeout = null;
@@ -350,32 +352,35 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     this.colorPicker.scheduleHide();
                 };
             
-                view.dom.addEventListener('mouseover', (event) => {
+                const handleMouseEvent = (event: MouseEvent) => {
                     const target = event.target as HTMLElement;
+                    
                     if (
                         (target.hasAttribute('data-decoration-id') && target.getAttribute('data-decoration-id') === `${from}-${to}`) ||
                         (highlightStyle === 'square' && 
-                         ((target.classList.contains('color-highlighter-square') && target.previousElementSibling?.getAttribute('data-decoration-id') === `${from}-${to}`) ||
-                          (target.classList.contains('color-highlighter-square') && target.getAttribute('data-decoration-id') === `${from}-${to}`)))
+                         target.classList.contains('color-highlighter-square') && 
+                         (target.getAttribute('data-decoration-id') === `${from}-${to}` || 
+                          target.previousElementSibling?.getAttribute('data-decoration-id') === `${from}-${to}`))
                     ) {
-                        showColorPicker(event);
+                        if (event.type === 'mouseover') {
+                            showColorPicker(event);
+                        } else if (event.type === 'mouseout') {
+                            hideColorPicker();
+                        }
                     }
-                });
+                };
             
-                view.dom.addEventListener('mouseout', (event) => {
-                    const target = event.target as HTMLElement;
-                    if (
-                        (target.hasAttribute('data-decoration-id') && target.getAttribute('data-decoration-id') === `${from}-${to}`) ||
-                        (highlightStyle === 'square' && 
-                         ((target.classList.contains('color-highlighter-square') && target.previousElementSibling?.getAttribute('data-decoration-id') === `${from}-${to}`) ||
-                          (target.classList.contains('color-highlighter-square') && target.getAttribute('data-decoration-id') === `${from}-${to}`)))
-                    ) {
-                        hideColorPicker(event);
+                view.dom.addEventListener('mouseover', handleMouseEvent);
+                view.dom.addEventListener('mouseout', handleMouseEvent);
+            
+                return () => {
+                    view.dom.removeEventListener('mouseover', handleMouseEvent);
+                    view.dom.removeEventListener('mouseout', handleMouseEvent);
+                    if (showTimeout) {
+                        clearTimeout(showTimeout);
                     }
-                });
-
+                };
             }
-
         },
         {
             decorations: v => v.decorations
