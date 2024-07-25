@@ -177,6 +177,9 @@ export function extractHslaComponents(hsla: string): [number, number, number, nu
 }
 
 export function hasAlphaChannel(color: string): boolean {
+    if (HTML_NAMED_COLORS.includes(color.toLowerCase())) {
+        return false;
+    }
     if (color.startsWith('rgba') || color.startsWith('hsla')) {
         return true;
     }
