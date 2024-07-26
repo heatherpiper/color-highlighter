@@ -90,19 +90,18 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                             this.display();
                         })
                     );
-
-                new Setting(codeHighlightSettings)
-                    .setName('Highlight named colors in HTML/CSS')
-                    .setDesc('Highlight named colors (e.g., "red", "blue") in HTML and CSS code blocks')
-                    .addToggle(toggle => toggle
-                        .setValue(this.plugin.settings.highlightNamedColors)
-                        .onChange(async (value) => {
-                            this.plugin.settings.highlightNamedColors = value;
-                            await this.plugin.saveSettings();
-                            this.display();
-                        })
-                    );
             }
+
+        new Setting(containerEl)
+            .setName('Highlight named colors in HTML/CSS')
+            .setDesc('Highlight named colors (e.g., "red", "blue") in HTML and CSS code blocks. This setting is independent of other highlight settings.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.highlightNamedColors)
+                .onChange(async (value) => {
+                    this.plugin.settings.highlightNamedColors = value;
+                    await this.plugin.saveSettings();
+                })
+            );
             
         new Setting(containerEl)
             .setName('Highlight style')
