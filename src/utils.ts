@@ -354,6 +354,12 @@ export function isValidColorContext(text: string, index: number): boolean {
         return true;
     }
 
+    // Check if the color is a value in an HTML style attribute
+    const styleAttributeRegex = /style\s*=\s*["'][^"']*$/i;
+    if (styleAttributeRegex.test(beforeText)) {
+        return true;
+    }
+
     return false;
 }
 
