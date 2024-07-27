@@ -5,7 +5,6 @@ export interface ColorHighlighterSettings {
     highlightEverywhere: boolean;
     highlightInBackticks: boolean;
     highlightInCodeblocks: boolean;
-    highlightNamedColors: boolean;
     highlightStyle: 'background' | 'border' | 'square' | 'underline';
     enableColorPicker: boolean;
     useContrastingBorder: boolean;
@@ -15,7 +14,6 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     highlightEverywhere: true,
     highlightInBackticks: false,
     highlightInCodeblocks: false,
-    highlightNamedColors: true,
     highlightStyle: 'background',
     enableColorPicker: true,
     useContrastingBorder: false,
@@ -91,17 +89,6 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                         })
                     );
             }
-
-        new Setting(containerEl)
-            .setName('Highlight named colors in HTML/CSS')
-            .setDesc('Highlight named colors (e.g., "red", "blue") in HTML and CSS code blocks. This setting is independent of other highlight settings.')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.highlightNamedColors)
-                .onChange(async (value) => {
-                    this.plugin.settings.highlightNamedColors = value;
-                    await this.plugin.saveSettings();
-                })
-            );
             
         new Setting(containerEl)
             .setName('Highlight style')
