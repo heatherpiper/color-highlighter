@@ -155,27 +155,6 @@ export function extractHslaComponents(hsla: string): [number, number, number, nu
     return [h, s, l, a];
 }
 
-export function getCodeBlockLanguage(element: HTMLElement): string | null {
-    // For Reading mode
-    if (element.classList.contains('language-html') || element.classList.contains('language-css')) {
-        return element.className.match(/language-(html|css)/)?.[1] || null;
-    }
-
-    // For Source mode
-    const sourceModeLangMatch = element.textContent?.match(/^```(html|css)/i);
-    if (sourceModeLangMatch) {
-        return sourceModeLangMatch[1].toLowerCase();
-    }
-
-    // For Live Preview mode
-    const livePreviewFlair = element.querySelector('.code-block-flair');
-    if (livePreviewFlair && ['HTML', 'CSS'].includes(livePreviewFlair.textContent || '')) {
-        return livePreviewFlair.textContent?.toLowerCase() || null;
-    }
-
-    return null;
-}
-
 export function hasAlphaChannel(color: string): boolean {
     if (color.startsWith('rgba') || color.startsWith('hsla')) {
         return true;
