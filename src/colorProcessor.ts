@@ -1,5 +1,5 @@
 import { App } from 'obsidian';
-import { ColorString } from '../types'
+import { ColorString, RGBAComponents, RGBComponents } from '../types'
 import { extractHslaComponents, extractRgbComponents, extractRgbaComponents, getBackgroundColor } from './utils';
 
 
@@ -165,7 +165,7 @@ export function getContrastColor(color: ColorString, background: ColorString): C
  * @param color2 The second color in any supported format.
  * @returns The contrast ratio between the two colors.
  */
-export function getContrastRatio(color1: string, color2: string): number {
+export function getContrastRatio(color1: ColorString, color2: ColorString): number {
     const lum1 = getLuminance(color1);
     const lum2 = getLuminance(color2);
     const brightest = Math.max(lum1, lum2);
@@ -180,7 +180,7 @@ export function getContrastRatio(color1: string, color2: string): number {
  * @param color The color in any supported format (hex, rgb, rgba, hsl, hsla).
  * @returns The relative luminance of the color.
  */
-function getLuminance(color: string): number {
+function getLuminance(color: ColorString): number {
     let rgb: [number, number, number];
     
     if (color.startsWith('rgb')) {
@@ -220,7 +220,7 @@ function getLuminance(color: string): number {
  * @param hex The hex color string (with or without '#' prefix).
  * @returns An array of RGB values [r, g, b].
  */
-function hexToRgb(hex: string): [number, number, number] {
+function hexToRgb(hex: ColorString): RGBComponents {
     const cleanHex = hex.charAt(0) === '#' ? hex.slice(1) : hex;
     
     if (cleanHex.length === 3) {
@@ -250,7 +250,7 @@ function hexToRgb(hex: string): [number, number, number] {
  * @returns The RGB color string.
  * @throws {Error} If the input HSL string is invalid.
  */
-export function hslToRgb(hsl: string): string {
+export function hslToRgb(hsl: ColorString): ColorString {
     try {
         // Extract HSL values
         const [h, s, l] = hsl.match(/\d+%?/g)?.map(val => {
@@ -299,7 +299,7 @@ export function hslToRgb(hsl: string): string {
  * @param l Lightness (0-1)
  * @returns An array of RGB values [r, g, b], each in the range 0-1.
  */
-function hslToRgbArray(h: number, s: number, l: number): [number, number, number] {
+function hslToRgbArray(h: number, s: number, l: number): RGBComponents {
     const c = (1 - Math.abs(2 * l - 1)) * s;
     const x = c * (1 - Math.abs((h / 60) % 2 - 1));
     const m = l - c / 2;
@@ -324,7 +324,7 @@ function hslToRgbArray(h: number, s: number, l: number): [number, number, number
  * @param a The alpha value, between 0 and 1.
  * @returns An array of the red, green, blue, and alpha values, each between 0 and 255.
  */
-export function hslaToRgba(h: number, s: number, l: number, a: number): [number, number, number, number] {
+export function hslaToRgba(h: number, s: number, l: number, a: number): RGBAComponents {
     let r, g, b;
     
     if (s === 0) {
@@ -359,7 +359,7 @@ export function hslaToRgba(h: number, s: number, l: number, a: number): [number,
  * @returns The hexadecimal color code.
  * @throws {Error} If the input string is not a valid RGB color.
  */
-export function rgbToHex(rgb: string): string {
+export function rgbToHex(rgb: ColorString): ColorString {
     try {
         if (rgb.startsWith('#')) {
             // If it's already a hex code, return it as is
