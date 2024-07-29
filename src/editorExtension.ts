@@ -3,7 +3,7 @@ import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
 import { ColorPicker } from './colorPicker';
 import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
-import ColorHighlighterPlugin from './main';
+import ColorHighlighterPlugin from '../main';
 import { ColorHighlighterSettings } from './settings';
 import { COLOR_REGEX, getBackgroundColor, hasAlphaChannel } from './utils';
 

@@ -1,9 +1,10 @@
 import { Editor, Notice, Plugin } from 'obsidian';
-import { ColorPicker } from './colorPicker';
-import { createEditorExtension } from './editorExtension';
-import { createPostProcessor } from './postProcessor';
-import { ColorHighlighterSettings, ColorHighlighterSettingTab, DEFAULT_SETTINGS } from './settings';
-import { addStyles, COLOR_REGEX } from './utils';
+import { ColorPicker } from './src/colorPicker';
+import { createEditorExtension } from './src/editorExtension';
+import { createPostProcessor } from './src/postProcessor';
+import { ColorHighlighterSettings, ColorHighlighterSettingTab, DEFAULT_SETTINGS } from './src/settings';
+import { COLOR_REGEX } from './src/utils';
+import './styles.css';
 
 class ColorHighlighterPlugin extends Plugin {
     settings: ColorHighlighterSettings;
@@ -14,7 +15,6 @@ class ColorHighlighterPlugin extends Plugin {
         this.addSettingTab(new ColorHighlighterSettingTab(this.app, this));
         this.registerEditorExtension(createEditorExtension(this));
         this.registerMarkdownPostProcessor(createPostProcessor(this));
-        addStyles(this);
 
         this.colorPicker = new ColorPicker(this.app);
 

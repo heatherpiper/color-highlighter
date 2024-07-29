@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import ColorHighlighterPlugin from './main';
+import ColorHighlighterPlugin from '../main';
 
 export interface ColorHighlighterSettings {
     highlightEverywhere: boolean;

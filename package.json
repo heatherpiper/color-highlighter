@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
-    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "version": "node version-bump.mjs && git add manifest.json versions.json"
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && shx cp styles.css dist/",
+    "version": "node version-bump.mjs && git add manifest.json"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +16,9 @@
     "@codemirror/view": "^6.28.2",
     "@types/node": "^20.14.8",
     "builtin-modules": "^4.0.0",
+    "cross-env": "^7.0.3",
     "esbuild": "^0.21.5",
+    "shx": "^0.3.4",
     "typescript": "^5.5.2"
   },
   "dependencies": {
