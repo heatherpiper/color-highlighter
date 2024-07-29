@@ -5,6 +5,7 @@ import { createPostProcessor } from './src/postProcessor';
 import { ColorHighlighterSettings, ColorHighlighterSettingTab, DEFAULT_SETTINGS } from './src/settings';
 import { COLOR_REGEX } from './src/utils';
 import './styles.css';
+import { Editor as CustomEditor } from './types';
 
 class ColorHighlighterPlugin extends Plugin {
     settings: ColorHighlighterSettings;
@@ -40,12 +41,12 @@ class ColorHighlighterPlugin extends Plugin {
         const cursor = editor.getCursor();
         const line = editor.getLine(cursor.line);
         const colorMatch = this.findColorAtCursor(line, cursor.ch);
-
+    
         if (colorMatch) {
             const from = editor.posToOffset({ line: cursor.line, ch: colorMatch.index });
             const to = editor.posToOffset({ line: cursor.line, ch: colorMatch.index + colorMatch[0].length });
             
-            const view = (editor as any).cm;
+            const view = (editor as unknown as CustomEditor).cm;
             
             if (view) {
                 this.colorPicker.show(view, from, to, colorMatch[0]);

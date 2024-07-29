@@ -17,7 +17,7 @@ interface Transaction {
 }
 
 interface Editor {
-    cm: CodeMirrorEditorView;
+    cm: EditorView;
     getCursor(): { line: number, ch: number };
     getLine(line: number): string;
     posToOffset(pos: { line: number, ch: number }): number;
