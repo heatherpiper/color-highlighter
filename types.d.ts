@@ -25,7 +25,6 @@ interface Editor {
 
 type ColorString = string;
 
-// Create utility types that combine CodeMirror types with our additional properties
 type EditorState = CodeMirrorEditorState & {
     doc: CodeMirrorEditorState['doc'] & {
         sliceString(from: number, to: number): string;
@@ -39,7 +38,6 @@ type EditorView = CodeMirrorEditorView & {
     coordsAtPos(pos: number): { top: number, left: number, bottom: number, right: number } | null;
 };
 
-// Export our types
 export {
     SyntaxTreeNode,
     Transaction,

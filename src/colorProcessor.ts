@@ -1,4 +1,5 @@
 import { App } from 'obsidian';
+import { ColorString } from '../types'
 import { extractHslaComponents, extractRgbComponents, extractRgbaComponents, getBackgroundColor } from './utils';
 
 
@@ -10,7 +11,7 @@ import { extractHslaComponents, extractRgbComponents, extractRgbaComponents, get
  * @param app The Obsidian app instance, used to get the default background color if the provided background is transparent.
  * @returns The blended color in RGB format.
  */
-export function blendColorWithBackground(color: string, background: string, app: App): string {
+export function blendColorWithBackground(color: ColorString, background: ColorString, app: App): ColorString {
     if (background === 'rgba(0, 0, 0, 0)' || background === 'transparent') {
         background = getBackgroundColor(app);
     }
@@ -51,7 +52,7 @@ export function blendColorWithBackground(color: string, background: string, app:
  * @param background The background color, in the same format as the `rgba` parameter.
  * @returns The blended color in RGB format.
  */
-export function blendRgbaWithBackground(rgba: string, background: string): string {
+export function blendRgbaWithBackground(rgba: ColorString, background: ColorString): ColorString {
     if (!rgba || !background) {
         console.warn('Invalid input in blendRgbaWithBackground:', rgba, background);
         return background;  // Fallback to background color if highlighted color is invalid
@@ -89,7 +90,7 @@ export function blendRgbaWithBackground(rgba: string, background: string): strin
  * @param background The background color, in the same format as the `hsla` parameter.
  * @returns The blended color in RGB format.
  */
-export function blendHslaWithBackground(hsla: string, background: string): string {
+export function blendHslaWithBackground(hsla: ColorString, background: ColorString): ColorString {
     // Extract HSLA components
     const components = extractHslaComponents(hsla);
 
@@ -128,7 +129,7 @@ export function blendHslaWithBackground(hsla: string, background: string): strin
  * @param background The background color, in the same format as the `color` parameter.
  * @returns The most effective contrast color, either 'black' or 'white'.
  */
-export function getContrastColor(color: string, background: string): string {
+export function getContrastColor(color: ColorString, background: ColorString): ColorString {
     // Convert color to RGB format
     if (color.startsWith('hsl')) {
         color = hslToRgb(color);
