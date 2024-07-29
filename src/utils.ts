@@ -1,4 +1,5 @@
 import { App, MarkdownView } from 'obsidian';
+import { ColorString } from '../types';
 
 export const COLOR_PATTERNS = {
     hex: /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})(?![0-9A-Fa-f])/,
@@ -18,7 +19,7 @@ export const COLOR_REGEX = new RegExp(Object.values(COLOR_PATTERNS).map(pattern 
  * @param app The Obsidian app instance.
  * @returns The background color in RGB format. 
  */
-export function getBackgroundColor(app: App): string {
+export function getBackgroundColor(app: App): ColorString {
     const view = app.workspace.getActiveViewOfType(MarkdownView);
     if (view instanceof MarkdownView) {
         // Try getting the background from the editor element
@@ -60,7 +61,7 @@ export function getBackgroundColor(app: App): string {
  * 
  * @returns The fallback background color in RGB format.
  */
-export function getThemeFallbackColor(): string {
+export function getThemeFallbackColor(): ColorString {
     const isDarkTheme = document.body.classList.contains('theme-dark') || 
                         document.documentElement.classList.contains('theme-dark');
     return isDarkTheme ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)';
@@ -72,7 +73,7 @@ export function getThemeFallbackColor(): string {
  * @param rgbString The color string to extract the components from.
  * @returns An array containing the red, green, and blue components of the color string.
  */
-export function extractRgbComponents(rgbString: string): [number, number, number] {
+export function extractRgbComponents(rgbString: ColorString): [number, number, number] {
     if (!rgbString) {
         console.warn('Received null or undefined rgbString in extractRgbComponents')
         // Fallback to black if the string is empty
@@ -105,7 +106,7 @@ export function extractRgbComponents(rgbString: string): [number, number, number
     return match.slice(0, 3).map(Number) as [number, number, number];
 }
 
-export function extractRgbaComponents(rgbaString: string): [number, number, number, number] | null {
+export function extractRgbaComponents(rgbaString: ColorString): [number, number, number, number] | null {
     const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
     if (!match) {
         console.warn('Invalid RGBA string:', rgbaString);
@@ -126,7 +127,7 @@ export function extractRgbaComponents(rgbaString: string): [number, number, numb
  * @param hsla The HSLA string to extract components from.
  * @returns An array containing the HSLA components [h, s, l, a], or null if the HSLA string is invalid.
  */
-export function extractHslaComponents(hsla: string): [number, number, number, number] | null {
+export function extractHslaComponents(hsla: ColorString): [number, number, number, number] | null {
     const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
 
     // Validate HSLA string format
@@ -155,7 +156,7 @@ export function extractHslaComponents(hsla: string): [number, number, number, nu
     return [h, s, l, a];
 }
 
-export function hasAlphaChannel(color: string): boolean {
+export function hasAlphaChannel(color: ColorString): boolean {
     if (color.startsWith('rgba') || color.startsWith('hsla')) {
         return true;
     }
