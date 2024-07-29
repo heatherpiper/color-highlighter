@@ -185,22 +185,31 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
 }
 
 /**
- * Handles the inline display of Dataview elements within the given HTML element.
+ * Processes Dataview inline elements to ensure proper rendering within notes.
  * 
- * This function processes all `p` and `div` elements within the provided `element`,
- * replacing them with inline `span` elements that contain the original HTML content.
- * It also removes any newline characters from the element's HTML and sets the
- * element's display style to `inline`.
- *
- * @param element The HTML element containing the Dataview elements to be processed.
+ * @param element The HTML element containing Dataview inline query results to be processed
  */
 function handleDataviewInline(element: HTMLElement) {
+    // Convert p and div elements to spans
     element.querySelectorAll('p, div').forEach(el => {
         const span = document.createElement('span');
-        span.innerHTML = el.innerHTML;
+        while (el.firstChild) {
+            span.appendChild(el.firstChild);
+        }
         el.parentNode?.replaceChild(span, el);
     });
 
-    element.innerHTML = element.innerHTML.replace(/\n/g, ' ');
+    // Remove newlines and extra spaces
+    const removeExtraWhitespace = (node: Node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            node.textContent = node.textContent?.replace(/\s+/g, ' ') || '';
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            Array.from(node.childNodes).forEach(removeExtraWhitespace);
+        }
+    };
+    
+    removeExtraWhitespace(element);
+
+    // Set display to inline
     element.style.display = 'inline';
 }
