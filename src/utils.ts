@@ -106,6 +106,12 @@ export function extractRgbComponents(rgbString: ColorString): RGBComponents {
     return match.slice(0, 3).map(Number) as [number, number, number];
 }
 
+/**
+ * Extracts the RGBA components from a color string, formatted as either hexadecimal or RGB
+ * 
+ * @param rgbaString The RGBA string to extract the components from.
+ * @returns An array containing the red, green, blue, and alpha components of the color string.
+ */
 export function extractRgbaComponents(rgbaString: ColorString): RGBAComponents | null {
     const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
     if (!match) {
@@ -156,6 +162,12 @@ export function extractHslaComponents(hsla: ColorString): HSLAComponents | null 
     return [h, s, l, a];
 }
 
+/**
+ * Determines if a given color string contains an alpha channel (transparency).
+ * 
+ * @param color The color string to check.
+ * @returns True if the color string contains an alpha channel, false otherwise.
+ */
 export function hasAlphaChannel(color: ColorString): boolean {
     if (color.startsWith('rgba') || color.startsWith('hsla')) {
         return true;
