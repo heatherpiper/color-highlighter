@@ -25,6 +25,11 @@ interface Editor {
 
 type ColorString = string;
 
+type RGBComponents = [number, number, number];
+type RGBAComponents = [number, number, number, number];
+type HSLComponents = [number, number, number];
+type HSLAComponents = [number, number, number, number];
+
 type EditorState = CodeMirrorEditorState & {
     doc: CodeMirrorEditorState['doc'] & {
         sliceString(from: number, to: number): string;
@@ -43,6 +48,10 @@ export {
     Transaction,
     Editor,
     ColorString,
+    RGBComponents,
+    RGBAComponents,
+    HSLComponents,
+    HSLAComponents,
     EditorState,
     EditorView,
     Decoration,

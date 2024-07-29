@@ -1,5 +1,5 @@
 import { App, MarkdownView } from 'obsidian';
-import { ColorString } from '../types';
+import { ColorString, HSLAComponents, RGBComponents, RGBAComponents } from '../types';
 
 export const COLOR_PATTERNS = {
     hex: /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})(?![0-9A-Fa-f])/,
@@ -73,7 +73,7 @@ export function getThemeFallbackColor(): ColorString {
  * @param rgbString The color string to extract the components from.
  * @returns An array containing the red, green, and blue components of the color string.
  */
-export function extractRgbComponents(rgbString: ColorString): [number, number, number] {
+export function extractRgbComponents(rgbString: ColorString): RGBComponents {
     if (!rgbString) {
         console.warn('Received null or undefined rgbString in extractRgbComponents')
         // Fallback to black if the string is empty
@@ -106,7 +106,7 @@ export function extractRgbComponents(rgbString: ColorString): [number, number, n
     return match.slice(0, 3).map(Number) as [number, number, number];
 }
 
-export function extractRgbaComponents(rgbaString: ColorString): [number, number, number, number] | null {
+export function extractRgbaComponents(rgbaString: ColorString): RGBAComponents | null {
     const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
     if (!match) {
         console.warn('Invalid RGBA string:', rgbaString);
@@ -127,7 +127,7 @@ export function extractRgbaComponents(rgbaString: ColorString): [number, number,
  * @param hsla The HSLA string to extract components from.
  * @returns An array containing the HSLA components [h, s, l, a], or null if the HSLA string is invalid.
  */
-export function extractHslaComponents(hsla: ColorString): [number, number, number, number] | null {
+export function extractHslaComponents(hsla: ColorString): HSLAComponents | null {
     const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
 
     // Validate HSLA string format
