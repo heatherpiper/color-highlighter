@@ -5,6 +5,7 @@ import { ColorPicker } from './colorPicker';
 import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
 import ColorHighlighterPlugin from '../main';
 import { ColorHighlighterSettings } from './settings';
+import { SyntaxTreeNode } from '../types';
 import { COLOR_REGEX, getBackgroundColor, hasAlphaChannel } from './utils';
 
 export function createEditorExtension(plugin: ColorHighlighterPlugin) {
@@ -150,7 +151,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * @param node The syntax tree node to check.
              * @returns True if the node represents a code block, false otherwise.
              */
-            private isCodeBlockNode(node: any): boolean {
+            private isCodeBlockNode(node: SyntaxTreeNode): boolean {
                 return node.type.name.includes('CodeBlock') ||
                        node.type.name.includes('FencedCode') ||
                        node.type.name.includes('hmd-codeblock') ||
