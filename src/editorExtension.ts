@@ -56,7 +56,8 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             const start = from + match.index;
                             const end = start + match[0].length;
 
-                            if (this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks)) {
+                            if (!this.isWithinTag(view.state, start) && 
+                                this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks)) {
                                 this.addDecoration(builder, start, end, match[0], view, highlightStyle, settings);
                             }
                         }
@@ -66,6 +67,27 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     console.error('Error building decorations:', error);
                     return Decoration.none;
                 }
+            }
+
+            private isWithinTag(state: EditorState, pos: number): boolean {
+                const tree = syntaxTree(state);
+                let node = tree.resolveInner(pos, 1);
+                
+                while (node) {
+                    if (this.isTagNode(node)) {
+                        return true;
+                    }
+                    const parent = node.parent;
+                    if (!parent) break;
+                    node = parent;
+                }
+                return false;
+            }
+
+            private isTagNode(node: SyntaxTreeNode): boolean {
+                return node.type.name.includes('hashtag') || 
+                       node.type.name.includes('tag') || 
+                       node.type.name.includes('formatting-hashtag');
             }
 
             /**
