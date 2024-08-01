@@ -78,10 +78,10 @@ Choose what part of your notes to highlight color codes in:
 
 ### Highlight style
 
-   - **Background**: Highlight color codes by changing their background color.
-   - **Border**: Highlight color codes by adding a solid color border.
-   - **Square**: Highlight color codes by adding a small colored square following the color code.
-   - **Underline**: Highlight color codes by adding a solid color underline.
+   - **Background**: Changes the background color of color codes.
+   - **Border**: Adds a solid color border around color codes.
+   - **Square**: Adds a small colored square after color codes.
+   - **Underline**: Adds a solid color underline to color codes.
 
 ![Color Highlighter highlight styles](images/highlighting-styles.png)
 
@@ -97,7 +97,7 @@ If your highlight style is set to **background** or **square**, you can choose t
 
 By default, a color picker is displayed when hovering over highlighted color codes. You may choose to disable this behavior. 
 
-If this setting is disabled, the color picker can still be displayed by selecting the command **Color Highlighter: Show color picker** in the command palette.
+If this setting is disabled, the color picker can still be displayed by selecting the command **Color Highlighter: Show color picker** in the command palette while your cursor is on a highlighted color.
 
 ## Feedback and Contributions
 
