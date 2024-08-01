@@ -258,6 +258,13 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * @param color The color to use for the square widget.
              */
             private addSquareWidget(builder: RangeSetBuilder<Decoration>, end: number, color: string, backgroundColor: string, settings: ColorHighlighterSettings, decorationId: string) {
+                type ColorSquareWidget = WidgetType & {
+                    color: string;
+                    backgroundColor: string;
+                    settings: ColorHighlighterSettings;
+                    decorationId: string;
+                };
+                
                 builder.add(end, end, Decoration.widget({
                     widget: new class extends WidgetType {
                         constructor(readonly color: string, readonly backgroundColor: string, readonly settings: ColorHighlighterSettings, readonly decorationId: string) {
@@ -280,10 +287,10 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             return span;
                         }
 
-                        eq(other: WidgetType): boolean {
-                            return other instanceof this.constructor && (other as any).color === this.color;
+                        eq(other: ColorSquareWidget): boolean {
+                            return other instanceof this.constructor && other.color === this.color;
                         }
-
+                        
                         updateDOM(): boolean {
                             return false; // The widget is static, so no update is needed
                         }
