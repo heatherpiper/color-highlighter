@@ -1,18 +1,18 @@
 import { syntaxTree } from '@codemirror/language';
-import { EditorState, RangeSetBuilder } from '@codemirror/state';
+import { EditorState, RangeSetBuilder, SelectionRange } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
+import ColorHighlighterPlugin from '../main';
+import { SyntaxTreeNode } from '../types';
 import { ColorPicker } from './colorPicker';
 import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
-import ColorHighlighterPlugin from '../main';
 import { ColorHighlighterSettings } from './settings';
-import { SyntaxTreeNode } from '../types';
 import { COLOR_REGEX, getBackgroundColor, hasAlphaChannel } from './utils';
 
 export function createEditorExtension(plugin: ColorHighlighterPlugin) {
     return ViewPlugin.fromClass(
         class ColorHighlighterView {
-            decorations: DecorationSet;
-            colorPicker: ColorPicker;
+                decorations: DecorationSet;
+                colorPicker: ColorPicker;
 
             constructor(view: EditorView) {
                 this.decorations = this.buildDecorations(view, plugin.settings);
@@ -20,34 +20,42 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             }
 
             /**
-             * Updates the color highlight decorations in the editor view when the document or viewport changes.
+             * Updates the plugin state in response to editor changes.
+             * This method is called by CodeMirror whenever the editor state changes.
+             * It rebuilds decorations if the document or viewport has changed,
+             * and updates the cursor color if the selection has changed.
              *
-             * @param update The ViewUpdate object containing information about the changes to the editor view.
+             * @param update - The ViewUpdate object containing information about what changed in the editor.
              */
             update(update: ViewUpdate) {
                 if (update.docChanged || update.viewportChanged) {
                     this.decorations = this.buildDecorations(update.view, plugin.settings);
                 }
+                
+                if (update.selectionSet) {
+                    this.updateCursorColor(update.view, update.state.selection.main);
+                }
             }
 
             /**
-             * Builds decorations for color highlighting in the editor view.
+             * Builds decorations for color highlighting.
              * 
-             * @param view The EditorView instance.
+             * @param view The current EditorView.
+             * @param settings The current Color Highlighter plugin settings.
              * @returns A DecorationSet containing all the color highlight decorations.
-             */            
+             */
             private buildDecorations(view: EditorView, settings: ColorHighlighterSettings) {
                 try {
                     const builder = new RangeSetBuilder<Decoration>();
                     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = settings;
-    
+
                     for (const { from, to } of view.visibleRanges) {
                         const text = view.state.doc.sliceString(from, to);
                         let match;
                         while ((match = COLOR_REGEX.exec(text)) !== null) {
                             const start = from + match.index;
                             const end = start + match[0].length;
-                            
+
                             if (this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks)) {
                                 this.addDecoration(builder, start, end, match[0], view, highlightStyle, settings);
                             }
@@ -57,6 +65,34 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                 } catch (error) {
                     console.error('Error building decorations:', error);
                     return Decoration.none;
+                }
+            }
+
+            /**
+             * Updates the cursor color based on its position relative to color decorations.
+             * This method checks if the cursor is inside a color highlight decoration and
+             * updates the caret color accordingly. If the cursor is not inside any color
+             * highlight, it resets the caret color by default.
+             * 
+             * @param view The current EditorView.
+             * @param cursor The currentn cursor selection range.
+             */
+            private updateCursorColor(view: EditorView, cursor: SelectionRange) {
+                let insideHighlight = false;
+
+                this.decorations.between(cursor.from, cursor.to, (from, to, decoration) => {
+                    if (decoration.spec.class && decoration.spec.class.includes('color-highlighter-decoration')) {
+                        insideHighlight = true;
+                        const contrastColor = (decoration.spec.attributes as any)?.style?.match(/--contrast-color:\s*([^;]+)/)?.[1];
+                        if (contrastColor) {
+                            view.dom.style.setProperty('--caret-color', contrastColor);
+                        }
+                        return false;
+                    }
+                });
+
+                if (!insideHighlight) {
+                    view.dom.style.setProperty('--caret-color', '');
                 }
             }
 
@@ -128,19 +164,19 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             private isWithinCodeBlock(state: EditorState, pos: number): boolean {
                 const tree = syntaxTree(state);
                 let node = tree.resolveInner(pos, 1);
-                
+
                 while (node) {
                     if (this.isCodeBlockNode(node)) {
                         return true;
                     }
-                    
+
                     if (node.parent) {
                         node = node.parent;
                     } else {
                         break; // We've reached the root of the tree
                     }
                 }
-                
+
                 return false;
             }
 
@@ -153,9 +189,9 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              */
             private isCodeBlockNode(node: SyntaxTreeNode): boolean {
                 return node.type.name.includes('CodeBlock') ||
-                       node.type.name.includes('FencedCode') ||
-                       node.type.name.includes('hmd-codeblock') ||
-                       node.type.name.includes('HyperMD-codeblock');
+                    node.type.name.includes('FencedCode') ||
+                    node.type.name.includes('hmd-codeblock') ||
+                    node.type.name.includes('HyperMD-codeblock');
             }
 
             /**
@@ -172,7 +208,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             private addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'border' | 'square' | 'underline', settings: ColorHighlighterSettings) {
                 try {
                     let editorBackground = getBackgroundColor(plugin.app);
-                    
+
                     let effectiveColor: string;
                     if (!hasAlphaChannel(color)) {
                         effectiveColor = color;
@@ -181,30 +217,32 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     }
 
                     const contrastColor = getContrastColor(effectiveColor, editorBackground);
-            
+
                     // Get the decoration attributes based on the selected style
                     const decorationAttributes = this.getDecorationAttributes(highlightStyle, effectiveColor, contrastColor, editorBackground, settings);
-                    
+
                     decorationAttributes['data-decoration-id'] = `${start}-${end}`;
-            
+
                     let decoration: Decoration;
                     if (color.startsWith('#')) {
                         // For hex colors, only style the part after the hash
                         decoration = Decoration.mark({
-                            attributes: decorationAttributes
+                            attributes: decorationAttributes,
+                            class: 'color-highlighter-decoration'
                         });
                         builder.add(start + 1, end, decoration);
                     } else {
                         // For other color formats, use the original decoration
                         decoration = Decoration.mark({
-                            attributes: decorationAttributes
+                            attributes: decorationAttributes,
+                            class: 'color-highlighter-decoration'
                         });
                         builder.add(start, end, decoration);
                     }
-            
+
                     // Add hover listeners
                     this.addHoverListeners(view, start, end, color, settings);
-            
+
                     // Add a square widget for the 'square' highlight style
                     if (highlightStyle === 'square') {
                         this.addSquareWidget(builder, end, effectiveColor, editorBackground, settings, `${start}-${end}`);
@@ -219,7 +257,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              *
              * @param highlightStyle The highlight style to use ('background', 'border', 'square', or 'underline').
              * @param effectiveColor The color to use for the decoration, blended with the editor background.
-             * @param contrastColor The contrasting color to use for the text, based on the effective color.
+             * @param contrastColor The contrasting color to use for the text and caret, based on the effective color.
              * @returns The decoration attributes to apply to the highlighted text.
              */
             private getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string, backgroundColor: string, settings: ColorHighlighterSettings): { [key: string]: string } {
@@ -227,10 +265,10 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     class: `color-highlighter ${highlightStyle}`,
                     'data-color': effectiveColor
                 };
-            
+
                 switch (highlightStyle) {
                     case 'background':
-                        attributes.style = `--highlight-color: ${effectiveColor}; --contrast-color: ${contrastColor};`;
+                        attributes.style = `--highlight-color: ${effectiveColor}; --contrast-color: ${contrastColor}; --caret-color: ${contrastColor};`;
                         if (settings.useContrastingBorder) {
                             const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
                             if (contrastRatio < 1.25) {
@@ -246,7 +284,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         // No additional styles for square, handled in addSquareWidget
                         break;
                 }
-            
+
                 return attributes;
             }
 
@@ -264,33 +302,33 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     settings: ColorHighlighterSettings;
                     decorationId: string;
                 };
-                
+
                 builder.add(end, end, Decoration.widget({
                     widget: new class extends WidgetType {
                         constructor(readonly color: string, readonly backgroundColor: string, readonly settings: ColorHighlighterSettings, readonly decorationId: string) {
                             super();
                         }
-                        
+
                         toDOM() {
                             const span = document.createElement('span');
                             span.className = 'color-highlighter-square';
                             span.setAttribute('data-decoration-id', this.decorationId);
                             span.style.setProperty('--highlight-color', this.color);
-            
+
                             if (this.settings.useContrastingBorder) {
                                 const contrastRatio = getContrastRatio(this.color, this.backgroundColor);
                                 if (contrastRatio < 1.25) {
                                     span.setAttribute('data-contrast-border', 'true');
                                 }
                             }
-            
+
                             return span;
                         }
 
                         eq(other: ColorSquareWidget): boolean {
                             return other instanceof this.constructor && other.color === this.color;
                         }
-                        
+
                         updateDOM(): boolean {
                             return false; // The widget is static, so no update is needed
                         }
@@ -311,28 +349,28 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             return null; // We don't need to implement custom coordinates
                         }
 
-                        destroy() {}
+                        destroy() { }
                     }(color, backgroundColor, settings, decorationId)
                 }));
             }
 
-           /**
-            * Adds hover listeners to color decorations to show the color picker.
-            * 
-            * @param view The EditorView instance where the decorations are applied.
-            * @param from The starting position of the color decoration in the document.
-            * @param to The ending position of the color decoration in the document.
-            * @param color The color string associated with this decoration.
-            * @param settings The plugin settings object, containing color highlighter options.
-            * 
-            * @returns A cleanup function that removes the added event listeners when called.
-            */
+            /**
+             * Adds hover listeners to color decorations to show the color picker.
+             * 
+             * @param view The EditorView instance where the decorations are applied.
+             * @param from The starting position of the color decoration in the document.
+             * @param to The ending position of the color decoration in the document.
+             * @param color The color string associated with this decoration.
+             * @param settings The plugin settings object, containing color highlighter options.
+             * 
+             * @returns A cleanup function that removes the added event listeners when called.
+             */
             private addHoverListeners(view: EditorView, from: number, to: number, color: string, settings: ColorHighlighterSettings) {
                 const { enableColorPicker, highlightStyle } = settings;
                 if (!enableColorPicker) return;
-            
+
                 let showTimeout: number | null = null;
-            
+
                 const showColorPicker = (event: MouseEvent) => {
                     if (showTimeout) {
                         clearTimeout(showTimeout);
@@ -342,7 +380,7 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         this.colorPicker.show(view, from, to, currentColor);
                     }, 200);
                 };
-            
+
                 const hideColorPicker = () => {
                     if (showTimeout) {
                         clearTimeout(showTimeout);
@@ -350,16 +388,16 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                     }
                     this.colorPicker.scheduleHide();
                 };
-            
+
                 const handleMouseEvent = (event: MouseEvent) => {
                     const target = event.target as HTMLElement;
-                    
+
                     if (
                         (target.hasAttribute('data-decoration-id') && target.getAttribute('data-decoration-id') === `${from}-${to}`) ||
-                        (highlightStyle === 'square' && 
-                         target.classList.contains('color-highlighter-square') && 
-                         (target.getAttribute('data-decoration-id') === `${from}-${to}` || 
-                          target.previousElementSibling?.getAttribute('data-decoration-id') === `${from}-${to}`))
+                        (highlightStyle === 'square' &&
+                            target.classList.contains('color-highlighter-square') &&
+                            (target.getAttribute('data-decoration-id') === `${from}-${to}` ||
+                                target.previousElementSibling?.getAttribute('data-decoration-id') === `${from}-${to}`))
                     ) {
                         if (event.type === 'mouseover') {
                             showColorPicker(event);
@@ -368,10 +406,10 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         }
                     }
                 };
-            
+
                 view.dom.addEventListener('mouseover', handleMouseEvent);
                 view.dom.addEventListener('mouseout', handleMouseEvent);
-            
+
                 return () => {
                     view.dom.removeEventListener('mouseover', handleMouseEvent);
                     view.dom.removeEventListener('mouseout', handleMouseEvent);
