@@ -56,10 +56,8 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             );
 
             if (!this.plugin.settings.highlightEverywhere) {
-                const codeHighlightSettings = containerEl.createDiv('code-highlight-settings');
-                codeHighlightSettings.style.paddingLeft = '2em';
     
-                new Setting(codeHighlightSettings)
+                new Setting(containerEl)
                     .setName('Highlight in inline code')
                     .setDesc('Highlight color codes within inline code (single backticks)')
                     .addToggle(toggle => toggle
@@ -74,7 +72,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                         })
                     );
     
-                new Setting(codeHighlightSettings)
+                new Setting(containerEl)
                     .setName('Highlight in code blocks')
                     .setDesc('Highlight color codes within code blocks (triple backticks)')
                     .addToggle(toggle => toggle
