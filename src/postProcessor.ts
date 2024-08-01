@@ -1,5 +1,5 @@
-import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
 import ColorHighlighterPlugin from '../main';
+import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
 import { COLOR_REGEX, getBackgroundColor } from './utils';
 
 /**
@@ -32,6 +32,13 @@ export function createPostProcessor(plugin: ColorHighlighterPlugin) {
     };
 }
 
+/**
+ * Recursively processes node in the DOM, applying color highlighting where appropriate.
+ * 
+ * @param node The DOM node to process.
+ * @param isDataviewInline Function to check if a node is part of a Dataview inline query.
+ * @param plugin The ColorHighlighterPlugin instance.
+ */
 function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plugin: ColorHighlighterPlugin): void {
     if (node.nodeType === Node.TEXT_NODE && node.textContent) {
         const parent = node.parentElement;
@@ -65,6 +72,12 @@ function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plug
     }
 }
 
+/**
+ * Processes a code block, highlighting color codes within it.
+ * 
+ * @param codeBlock The code block element to process.
+ * @param plugin The ColorHighlighterPlugin instance.
+ */
 function processCodeBlock(codeBlock: HTMLElement, plugin: ColorHighlighterPlugin) {
     const content = codeBlock.textContent || '';
     const matches = Array.from(content.matchAll(COLOR_REGEX));
@@ -103,6 +116,12 @@ function processCodeBlock(codeBlock: HTMLElement, plugin: ColorHighlighterPlugin
     codeBlock.appendChild(fragment);
 }
 
+/**
+ * Highlights color codes within a text node by replacing it with a document fragment.
+ * 
+ * @param node The text node to process.
+ * @param plugin The ColorHighlighterPlugin instance.
+ */
 function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin) {
     const fragment = document.createDocumentFragment();
     let lastIndex = 0;
@@ -139,6 +158,13 @@ function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin) {
     }
 }
 
+/**
+ * Applies the appropriate highlight style to a span element containing color code.
+ * 
+ * @param span The span element to style.
+ * @param colorCode The color code to highlight.
+ * @param plugin The ColorHighlighterPlugin instance.
+ */
 function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: ColorHighlighterPlugin) {
     const backgroundColor = getBackgroundColor(plugin.app);
     let effectiveColor;
@@ -191,7 +217,7 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
 /**
  * Processes Dataview inline elements to ensure proper rendering within notes.
  * 
- * @param element The HTML element containing Dataview inline query results to be processed
+ * @param element The HTML element containing Dataview inline query results to be processed.
  */
 function handleDataviewInline(element: HTMLElement) {
     // Convert p and div elements to spans
@@ -217,6 +243,12 @@ function handleDataviewInline(element: HTMLElement) {
     element.style.display = 'inline';
 }
 
+/**
+ * Checks if a node is part of a tag element.
+ * 
+ * @param node The node to check.
+ * @returns True if the node is part of a tag, false otherwise.
+ */
 function isPartOfTag(node: Node): boolean {
     const parent = node.parentElement;
     if (!parent) return false;
