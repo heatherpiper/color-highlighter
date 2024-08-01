@@ -150,8 +150,8 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
         case 'background':
             span.classList.add('background');
             const contrastColor = getContrastColor(effectiveColor, backgroundColor);
-            span.style.backgroundColor = effectiveColor;
-            span.style.color = contrastColor;
+            span.style.setProperty('--highlight-color', effectiveColor);
+            span.style.setProperty('--contrast-color', contrastColor);
 
             if (plugin.settings.useContrastingBorder) {
                 const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
@@ -162,12 +162,12 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
             break;
         case 'underline':
             span.classList.add('underline');
-            span.style.borderBottomColor = effectiveColor;
+            span.style.setProperty('--highlight-color', effectiveColor);
             break;
         case 'square':
             const square = document.createElement('span');
             square.classList.add('color-highlighter-square');
-            square.style.backgroundColor = effectiveColor;
+            square.style.setProperty('--highlight-color', effectiveColor);
             span.appendChild(square);
 
             if (plugin.settings.useContrastingBorder) {
@@ -179,7 +179,7 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
             break;
         case 'border':
             span.classList.add('border');
-            span.style.borderColor = effectiveColor;
+            span.style.setProperty('--highlight-color', effectiveColor);
             break;
     }
 }
@@ -210,6 +210,5 @@ function handleDataviewInline(element: HTMLElement) {
     
     removeExtraWhitespace(element);
 
-    // Set display to inline
     element.style.display = 'inline';
 }
