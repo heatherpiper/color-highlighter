@@ -4,5 +4,8 @@ node_modules/
 # Ignore dist directory
 dist/
 
+# Ignore main.js
+src/main.js
+
 # Ignore IDE configuration files
 *.idea
