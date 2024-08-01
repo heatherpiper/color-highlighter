@@ -34,3 +34,22 @@
 .color-highlighter-square[data-contrast-border="true"] {
     border: 1px solid var(--background-modifier-border-hover);
 }
+
+.color-highlighter-picker {
+    display: none;
+    position: absolute;
+    left: var(--picker-left, 0);
+    top: var(--picker-top, 0);
+}
+
+.color-highlighter-picker-visible {
+    display: block;
+}
+
+.color-highlighter-picker-left {
+    transform: translateX(-100%);
+}
+
+.color-highlighter-picker-top {
+    transform: translateY(-100%);
+}

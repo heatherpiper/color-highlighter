@@ -58,11 +58,19 @@ export class ColorPicker {
         const normalizedColor = this.normalizeColor(initialColor);
         if (normalizedColor) {
             // Position the color picker
-            const rect = view.dom.getBoundingClientRect();
-            this.containerEl.style.position = 'absolute';
-            this.containerEl.style.left = `${endCoords.right - rect.left + 5}px`;
-            this.containerEl.style.top = `${startCoords.top - rect.top}px`;
+            const editorRect = view.dom.getBoundingClientRect();
+            
+            // Calculate position relative to the editor
+            const left = endCoords.right - editorRect.left;
+            const top = startCoords.top - editorRect.top;
+
+            this.containerEl.classList.add('color-highlighter-picker-visible');
+            this.containerEl.style.setProperty('--picker-left', `${left}px`);
+            this.containerEl.style.setProperty('--picker-top', `${top}px`);
+
             view.dom.appendChild(this.containerEl);
+
+            this.adjustPosition(view);
 
             // Delay setting the initial color
             setTimeout(() => {
@@ -89,8 +97,6 @@ export class ColorPicker {
             this.containerEl.onmouseleave = () => {
                 this.scheduleHide();
             };
-
-            this.adjustPosition(view);
         } else {
         }
     }
@@ -124,6 +130,27 @@ export class ColorPicker {
     }
 
     /**
+     * Adjusts the position of the color picker container element to ensure it remains within the bounds of the editor view.
+     * 
+     * This method checks if the color picker is overflowing the right or bottom edges of the editor view.
+     * If an overflow is detected, it adds appropriate CSS classes to reposition the color picker:
+     * - 'color-highlighter-picker-left' class is added if the picker overflows the right edge.
+     * - 'color-highlighter-picker-top' class is added if the picker overflows the bottom edge.
+     * 
+     * @param view The current EditorView instance, used to get the bounding rectangle of the editor.
+     */
+    private adjustPosition(view: EditorView) {
+        const pickerRect = this.containerEl.getBoundingClientRect();
+        const editorRect = view.dom.getBoundingClientRect();
+
+        const overflowRight = pickerRect.right > editorRect.right;
+        const overflowBottom = pickerRect.bottom > editorRect.bottom;
+
+        this.containerEl.classList.toggle('color-highlighter-picker-left', overflowRight);
+        this.containerEl.classList.toggle('color-highlighter-picker-top', overflowBottom);
+    }
+
+    /**
      * Updates the color in the editor view with the provided new color.
      *
      * This method first formats the new color to a 6-digit hexadecimal representation, 
@@ -143,25 +170,6 @@ export class ColorPicker {
                 });
                 this.originalColor = formattedColor;
             }
-        }
-    }
-
-    /**
-     * Adjusts the position of the color picker container element to ensure it is fully visible within the editor view.
-     *
-     * This method is called when the color picker is displayed to ensure it is positioned correctly relative to the
-     * editor view. If the color picker container would extend beyond the right edge of the editor view, this method
-     * adjusts the left position of the container to keep it fully visible.
-     *
-     * @param view The EditorView instance associated with the current editor.
-     */
-    private adjustPosition(view: EditorView) {
-        const rect = this.containerEl.getBoundingClientRect();
-        const editorRect = view.dom.getBoundingClientRect();
-
-        if (rect.right > editorRect.right) {
-            const overflow = rect.right - editorRect.right;
-            this.containerEl.style.left = `${parseInt(this.containerEl.style.left) - overflow - 10}px`;
         }
     }
 
