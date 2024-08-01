@@ -41,6 +41,10 @@ function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plug
             return;
         }
 
+        if (isPartOfTag(node)) {
+            return; // Skip processing if it's part of a tag
+        }
+
         // Check if the color should be highlighted based on the settings
         if (
             (plugin.settings.highlightEverywhere) ||
@@ -211,4 +215,15 @@ function handleDataviewInline(element: HTMLElement) {
     removeExtraWhitespace(element);
 
     element.style.display = 'inline';
+}
+
+function isPartOfTag(node: Node): boolean {
+    const parent = node.parentElement;
+    if (!parent) return false;
+
+    if (parent.tagName === 'A' && parent.classList.contains('tag')) {
+        return true;
+    }
+
+    return false;
 }
