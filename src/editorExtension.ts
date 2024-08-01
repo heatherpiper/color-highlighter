@@ -223,26 +223,14 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              * @returns The decoration attributes to apply to the highlighted text.
              */
             private getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string, backgroundColor: string, settings: ColorHighlighterSettings): { [key: string]: string } {
-                const attributes: { [key: string]: string } = {};
-
+                const attributes: { [key: string]: string } = {
+                    class: `color-highlighter ${highlightStyle}`,
+                    'data-color': effectiveColor
+                };
+            
                 switch (highlightStyle) {
                     case 'background':
-                        attributes.style = `background-color: ${effectiveColor}; color: ${contrastColor}; border-radius: 3px; padding: 0.1em 0.2em;`;
-                        
-                        if (settings.useContrastingBorder) {
-                            const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
-                            if (contrastRatio < 1.25) {
-                                attributes['data-contrast-border'] = 'true';
-                                attributes.style += ' border: 1px solid var(--background-modifier-border-hover);';
-                                attributes.style += ' padding: calc(0.1em - 1px) calc(0.2em - 1px);';
-                            }
-                        }
-                        break;
-                    case 'underline':
-                        attributes.class += " color-highlighter-underline";
-                        attributes.style = `border-bottom: 2px solid ${effectiveColor};`;
-                        break;
-                    case 'square':
+                        attributes.style = `--highlight-color: ${effectiveColor}; --contrast-color: ${contrastColor};`;
                         if (settings.useContrastingBorder) {
                             const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
                             if (contrastRatio < 1.25) {
@@ -251,11 +239,14 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                         }
                         break;
                     case 'border':
-                        attributes.class += " color-highlighter-border";
-                        attributes.style = `border: 2px solid ${effectiveColor}; border-radius: 3px; padding: 0 0.2em;`;
+                    case 'underline':
+                        attributes.style = `--highlight-color: ${effectiveColor};`;
+                        break;
+                    case 'square':
+                        // No additional styles for square, handled in addSquareWidget
                         break;
                 }
-
+            
                 return attributes;
             }
 
@@ -277,18 +268,12 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                             const span = document.createElement('span');
                             span.className = 'color-highlighter-square';
                             span.setAttribute('data-decoration-id', this.decorationId);
-                            span.style.display = 'inline-block';
-                            span.style.width = '10px';
-                            span.style.height = '10px';
-                            span.style.backgroundColor = this.color;
-                            span.style.marginLeft = '0.25em';
-                            span.style.verticalAlign = 'middle';
-                            span.style.borderRadius = '1px';
+                            span.style.setProperty('--highlight-color', this.color);
             
                             if (this.settings.useContrastingBorder) {
                                 const contrastRatio = getContrastRatio(this.color, this.backgroundColor);
                                 if (contrastRatio < 1.25) {
-                                    span.style.border = '1px solid var(--background-modifier-border-hover)';
+                                    span.setAttribute('data-contrast-border', 'true');
                                 }
                             }
             
