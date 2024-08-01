@@ -1,6 +1,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorState, RangeSetBuilder, SelectionRange } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
+import { SyntaxNode, Tree, TreeCursor } from '@lezer/common';
 import ColorHighlighterPlugin from '../main';
 import { SyntaxTreeNode } from '../types';
 import { ColorPicker } from './colorPicker';
@@ -46,22 +47,35 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
              */
             private buildDecorations(view: EditorView, settings: ColorHighlighterSettings) {
                 try {
-                    const builder = new RangeSetBuilder<Decoration>();
                     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = settings;
-
+                    const decorations: { from: number; to: number; color: string }[] = [];
+                    const tree = syntaxTree(view.state);
+                    const frontmatterRange = this.getFrontmatterRange(tree);
+            
                     for (const { from, to } of view.visibleRanges) {
                         const text = view.state.doc.sliceString(from, to);
                         let match;
                         while ((match = COLOR_REGEX.exec(text)) !== null) {
                             const start = from + match.index;
                             const end = start + match[0].length;
-
-                            if (!this.isWithinTag(view.state, start) && 
-                                this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks)) {
-                                this.addDecoration(builder, start, end, match[0], view, highlightStyle, settings);
+            
+                            const isInFrontmatter = this.isWithinFrontmatter(start, frontmatterRange);
+                            const isInTag = this.isWithinTag(view.state, start);
+                            const shouldHighlight = this.shouldHighlight(view.state, start, end, highlightEverywhere, highlightInBackticks, highlightInCodeblocks);
+            
+                            if (!isInFrontmatter && !isInTag && shouldHighlight) {
+                                decorations.push({ from: start, to: end, color: match[0] });
                             }
                         }
                     }
+            
+                    decorations.sort((a, b) => a.from - b.from);
+            
+                    const builder = new RangeSetBuilder<Decoration>();
+                    for (const { from, to, color } of decorations) {
+                        this.addDecoration(builder, from, to, color, view, highlightStyle, settings);
+                    }
+            
                     return builder.finish();
                 } catch (error) {
                     console.error('Error building decorations:', error);
@@ -69,25 +83,88 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
                 }
             }
 
+            /**
+             * Identifies the range of the frontmatter section in the document.
+             * 
+             * @param tree The syntax tree of the document
+             * @returns An object with 'from and 'to' properties defining the frontmatter range, or null if not found
+             */
+            private getFrontmatterRange(tree: Tree): { from: number, to: number } | null {
+                let frontmatterStart: number | null = null;
+                let frontmatterEnd: number | null = null;
+            
+                tree.iterate({
+                    enter: (node: TreeCursor) => {
+                        if (node.type.name === "def_hmd-frontmatter") {
+                            if (frontmatterStart === null) {
+                                frontmatterStart = node.from;
+                            } else {
+                                frontmatterEnd = node.to;
+                                return false; // Stop iteration
+                            }
+                        }
+                    }
+                });
+            
+                if (frontmatterStart !== null && frontmatterEnd !== null) {
+                    return { from: frontmatterStart, to: frontmatterEnd };
+                }
+                return null;
+            }
+
+            /**
+             * Checks if a given position is within the frontmatter section of the document.
+             * 
+             * @param pos The position to check.
+             * @param frontmatterRange The range of the fontmatter section.
+             * @returns True if the position is within the frontmatter, false otherwise
+             */
+            private isWithinFrontmatter(pos: number, frontmatterRange: { from: number, to: number } | null): boolean {
+                if (!frontmatterRange) return false;
+                return pos >= frontmatterRange.from && pos <= frontmatterRange.to;
+            }
+
+            /**
+             * Determines if a given position in the document is within a tag. This includes both inline tags and tags within frontmatter.
+             * 
+             * @param state The current editor state.
+             * @param pos The position to check.
+             * @returns True if the position is within a tag, false otherwise.
+             */
             private isWithinTag(state: EditorState, pos: number): boolean {
                 const tree = syntaxTree(state);
-                let node = tree.resolveInner(pos, 1);
+                let node: SyntaxNode | null = tree.resolveInner(pos, 1);
                 
                 while (node) {
-                    if (this.isTagNode(node)) {
+                    if (this.isTagNode(node) || this.isFrontmatterTagNode(node)) {
                         return true;
                     }
-                    const parent = node.parent;
-                    if (!parent) break;
-                    node = parent;
+                    node = node.parent;
                 }
                 return false;
             }
 
-            private isTagNode(node: SyntaxTreeNode): boolean {
+            /**
+             * Checks if a given syntax node represents a tag.
+             * 
+             * @param node The syntax node to check.
+             * @returns True if the node represents a tag, false otherwise.
+             */
+            private isTagNode(node: SyntaxNode): boolean {
                 return node.type.name.includes('hashtag') || 
                        node.type.name.includes('tag') || 
                        node.type.name.includes('formatting-hashtag');
+            }
+            
+            /**
+             * Checks if a given syntax node represents a tag within the frontmatter.
+             * 
+             * @param node The syntax node to check.
+             * @returns True if the node represents a frontmatter tag, false otherwise.
+             */
+            private isFrontmatterTagNode(node: SyntaxNode): boolean {
+                return node.type.name === "hmd-frontmatter_string" && 
+                       node.parent?.type.name === "hmd-frontmatter_meta";
             }
 
             /**
