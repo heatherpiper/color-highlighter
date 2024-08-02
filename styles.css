@@ -34,6 +34,7 @@
     width: 10px;
     height: 10px;
     margin-left: 0.25em;
+    margin-top: -0.2em;
     vertical-align: middle;
     border-radius: 1px;
     background-color: var(--highlight-color);
