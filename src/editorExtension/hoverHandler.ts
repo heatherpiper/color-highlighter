@@ -17,6 +17,11 @@ export function addHoverListeners(view: EditorView, from: number, to: number, co
     const { enableColorPicker, highlightStyle } = settings;
     if (!enableColorPicker) return;
 
+    if (!colorPicker) {
+        console.error('ColorPicker is undefined in addHoverListeners');
+        return;
+    }
+
     let showTimeout: number | null = null;
 
     const showColorPicker = (event: MouseEvent) => {

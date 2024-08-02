@@ -11,8 +11,8 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             colorPicker: ColorPicker;
 
             constructor(view: EditorView) {
+                this.colorPicker = plugin.colorPicker;
                 this.decorations = buildDecorations(view, plugin.settings, plugin.app, this.colorPicker);
-                this.colorPicker = new ColorPicker(plugin.app);
             }
 
             /**

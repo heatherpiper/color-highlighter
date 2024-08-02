@@ -53,7 +53,6 @@ export function addDecoration(builder: RangeSetBuilder<Decoration>, start: numbe
             builder.add(start, end, decoration);
         }
 
-        // Add hover listeners
         addHoverListeners(view, start, end, color, settings, colorPicker);
 
         // Add a square widget for the 'square' highlight style

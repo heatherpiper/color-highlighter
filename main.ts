@@ -13,11 +13,10 @@ class ColorHighlighterPlugin extends Plugin {
 
     async onload() {
         await this.loadSettings();
+        this.colorPicker = new ColorPicker(this.app);
         this.addSettingTab(new ColorHighlighterSettingTab(this.app, this));
         this.registerEditorExtension(createEditorExtension(this));
         this.registerMarkdownPostProcessor(createPostProcessor(this));
-
-        this.colorPicker = new ColorPicker(this.app);
 
         this.addCommand({
             id: 'show-color-picker',
