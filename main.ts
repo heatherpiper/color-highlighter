@@ -37,6 +37,11 @@ class ColorHighlighterPlugin extends Plugin {
         this.app.workspace.updateOptions();
     }
 
+    /**
+     * Shows the color picker for the current cursor position in the editor.
+     * 
+     * @param editor The current editor instance.
+     */
     showColorPicker(editor: Editor) {
         const cursor = editor.getCursor();
         const line = editor.getLine(cursor.line);
@@ -58,6 +63,13 @@ class ColorHighlighterPlugin extends Plugin {
         }
     }
 
+    /**
+     * Finds a color code at the current cursor position in the given line of text.
+     * 
+     * @param line The line of text to search.
+     * @param cursorCh The cursor position within the line.
+     * @returns A RegExpExecArray if a color code is found, null otherwise.
+     */
     private findColorAtCursor(line: string, cursorCh: number): RegExpExecArray | null {
         COLOR_REGEX.lastIndex = 0;
         let match;
