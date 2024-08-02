@@ -1,6 +1,6 @@
 import { Editor, Notice, Plugin } from 'obsidian';
 import { ColorPicker } from './src/colorPicker';
-import { createEditorExtension } from './src/editorExtension';
+import { createEditorExtension } from './src/editorExtension/editorExtension';
 import { createPostProcessor } from './src/postProcessor';
 import { ColorHighlighterSettings, ColorHighlighterSettingTab, DEFAULT_SETTINGS } from './src/settings';
 import { COLOR_REGEX } from './src/utils';
