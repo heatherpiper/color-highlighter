@@ -93,6 +93,12 @@ If your highlight style is set to **background** or **square**, you can choose t
 
 ![Contrasting border disabled versus enabled with square style highlight](images/contrast-border-square.png)
 
+### Scale square with text size
+
+If your highlight style is set to **square**, you can choose to enable this option to scale the size of the square with the size of the text. If disabled, the square will always be 10 x 10 pixels.
+
+![Square scaling disabled versus enabled](images/square-scaling.png)
+
 ### Color picker
 
 By default, a color picker is displayed when hovering over highlighted color codes. You may choose to disable this behavior. 

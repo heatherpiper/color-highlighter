@@ -116,8 +116,8 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
 
         if (this.plugin.settings.highlightStyle === 'square') {
             new Setting(containerEl)
-                .setName('Scale square with text')
-                .setDesc('Make the size of the square widget scale with the text size. If disabled, the square will always be 10x10 pixels.')
+                .setName('Scale square with text size')
+                .setDesc('Make the size of the square scale with the text size. If disabled, the square will always be 10 x 10 pixels.')
                 .addToggle(toggle => toggle
                     .setValue(this.plugin.settings.scaleSquareWithText)
                     .onChange(async (value) => {
