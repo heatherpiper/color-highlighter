@@ -38,7 +38,7 @@ Color Highlighter provides a visual representation of colors directly in your te
 
 ### Install manually
 
-As this plugin is currently in beta, it's not yet available in the Obsidian community plugins browser. 
+As this plugin is currently in beta, it's not yet available in the Obsidian community plugins directory. 
 
 To install:
 
@@ -54,7 +54,7 @@ BRAT (Beta Reviewers Auto-update Tool) is a community plugin that makes it easie
 
 To install using BRAT:
 
-1. Make sure you have installed and enabled the BRAT plugin from the Obsidian community plugins browser.
+1. Make sure you have installed and enabled the BRAT plugin from the Obsidian community plugins directory.
 2. Copy this link: `https://github.com/heatherpiper/color-highlighter`
 3. Open the command palette and select the command **BRAT: Add a beta plugin for testing**.
 4. Paste the link into the pop-up modal and select **Add Plugin**.
@@ -62,10 +62,7 @@ To install using BRAT:
 
 ## Usage and configuration
 
-Once installed and enabled, the plugin will automatically detect and highlight color codes based on your settings. To configure the plugin, first go to **Settings → Community plugins**. Then find Color Highlighter in the list and select the gear icon to access its settings.
-
-> [!NOTE]
-> After changing any of these settings, you may need to reload any open notes in order to see the changes take effect.
+Once installed and enabled, the plugin will automatically detect and highlight color codes based on your settings. To configure the plugin, first go to **Settings → Community plugins**. Find Color Highlighter in the list and select the gear icon to access its settings.
 
 ### Highlight locations
 
@@ -103,7 +100,7 @@ If your highlight style is set to **square**, you can choose to enable this opti
 
 By default, a color picker is displayed when hovering over highlighted color codes. You may choose to disable this behavior. 
 
-If this setting is disabled, the color picker can still be displayed by selecting the command **Color Highlighter: Show color picker** in the command palette while your cursor is on a highlighted color.
+If this setting is disabled, the color picker can still be displayed by selecting the command **Color Highlighter: Show color picker** in the command palette. Your cursor must be on a highlighted color for this command to be available.
 
 ## Feedback and Contributions
 
