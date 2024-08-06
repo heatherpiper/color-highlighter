@@ -31,13 +31,21 @@
 
 .color-highlighter-square {
     display: inline-block;
-    width: 10px;
-    height: 10px;
+    vertical-align: middle;
     margin-left: 0.25em;
     margin-top: -0.2em;
-    vertical-align: middle;
     border-radius: 1px;
     background-color: var(--highlight-color);
+}
+
+.color-highlighter-square-fixed {
+    width: 10px;
+    height: 10px;
+}
+
+.color-highlighter-square-scalable {
+    width: 0.8em;
+    height: 0.8em;
 }
 
 .color-highlighter-square[data-contrast-border="true"] {

@@ -124,6 +124,7 @@ export function addSquareWidget(builder: RangeSetBuilder<Decoration>, end: numbe
             toDOM() {
                 const span = document.createElement('span');
                 span.className = 'color-highlighter-square';
+                span.classList.add(this.settings.scaleSquareWithText ? 'color-highlighter-square-scalable' : 'color-highlighter-square-fixed');
                 span.setAttribute('data-decoration-id', this.decorationId);
                 span.style.setProperty('--highlight-color', this.color);
 

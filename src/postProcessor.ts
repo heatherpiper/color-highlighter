@@ -197,6 +197,7 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
         case 'square':
             const square = document.createElement('span');
             square.classList.add('color-highlighter-square');
+            square.classList.add(plugin.settings.scaleSquareWithText ? 'color-highlighter-square-scalable' : 'color-highlighter-square-fixed');
             square.style.setProperty('--highlight-color', effectiveColor);
             span.appendChild(square);
 

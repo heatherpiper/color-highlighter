@@ -8,6 +8,7 @@ export interface ColorHighlighterSettings {
     highlightStyle: 'background' | 'border' | 'square' | 'underline';
     enableColorPicker: boolean;
     useContrastingBorder: boolean;
+    scaleSquareWithText: boolean;
 }
 
 export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
@@ -17,6 +18,7 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     highlightStyle: 'background',
     enableColorPicker: true,
     useContrastingBorder: false,
+    scaleSquareWithText: false
 }
 
 export class ColorHighlighterSettingTab extends PluginSettingTab {
@@ -111,6 +113,19 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                     })
                 );
             }
+
+        if (this.plugin.settings.highlightStyle === 'square') {
+            new Setting(containerEl)
+                .setName('Scale square with text')
+                .setDesc('Make the size of the square widget scale with the text size. If disabled, the square will always be 10x10 pixels.')
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.settings.scaleSquareWithText)
+                    .onChange(async (value) => {
+                        this.plugin.settings.scaleSquareWithText = value;
+                        await this.plugin.saveSettings();
+                    })
+                );
+        }
 
         new Setting(containerEl)
             .setName('Enable color picker on hover')
