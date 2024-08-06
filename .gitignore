@@ -9,3 +9,6 @@ src/main.js
 
 # Ignore IDE configuration files
 *.idea
+
+# Ignore .txt files
+*.txt
