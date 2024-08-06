@@ -1,8 +1,11 @@
+import { StateEffect } from '@codemirror/state';
 import { DecorationSet, EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
 import ColorHighlighterPlugin from '../../main';
 import { ColorPicker } from '../colorPicker';
 import { updateCursorColor } from './colorDecorationUtils';
 import { buildDecorations } from './decorationBuilder';
+
+export const refreshEffect = StateEffect.define<null>();
 
 export function createEditorExtension(plugin: ColorHighlighterPlugin) {
     return ViewPlugin.fromClass(
@@ -18,13 +21,13 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             /**
              * Updates the plugin state in response to editor changes.
              * This method is called by CodeMirror whenever the editor state changes.
-             * It rebuilds decorations if the document or viewport has changed,
+             * It rebuilds decorations if the document or viewport has changed, or if a transaction has the refreshEffect,
              * and updates the cursor color if the selection has changed.
              *
-             * @param update - The ViewUpdate object containing information about what changed in the editor.
+             * @param update The ViewUpdate object containing information about what changed in the editor.
              */
             update(update: ViewUpdate) {
-                if (update.docChanged || update.viewportChanged) {
+                if (update.docChanged || update.viewportChanged || update.transactions.some(tr => tr.effects.some(e => e.is(refreshEffect)))) {
                     this.decorations = buildDecorations(update.view, plugin.settings, plugin.app, this.colorPicker);
                 }
                 

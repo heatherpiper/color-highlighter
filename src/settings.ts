@@ -32,11 +32,6 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
 
         containerEl.empty();
 
-        const descEl = containerEl.createEl('p', {
-            text: 'NOTE: After changing any of these settings, you may need to reload any open notes in order to see the changes take effect.',
-            cls: 'setting-item-description'
-        });
-
         new Setting(containerEl)
             .setName('Highlight locations')
             .setDesc('Choose where to highlight color codes')

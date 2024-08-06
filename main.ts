@@ -1,6 +1,7 @@
-import { Editor, Notice, Plugin } from 'obsidian';
+import { EditorView } from '@codemirror/view';
+import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
 import { ColorPicker } from './src/colorPicker';
-import { createEditorExtension } from './src/editorExtension/editorExtension';
+import { createEditorExtension, refreshEffect } from './src/editorExtension/editorExtension';
 import { createPostProcessor } from './src/postProcessor';
 import { ColorHighlighterSettings, ColorHighlighterSettingTab, DEFAULT_SETTINGS } from './src/settings';
 import { COLOR_REGEX } from './src/utils';
@@ -34,6 +35,43 @@ class ColorHighlighterPlugin extends Plugin {
     async saveSettings() {
         await this.saveData(this.settings);
         this.app.workspace.updateOptions();
+        this.applyRefreshEffect();
+    }
+
+    /**
+     * Applies a refresh effect to all open Markdown views, updating color highlighting to reflect changes in plugin settings.
+     */
+    applyRefreshEffect() {
+        this.app.workspace.iterateAllLeaves(leaf => {
+            if (leaf.view instanceof MarkdownView) {
+                if (leaf.view.getMode() === 'source') {
+                    const editor = leaf.view.editor;
+                    if ('cm' in editor && editor.cm instanceof EditorView) {
+                        editor.cm.dispatch({
+                            effects: refreshEffect.of(null)
+                        });
+                    }
+                } else if (leaf.view.getMode() === 'preview') {
+                    // For reading view, re-apply our post processor
+                    const content = leaf.view.contentEl;
+                    this.reprocessReadingView(content);
+                }
+            }
+        });
+    }
+
+    /**
+     * Reprocesses reading view to update color highlighting based on the current plugin settings.
+     * 
+     * @param element The content element of the reading view to reprocess.
+     */
+    private reprocessReadingView(element: HTMLElement) {
+        element.querySelectorAll('.color-highlighter').forEach(el => {
+            el.replaceWith(el.textContent || '');
+        });
+
+        const postProcessor = createPostProcessor(this);
+        postProcessor(element);
     }
 
     /**
