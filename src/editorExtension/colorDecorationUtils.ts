@@ -21,14 +21,7 @@ import { addHoverListeners } from './hoverHandler';
 export function addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'border' | 'square' | 'underline', settings: ColorHighlighterSettings, app: App, colorPicker: ColorPicker) {
     try {
         let editorBackground = getBackgroundColor(app);
-
-        let effectiveColor: string;
-        if (!hasAlphaChannel(color)) {
-            effectiveColor = color;
-        } else {
-            effectiveColor = blendColorWithBackground(color, editorBackground, app);
-        }
-
+        let effectiveColor = hasAlphaChannel(color) ? blendColorWithBackground(color, editorBackground, app) : color;
         const contrastColor = getContrastColor(effectiveColor, editorBackground);
 
         // Get the decoration attributes based on the selected style
