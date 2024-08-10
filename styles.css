@@ -52,6 +52,21 @@
     border: 1px solid var(--background-modifier-border-hover);
 }
 
+.cm-strikethrough .color-highlighter-square,
+.markdown-rendered del .color-highlighter-square {
+    position: relative;
+}
+
+.cm-strikethrough .color-highlighter-square::before,
+.markdown-rendered del .color-highlighter-square::before {
+    content: "";
+    position: absolute;
+    left: -0.25em;
+    right: 0;
+    top: 50%;
+    border-top: 1.5px solid currentColor;
+}
+
 .color-highlighter-picker {
     display: none;
     position: absolute;
