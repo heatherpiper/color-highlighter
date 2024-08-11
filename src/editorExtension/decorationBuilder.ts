@@ -7,9 +7,11 @@ import { ColorHighlighterSettings } from '../settings';
 import { COLOR_REGEX } from '../utils';
 import { addDecoration } from './colorDecorationUtils';
 import { getFrontmatterRange, isWithinFrontmatter, isWithinTag, shouldHighlightColor } from './syntaxTreeUtils';
+import { HighlightStyle } from '../HighlightStyle';
 
 export function buildDecorations(view: EditorView, settings: ColorHighlighterSettings, app: App, colorPicker: ColorPicker): DecorationSet {
-    const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks, highlightStyle } = settings;
+    const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks } = settings;
+    const highlightStyle = settings.highlightStyle as HighlightStyle;
     const decorations: { from: number; to: number; color: string }[] = [];
     const tree = syntaxTree(view.state);
     const frontmatterRange = getFrontmatterRange(tree);
@@ -36,7 +38,7 @@ export function buildDecorations(view: EditorView, settings: ColorHighlighterSet
     decorations.sort((a, b) => a.from - b.from);
 
     for (const { from, to, color } of decorations) {
-        addDecoration(builder, from, to, color, view, settings.highlightStyle, settings, app, colorPicker);
+        addDecoration(builder, from, to, color, view, highlightStyle, settings, app, colorPicker);
     }
 
     return builder.finish();

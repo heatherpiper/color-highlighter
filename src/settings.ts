@@ -1,11 +1,12 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import ColorHighlighterPlugin from '../main';
+import { HighlightStyle } from './HighlightStyle';
 
 export interface ColorHighlighterSettings {
     highlightEverywhere: boolean;
     highlightInBackticks: boolean;
     highlightInCodeblocks: boolean;
-    highlightStyle: 'background' | 'border' | 'square' | 'underline';
+    highlightStyle: HighlightStyle;
     enableColorPicker: boolean;
     useContrastingBorder: boolean;
     scaleSquareWithText: boolean;
@@ -16,7 +17,7 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     highlightEverywhere: true,
     highlightInBackticks: false,
     highlightInCodeblocks: false,
-    highlightStyle: 'background',
+    highlightStyle: HighlightStyle.Background,
     enableColorPicker: true,
     useContrastingBorder: false,
     scaleSquareWithText: false,
@@ -96,7 +97,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 .addOption('square', 'Square')
                 .addOption('underline', 'Underline')
                 .setValue(this.plugin.settings.highlightStyle)
-                .onChange(async (value: 'background' | 'border' | 'square' | 'underline') => {
+                .onChange(async (value: HighlightStyle) => {
                     this.plugin.settings.highlightStyle = value;
                     await this.plugin.saveSettings();
                     this.display();

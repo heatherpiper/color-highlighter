@@ -1,6 +1,7 @@
 import ColorHighlighterPlugin from '../main';
 import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
 import { COLOR_REGEX, getBackgroundColor } from './utils';
+import { HighlightStyle } from './HighlightStyle';
 
 /**
  * Processes the DOM of a rendered Markdown note file, highlighting color codes within text nodes.
@@ -177,7 +178,7 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
     span.classList.add('color-highlighter');
 
     switch (plugin.settings.highlightStyle) {
-        case 'background':
+        case HighlightStyle.Background:
             span.classList.add('background');
             const contrastColor = getContrastColor(effectiveColor, backgroundColor);
             span.style.setProperty('--highlight-color', effectiveColor);
@@ -190,11 +191,11 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
                 }
             }
             break;
-        case 'border':
+        case HighlightStyle.Border:
             span.classList.add('border');
             span.style.setProperty('--highlight-color', effectiveColor);
             break;
-        case 'square':
+        case HighlightStyle.Square:
             const square = document.createElement('span');
             square.classList.add('color-highlighter-square');
             square.classList.add(plugin.settings.scaleSquareWithText ? 'color-highlighter-square-scalable' : 'color-highlighter-square-fixed');
@@ -214,7 +215,7 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
                 }
             }
             break;
-        case 'underline':
+        case HighlightStyle.Underline:
             span.classList.add('underline');
             span.style.setProperty('--highlight-color', effectiveColor);
             break;

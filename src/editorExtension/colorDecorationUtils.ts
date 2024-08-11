@@ -1,11 +1,12 @@
-import { EditorView, Decoration, DecorationSet, WidgetType } from '@codemirror/view';
 import { RangeSetBuilder, SelectionRange } from '@codemirror/state';
-import { ColorHighlighterSettings } from '../settings';
-import { getBackgroundColor, hasAlphaChannel } from '../utils';
-import { blendColorWithBackground, getContrastColor, getContrastRatio } from '../colorProcessor';
+import { Decoration, DecorationSet, EditorView, WidgetType } from '@codemirror/view';
 import { App } from 'obsidian';
 import { ColorPicker } from '../colorPicker';
+import { blendColorWithBackground, getContrastColor, getContrastRatio } from '../colorProcessor';
+import { ColorHighlighterSettings } from '../settings';
+import { getBackgroundColor, hasAlphaChannel } from '../utils';
 import { addHoverListeners } from './hoverHandler';
+import { HighlightStyle } from '../HighlightStyle';
 
 /**
  * Applies the appropriate styles and attributes based on the selected highlight style. It
@@ -18,7 +19,7 @@ import { addHoverListeners } from './hoverHandler';
  * @param view The EditorView instance.
  * @param highlightStyle The highlight style to use ('background', 'border', 'square', or 'underline').
  */
-export function addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: 'background' | 'border' | 'square' | 'underline', settings: ColorHighlighterSettings, app: App, colorPicker: ColorPicker) {
+export function addDecoration(builder: RangeSetBuilder<Decoration>, start: number, end: number, color: string, view: EditorView, highlightStyle: HighlightStyle, settings: ColorHighlighterSettings, app: App, colorPicker: ColorPicker) {
     try {
         let editorBackground = getBackgroundColor(app);
         let effectiveColor = hasAlphaChannel(color) ? blendColorWithBackground(color, editorBackground, app) : color;
@@ -38,14 +39,14 @@ export function addDecoration(builder: RangeSetBuilder<Decoration>, start: numbe
         const decorationStart = isHexColor ? start + 1 : start;
 
         // Add square widget before the color code if necessary
-        if (highlightStyle === 'square' && settings.squarePosition === 'before') {
+        if (highlightStyle === HighlightStyle.Square && settings.squarePosition === 'before') {
             addSquareWidget(builder, start, effectiveColor, editorBackground, settings, `${start}-${end}`);
         }
 
         builder.add(decorationStart, end, decoration);
 
         // Add square widget after the color code if necessary
-        if (highlightStyle === 'square' && settings.squarePosition === 'after') {
+        if (highlightStyle === HighlightStyle.Square && settings.squarePosition === 'after') {
             addSquareWidget(builder, end, effectiveColor, editorBackground, settings, `${start}-${end}`);
         }
 
@@ -63,14 +64,14 @@ export function addDecoration(builder: RangeSetBuilder<Decoration>, start: numbe
  * @param contrastColor The contrasting color to use for the text and caret, based on the effective color.
  * @returns The decoration attributes to apply to the highlighted text.
  */
-export function getDecorationAttributes(highlightStyle: string, effectiveColor: string, contrastColor: string, backgroundColor: string, settings: ColorHighlighterSettings): { [key: string]: string } {
+export function getDecorationAttributes(highlightStyle: HighlightStyle, effectiveColor: string, contrastColor: string, backgroundColor: string, settings: ColorHighlighterSettings): { [key: string]: string } {
     const attributes: { [key: string]: string } = {
         class: `color-highlighter ${highlightStyle}`,
         'data-color': effectiveColor
     };
 
     switch (highlightStyle) {
-        case 'background':
+        case HighlightStyle.Background:
             attributes.style = `--highlight-color: ${effectiveColor}; --contrast-color: ${contrastColor}; --caret-color: ${contrastColor};`;
             if (settings.useContrastingBorder) {
                 const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
@@ -79,11 +80,11 @@ export function getDecorationAttributes(highlightStyle: string, effectiveColor: 
                 }
             }
             break;
-        case 'border':
-        case 'underline':
+        case HighlightStyle.Border:
+        case HighlightStyle.Underline:
             attributes.style = `--highlight-color: ${effectiveColor};`;
             break;
-        case 'square':
+        case HighlightStyle.Square:
             // No additional styles for square, handled in addSquareWidget
             break;
     }
