@@ -32,10 +32,17 @@
 .color-highlighter-square {
     display: inline-block;
     vertical-align: middle;
-    margin-left: 0.25em;
     margin-top: -0.2em;
     border-radius: 1px;
     background-color: var(--highlight-color);
+}
+
+.color-highlighter-square-after {
+    margin-left: 0.25em;
+}
+
+.color-highlighter-square-before {
+    margin-right: 0.25em;
 }
 
 .color-highlighter-square-fixed {

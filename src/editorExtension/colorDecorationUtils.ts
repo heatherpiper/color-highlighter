@@ -29,29 +29,27 @@ export function addDecoration(builder: RangeSetBuilder<Decoration>, start: numbe
 
         decorationAttributes['data-decoration-id'] = `${start}-${end}`;
 
-        let decoration: Decoration;
-        if (color.startsWith('#')) {
-            // For hex colors, only style the part after the hash
-            decoration = Decoration.mark({
-                attributes: decorationAttributes,
-                class: 'color-highlighter-decoration'
-            });
-            builder.add(start + 1, end, decoration);
-        } else {
-            // For other color formats, use the original decoration
-            decoration = Decoration.mark({
-                attributes: decorationAttributes,
-                class: 'color-highlighter-decoration'
-            });
-            builder.add(start, end, decoration);
+        let decoration = Decoration.mark({
+            attributes: decorationAttributes,
+            class: 'color-highlighter-decoration'
+        });
+
+        const isHexColor = color.startsWith('#');
+        const decorationStart = isHexColor ? start + 1 : start;
+
+        // Add square widget before the color code if necessary
+        if (highlightStyle === 'square' && settings.squarePosition === 'before') {
+            addSquareWidget(builder, start, effectiveColor, editorBackground, settings, `${start}-${end}`);
+        }
+
+        builder.add(decorationStart, end, decoration);
+
+        // Add square widget after the color code if necessary
+        if (highlightStyle === 'square' && settings.squarePosition === 'after') {
+            addSquareWidget(builder, end, effectiveColor, editorBackground, settings, `${start}-${end}`);
         }
 
         addHoverListeners(view, start, end, color, settings, colorPicker);
-
-        // Add a square widget for the 'square' highlight style
-        if (highlightStyle === 'square') {
-            addSquareWidget(builder, end, effectiveColor, editorBackground, settings, `${start}-${end}`);
-        }
     } catch (error) {
         console.warn('Error adding decoration:', error, { color, highlightStyle });
     }
@@ -118,6 +116,7 @@ export function addSquareWidget(builder: RangeSetBuilder<Decoration>, end: numbe
                 const span = document.createElement('span');
                 span.className = 'color-highlighter-square';
                 span.classList.add(this.settings.scaleSquareWithText ? 'color-highlighter-square-scalable' : 'color-highlighter-square-fixed');
+                span.classList.add(`color-highlighter-square-${this.settings.squarePosition}`);
                 span.setAttribute('data-decoration-id', this.decorationId);
                 span.style.setProperty('--highlight-color', this.color);
 

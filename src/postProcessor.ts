@@ -190,16 +190,22 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
                 }
             }
             break;
-        case 'underline':
-            span.classList.add('underline');
+        case 'border':
+            span.classList.add('border');
             span.style.setProperty('--highlight-color', effectiveColor);
             break;
         case 'square':
             const square = document.createElement('span');
             square.classList.add('color-highlighter-square');
             square.classList.add(plugin.settings.scaleSquareWithText ? 'color-highlighter-square-scalable' : 'color-highlighter-square-fixed');
+            square.classList.add(`color-highlighter-square-${plugin.settings.squarePosition}`);
             square.style.setProperty('--highlight-color', effectiveColor);
-            span.appendChild(square);
+            
+            if (plugin.settings.squarePosition === 'before') {
+                span.insertBefore(square, span.firstChild);
+            } else {
+                span.appendChild(square);
+            }
 
             if (plugin.settings.useContrastingBorder) {
                 const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
@@ -208,8 +214,8 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
                 }
             }
             break;
-        case 'border':
-            span.classList.add('border');
+        case 'underline':
+            span.classList.add('underline');
             span.style.setProperty('--highlight-color', effectiveColor);
             break;
     }
