@@ -9,6 +9,7 @@ export interface ColorHighlighterSettings {
     enableColorPicker: boolean;
     useContrastingBorder: boolean;
     scaleSquareWithText: boolean;
+    squarePosition: 'before' | 'after';
 }
 
 export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
@@ -18,7 +19,8 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     highlightStyle: 'background',
     enableColorPicker: true,
     useContrastingBorder: false,
-    scaleSquareWithText: false
+    scaleSquareWithText: false,
+    squarePosition: 'after'
 }
 
 export class ColorHighlighterSettingTab extends PluginSettingTab {
@@ -36,7 +38,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Highlight locations')
-            .setDesc('Choose where to highlight color codes')
+            .setDesc('Choose where to highlight color codes.')
             .addDropdown(dropdown => dropdown
                 .addOption('anywhere', 'Highlight anywhere')
                 .addOption('code', 'Highlight only in code')
@@ -56,7 +58,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
     
                 new Setting(containerEl)
                     .setName('Highlight in inline code')
-                    .setDesc('Highlight color codes within inline code (single backticks)')
+                    .setDesc('Highlight color codes within inline code (single backticks).')
                     .addToggle(toggle => toggle
                         .setValue(this.plugin.settings.highlightInBackticks)
                         .onChange(async (value) => {
@@ -71,7 +73,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
     
                 new Setting(containerEl)
                     .setName('Highlight in code blocks')
-                    .setDesc('Highlight color codes within code blocks (triple backticks)')
+                    .setDesc('Highlight color codes within code blocks (triple backticks).')
                     .addToggle(toggle => toggle
                         .setValue(this.plugin.settings.highlightInCodeblocks)
                         .onChange(async (value) => {
@@ -87,7 +89,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             
         new Setting(containerEl)
             .setName('Highlight style')
-            .setDesc('Choose how color code highlights are displayed')
+            .setDesc('Choose how color code highlights are displayed.')
             .addDropdown(dropdown => dropdown
                 .addOption('background', 'Background color')
                 .addOption('border', 'Border')
@@ -101,6 +103,32 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 })
             );
 
+        if (this.plugin.settings.highlightStyle === 'square') {
+            new Setting(containerEl)
+                .setName('Square position')
+                .setDesc('Choose whether the square appears before or after the color code text.')
+                .addDropdown(dropdown => dropdown
+                    .addOption('before', 'Before text')
+                    .addOption('after', 'After text')
+                    .setValue(this.plugin.settings.squarePosition)
+                    .onChange(async (value: 'before' | 'after') => {
+                    this.plugin.settings.squarePosition = value;
+                    await this.plugin.saveSettings();
+                    })
+                );
+                
+            new Setting(containerEl)
+                .setName('Scale square with text size')
+                .setDesc('Make the size of the square scale with the text size. If disabled, the square will always be 10 x 10 pixels.')
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.settings.scaleSquareWithText)
+                    .onChange(async (value) => {
+                        this.plugin.settings.scaleSquareWithText = value;
+                        await this.plugin.saveSettings();
+                    })
+                );
+        }
+
         if (this.plugin.settings.highlightStyle === 'background' || this.plugin.settings.highlightStyle === 'square') {
             new Setting(containerEl)
                 .setName('Use contrasting border for low-contrast highlights')
@@ -113,19 +141,6 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                     })
                 );
             }
-
-        if (this.plugin.settings.highlightStyle === 'square') {
-            new Setting(containerEl)
-                .setName('Scale square with text size')
-                .setDesc('Make the size of the square scale with the text size. If disabled, the square will always be 10 x 10 pixels.')
-                .addToggle(toggle => toggle
-                    .setValue(this.plugin.settings.scaleSquareWithText)
-                    .onChange(async (value) => {
-                        this.plugin.settings.scaleSquareWithText = value;
-                        await this.plugin.saveSettings();
-                    })
-                );
-        }
 
         new Setting(containerEl)
             .setName('Enable color picker on hover')
