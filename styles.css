@@ -45,7 +45,7 @@
     display: inline-block;
     vertical-align: middle;
     margin-top: -0.2em;
-    border-radius: 1px;
+    border-radius: var(--square-border-radius, 1px);
     background-color: var(--highlight-color);
 }
 

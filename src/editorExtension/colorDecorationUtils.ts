@@ -122,6 +122,7 @@ export function addSquareWidget(builder: RangeSetBuilder<Decoration>, end: numbe
                 span.classList.add(`color-highlighter-square-${this.settings.squarePosition}`);
                 span.setAttribute('data-decoration-id', this.decorationId);
                 span.style.setProperty('--highlight-color', this.color);
+                span.style.setProperty('--square-border-radius', `${this.settings.squareBorderRadius}px`);
 
                 if (this.settings.useContrastingBorder) {
                     const contrastRatio = getContrastRatio(this.color, this.backgroundColor);

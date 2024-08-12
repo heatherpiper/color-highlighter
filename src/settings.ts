@@ -17,6 +17,7 @@ export interface ColorHighlighterSettings {
     borderThickness: number;
     borderBorderRadius: number;
     underlineThickness: number;
+    squareBorderRadius: number;
 }
 
 export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
@@ -33,7 +34,8 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     backgroundBorderRadius: 3,
     borderThickness: 2,
     borderBorderRadius: 3,
-    underlineThickness: 2
+    underlineThickness: 2,
+    squareBorderRadius: 1
 }
 
 export class ColorHighlighterSettingTab extends PluginSettingTab {
@@ -123,6 +125,8 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
         } else if (this.plugin.settings.highlightStyle === HighlightStyle.Border) {
             this.addSliderWithReset(containerEl, 'Border highlight thickness', 'Adjust the thickness of border highlights (in pixels)', 'borderThickness', 1, 6, 1);
             this.addSliderWithReset(containerEl, 'Border highlight border radius', 'Adjust the border radius of border style highlights (in pixels)', 'borderBorderRadius', 0, 10, 1);
+        } else if (this.plugin.settings.highlightStyle === HighlightStyle.Square) {
+            this.addSliderWithReset(containerEl, 'Square highlight border radius', 'Adjust the border radius of square highlights (in pixels)', 'squareBorderRadius', 0, 10, 1);
         } else if (this.plugin.settings.highlightStyle === HighlightStyle.Underline) {
             this.addSliderWithReset(containerEl, 'Underline highlight thickness', 'Adjust the thickness of underline highlights (in pixels)', 'underlineThickness', 1, 6, 1);
         }

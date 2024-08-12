@@ -206,6 +206,7 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
             square.classList.add(plugin.settings.scaleSquareWithText ? 'color-highlighter-square-scalable' : 'color-highlighter-square-fixed');
             square.classList.add(`color-highlighter-square-${plugin.settings.squarePosition}`);
             square.style.setProperty('--highlight-color', effectiveColor);
+            square.style.setProperty('--square-border-radius', `${plugin.settings.squareBorderRadius}px`);
             
             if (plugin.settings.squarePosition === 'before') {
                 span.insertBefore(square, span.firstChild);
