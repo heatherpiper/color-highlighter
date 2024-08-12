@@ -5,14 +5,26 @@
 .color-highlighter.background {
     background-color: var(--highlight-color);
     color: var(--contrast-color);
-    border-radius: 3px;
-    padding: 0.1em 0.2em;
+    border-radius: var(--background-border-radius, 3px);
+    padding: var(--background-vertical-padding, 0.1em) var(--background-horizontal-padding, 0.2em);
     caret-color: var(--caret-color);
 }
 
 .color-highlighter.background[data-contrast-border="true"] {
+    position: relative;
+    z-index: 1;
+}
+
+.color-highlighter.background[data-contrast-border="true"]::before {
+    content: "";
+    position: absolute;
+    top: calc(-1 * var(--background-vertical-padding, 0.1em));
+    left: calc(-1 * var(--background-horizontal-padding, 0.2em));
+    right: calc(-1 * var(--background-horizontal-padding, 0.2em));
+    bottom: calc(-1 * var(--background-vertical-padding, 0.1em));
     border: 1px solid var(--background-modifier-border-hover);
-    padding: calc(0.1em - 1px) calc(0.2em - 1px);
+    border-radius: var(--background-border-radius, 3px);
+    z-index: -1;
 }
 
 .color-highlighter.border {

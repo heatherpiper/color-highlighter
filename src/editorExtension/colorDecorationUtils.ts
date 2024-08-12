@@ -72,7 +72,7 @@ export function getDecorationAttributes(highlightStyle: HighlightStyle, effectiv
 
     switch (highlightStyle) {
         case HighlightStyle.Background:
-            attributes.style = `--highlight-color: ${effectiveColor}; --contrast-color: ${contrastColor}; --caret-color: ${contrastColor};`;
+            attributes.style = `--highlight-color: ${effectiveColor}; --contrast-color: ${contrastColor}; --caret-color: ${contrastColor}; --background-vertical-padding: ${settings.backgroundVerticalPadding}em; --background-horizontal-padding: ${settings.backgroundHorizontalPadding}em; --background-border-radius: ${settings.backgroundBorderRadius}px;`;
             if (settings.useContrastingBorder) {
                 const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
                 if (contrastRatio < 1.25) {

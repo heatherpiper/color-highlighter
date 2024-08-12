@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, ButtonComponent, PluginSettingTab, Setting } from 'obsidian';
 import ColorHighlighterPlugin from '../main';
 import { HighlightStyle } from './HighlightStyle';
 
@@ -11,7 +11,8 @@ export interface ColorHighlighterSettings {
     useContrastingBorder: boolean;
     scaleSquareWithText: boolean;
     squarePosition: 'before' | 'after';
-    backgroundPadding: number;
+    backgroundVerticalPadding: number;
+    backgroundHorizontalPadding: number;
     backgroundBorderRadius: number;
 }
 
@@ -24,7 +25,8 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     useContrastingBorder: false,
     scaleSquareWithText: false,
     squarePosition: 'after',
-    backgroundPadding: 0.1,
+    backgroundVerticalPadding: 0.1,
+    backgroundHorizontalPadding: 0.2,
     backgroundBorderRadius: 3
 }
 
@@ -109,34 +111,10 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             );
 
         if (this.plugin.settings.highlightStyle === HighlightStyle.Background) {
-            new Setting(containerEl)
-                .setName('Background highlight padding')
-                .setDesc('Adjust the padding of background highlights (in em)')
-                .addSlider(slider => slider
-                    .setLimits(0, 0.5, 0.05)
-                    .setValue(this.plugin.settings.backgroundPadding)
-                    .setDynamicTooltip()
-                    .onChange(async (value) => {
-                        this.plugin.settings.backgroundPadding = value;
-                        await this.plugin.saveSettings();
-                        this.plugin.applyRefreshEffect();
-                    })
-                );
-
-            new Setting(containerEl)
-                .setName('Background border radius')
-                .setDesc('Adjust the border radius of background highlights (in pixels)')
-                .addSlider(slider => slider
-                    .setLimits(0, 10, 1)
-                    .setValue(this.plugin.settings.backgroundBorderRadius)
-                    .setDynamicTooltip()
-                    .onChange(async (value) => {
-                        this.plugin.settings.backgroundBorderRadius = value;
-                        await this.plugin.saveSettings();
-                        this.plugin.applyRefreshEffect();
-                    })
-                );
-        }    
+            this.addSliderWithReset(containerEl, 'Background highlight vertical padding', 'Adjust the vertical padding of background highlights (in em)', 'backgroundVerticalPadding', 0, 0.5, 0.05);
+            this.addSliderWithReset(containerEl, 'Background highlight horizontal padding', 'Adjust the horizontal padding of background highlights (in em)', 'backgroundHorizontalPadding', 0, 0.5, 0.05);
+            this.addSliderWithReset(containerEl, 'Background highlight border radius', 'Adjust the border radius of background highlights (in pixels)', 'backgroundBorderRadius', 0, 10, 1);
+        }
             
         if (this.plugin.settings.highlightStyle === HighlightStyle.Square) {
             new Setting(containerEl)
@@ -187,5 +165,31 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 })
             );
+    }
+
+    addSliderWithReset(containerEl: HTMLElement, name: string, desc: string, settingKey: keyof ColorHighlighterSettings, min: number, max: number, step: number) {
+        new Setting(containerEl)
+            .setName(name)
+            .setDesc(desc)
+            .addSlider(slider => slider
+                .setLimits(min, max, step)
+                .setValue(this.plugin.settings[settingKey] as number)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    (this.plugin.settings[settingKey] as number) = value;
+                    await this.plugin.saveSettings();
+                    this.plugin.applyRefreshEffect();
+                })
+            )
+            .addButton((button: ButtonComponent) => {
+                button
+                    .setButtonText("Reset")
+                    .onClick(async () => {
+                        (this.plugin.settings[settingKey] as number) = DEFAULT_SETTINGS[settingKey] as number;
+                        await this.plugin.saveSettings();
+                        this.plugin.applyRefreshEffect();
+                        this.display(); // Refresh the settings panel
+                    });
+            });
     }
 }

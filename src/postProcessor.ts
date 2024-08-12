@@ -183,6 +183,9 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
             const contrastColor = getContrastColor(effectiveColor, backgroundColor);
             span.style.setProperty('--highlight-color', effectiveColor);
             span.style.setProperty('--contrast-color', contrastColor);
+            span.style.setProperty('--background-vertical-padding', `${plugin.settings.backgroundVerticalPadding}em`);
+            span.style.setProperty('--background-horizontal-padding', `${plugin.settings.backgroundHorizontalPadding}em`);
+            span.style.setProperty('--background-border-radius', `${plugin.settings.backgroundBorderRadius}px`);
 
             if (plugin.settings.useContrastingBorder) {
                 const contrastRatio = getContrastRatio(effectiveColor, backgroundColor);
