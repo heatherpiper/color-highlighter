@@ -11,6 +11,8 @@ export interface ColorHighlighterSettings {
     useContrastingBorder: boolean;
     scaleSquareWithText: boolean;
     squarePosition: 'before' | 'after';
+    backgroundPadding: number;
+    backgroundBorderRadius: number;
 }
 
 export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
@@ -21,7 +23,9 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     enableColorPicker: true,
     useContrastingBorder: false,
     scaleSquareWithText: false,
-    squarePosition: 'after'
+    squarePosition: 'after',
+    backgroundPadding: 0.1,
+    backgroundBorderRadius: 3
 }
 
 export class ColorHighlighterSettingTab extends PluginSettingTab {
@@ -104,6 +108,36 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 })
             );
 
+        if (this.plugin.settings.highlightStyle === HighlightStyle.Background) {
+            new Setting(containerEl)
+                .setName('Background highlight padding')
+                .setDesc('Adjust the padding of background highlights (in em)')
+                .addSlider(slider => slider
+                    .setLimits(0, 0.5, 0.05)
+                    .setValue(this.plugin.settings.backgroundPadding)
+                    .setDynamicTooltip()
+                    .onChange(async (value) => {
+                        this.plugin.settings.backgroundPadding = value;
+                        await this.plugin.saveSettings();
+                        this.plugin.applyRefreshEffect();
+                    })
+                );
+
+            new Setting(containerEl)
+                .setName('Background border radius')
+                .setDesc('Adjust the border radius of background highlights (in pixels)')
+                .addSlider(slider => slider
+                    .setLimits(0, 10, 1)
+                    .setValue(this.plugin.settings.backgroundBorderRadius)
+                    .setDynamicTooltip()
+                    .onChange(async (value) => {
+                        this.plugin.settings.backgroundBorderRadius = value;
+                        await this.plugin.saveSettings();
+                        this.plugin.applyRefreshEffect();
+                    })
+                );
+        }    
+            
         if (this.plugin.settings.highlightStyle === HighlightStyle.Square) {
             new Setting(containerEl)
                 .setName('Square position')
