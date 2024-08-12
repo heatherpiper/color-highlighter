@@ -86,19 +86,23 @@ Choose what part of your notes to highlight color codes in:
 
 You can further customize your highlights with style-specific adjustments that allow you change the padding, border radius, or width of highlights, depending on your chosen style. Below are some examples of what these adjustments look like.
 
-Background styles:
+##### Background styles:
 
 ![Background style adjustment options](images/styles-background.png)
 
-Border styles:
+##### Border styles:
 
 ![Border style adjustment options](images/styles-border.png)
 
-Square styles:
+##### Square styles:
 
 ![Square style adjustment options](images/styles-square.png)
 
-Underline styles:
+You can choose to scale the size of the square with the size of the text. If disabled, the square will always be 10 x 10 pixels.
+
+![Square scaling disabled versus enabled](images/square-scaling.png)
+
+##### Underline styles:
 
 ![Underline style adjustment options](images/styles-underline.png)
 
@@ -109,12 +113,6 @@ If your highlight style is set to **background** or **square**, you can choose t
 ![Contrasting border disabled versus enabled with background style highlight](images/contrast-border-background.png)
 
 ![Contrasting border disabled versus enabled with square style highlight](images/contrast-border-square.png)
-
-### Scale square with text size
-
-If your highlight style is set to **square**, you can choose to enable this option to scale the size of the square with the size of the text. If disabled, the square will always be 10 x 10 pixels.
-
-![Square scaling disabled versus enabled](images/square-scaling.png)
 
 ### Color picker
 
