@@ -77,10 +77,26 @@ Choose what part of your notes to highlight color codes in:
 
    - **Background**: Changes the background color of color codes.
    - **Border**: Adds a solid color border around color codes.
-   - **Square**: Adds a small colored square after color codes.
+   - **Square**: Adds a small colored square before or after color codes.
    - **Underline**: Adds a solid color underline to color codes.
 
 ![Color Highlighter highlight styles](images/highlighting-styles.png)
+
+#### Customizing the highlight style
+
+You can further customize your highlights with style-specific adjustments that allow you change the padding, border radius, or width of highlights, depending on your chosen style. Below are some examples of what these adjustments look like.
+
+Background styles:
+![Background style adjustment options](images/styles-background.png)
+
+Border styles:
+![Border style adjustment options](images/styles-border.png)
+
+Square styles:
+![Square style adjustment options](images/styles-square.png)
+
+Underline styles:
+![Underline style adjustment options](images/styles-underline.png)
 
 ### Contrast border
 
