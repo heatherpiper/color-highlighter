@@ -197,6 +197,8 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
         case HighlightStyle.Border:
             span.classList.add('border');
             span.style.setProperty('--highlight-color', effectiveColor);
+            span.style.setProperty('--border-thickness', `${plugin.settings.borderThickness}px`);
+            span.style.setProperty('--border-radius', `${plugin.settings.borderBorderRadius}px`);
             break;
         case HighlightStyle.Square:
             const square = document.createElement('span');

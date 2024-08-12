@@ -29,8 +29,8 @@
 
 .color-highlighter.border {
     border-color: var(--highlight-color);
-    border-radius: 3px;
-    border-width: 2px;
+    border-radius: var(--border-radius, 3px);
+    border-width: var(--border-thickness, 2px);
     border-style: solid;
     padding: 0 0.2em;
 }

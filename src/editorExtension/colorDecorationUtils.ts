@@ -81,6 +81,8 @@ export function getDecorationAttributes(highlightStyle: HighlightStyle, effectiv
             }
             break;
         case HighlightStyle.Border:
+            attributes.style = `--highlight-color: ${effectiveColor}; --border-thickness: ${settings.borderThickness}px; --border-radius: ${settings.borderBorderRadius}px;`;
+            break;
         case HighlightStyle.Underline:
             attributes.style = `--highlight-color: ${effectiveColor}; --underline-thickness: ${settings.underlineThickness}px;`;
             break;

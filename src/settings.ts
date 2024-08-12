@@ -14,6 +14,8 @@ export interface ColorHighlighterSettings {
     backgroundVerticalPadding: number;
     backgroundHorizontalPadding: number;
     backgroundBorderRadius: number;
+    borderThickness: number;
+    borderBorderRadius: number;
     underlineThickness: number;
 }
 
@@ -29,6 +31,8 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     backgroundVerticalPadding: 0.1,
     backgroundHorizontalPadding: 0.2,
     backgroundBorderRadius: 3,
+    borderThickness: 2,
+    borderBorderRadius: 3,
     underlineThickness: 2
 }
 
@@ -116,8 +120,11 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             this.addSliderWithReset(containerEl, 'Background highlight vertical padding', 'Adjust the vertical padding of background highlights (in em)', 'backgroundVerticalPadding', 0, 0.5, 0.05);
             this.addSliderWithReset(containerEl, 'Background highlight horizontal padding', 'Adjust the horizontal padding of background highlights (in em)', 'backgroundHorizontalPadding', 0, 0.5, 0.05);
             this.addSliderWithReset(containerEl, 'Background highlight border radius', 'Adjust the border radius of background highlights (in pixels)', 'backgroundBorderRadius', 0, 10, 1);
+        } else if (this.plugin.settings.highlightStyle === HighlightStyle.Border) {
+            this.addSliderWithReset(containerEl, 'Border highlight thickness', 'Adjust the thickness of border highlights (in pixels)', 'borderThickness', 1, 6, 1);
+            this.addSliderWithReset(containerEl, 'Border highlight border radius', 'Adjust the border radius of border style highlights (in pixels)', 'borderBorderRadius', 0, 10, 1);
         } else if (this.plugin.settings.highlightStyle === HighlightStyle.Underline) {
-            this.addSliderWithReset(containerEl, 'Underline thickness', 'Adjust the thickness of underline highlights (in pixels)', 'underlineThickness', 1, 6, 1);
+            this.addSliderWithReset(containerEl, 'Underline highlight thickness', 'Adjust the thickness of underline highlights (in pixels)', 'underlineThickness', 1, 6, 1);
         }
             
         if (this.plugin.settings.highlightStyle === HighlightStyle.Square) {
