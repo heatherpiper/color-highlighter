@@ -221,6 +221,7 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
         case HighlightStyle.Underline:
             span.classList.add('underline');
             span.style.setProperty('--highlight-color', effectiveColor);
+            span.style.setProperty('--underline-thickness', `${plugin.settings.underlineThickness}px`);
             break;
     }
 }

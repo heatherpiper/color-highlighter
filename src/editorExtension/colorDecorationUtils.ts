@@ -82,7 +82,7 @@ export function getDecorationAttributes(highlightStyle: HighlightStyle, effectiv
             break;
         case HighlightStyle.Border:
         case HighlightStyle.Underline:
-            attributes.style = `--highlight-color: ${effectiveColor};`;
+            attributes.style = `--highlight-color: ${effectiveColor}; --underline-thickness: ${settings.underlineThickness}px;`;
             break;
         case HighlightStyle.Square:
             // No additional styles for square, handled in addSquareWidget
