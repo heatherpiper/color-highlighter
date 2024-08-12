@@ -92,10 +92,10 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             .setName('Highlight style')
             .setDesc('Choose how color code highlights are displayed.')
             .addDropdown(dropdown => dropdown
-                .addOption('background', 'Background color')
-                .addOption('border', 'Border')
-                .addOption('square', 'Square')
-                .addOption('underline', 'Underline')
+                .addOption(HighlightStyle.Background, 'Background color')
+                .addOption(HighlightStyle.Border, 'Border')
+                .addOption(HighlightStyle.Square, 'Square')
+                .addOption(HighlightStyle.Underline, 'Underline')
                 .setValue(this.plugin.settings.highlightStyle)
                 .onChange(async (value: HighlightStyle) => {
                     this.plugin.settings.highlightStyle = value;
@@ -104,7 +104,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 })
             );
 
-        if (this.plugin.settings.highlightStyle === 'square') {
+        if (this.plugin.settings.highlightStyle === HighlightStyle.Square) {
             new Setting(containerEl)
                 .setName('Square position')
                 .setDesc('Choose whether the square appears before or after the color code text.')
@@ -130,7 +130,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 );
         }
 
-        if (this.plugin.settings.highlightStyle === 'background' || this.plugin.settings.highlightStyle === 'square') {
+        if (this.plugin.settings.highlightStyle === HighlightStyle.Background || this.plugin.settings.highlightStyle === HighlightStyle.Square) {
             new Setting(containerEl)
                 .setName('Use contrasting border for low-contrast highlights')
                 .setDesc('Adds a faint border around highlights when there is not enough contrast with the background.')
