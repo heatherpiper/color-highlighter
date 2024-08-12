@@ -1,6 +1,6 @@
 {
   "name": "color-highlighter",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "main": "index.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
