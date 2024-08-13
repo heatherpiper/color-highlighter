@@ -1,5 +1,5 @@
 import { EditorView } from '@codemirror/view';
-import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
+import { Editor, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
 import { HighlightStyle } from 'src/HighlightStyle';
 import { ColorPicker } from './src/colorPicker';
 import { createEditorExtension, refreshEffect } from './src/editorExtension/editorExtension';
@@ -21,6 +21,20 @@ class ColorHighlighterPlugin extends Plugin {
         this.registerEditorExtension(createEditorExtension(this));
         this.registerMarkdownPostProcessor(createPostProcessor(this));
 
+        this.registerEvent(
+            this.app.workspace.on('active-leaf-change', (leaf) => {
+                if (leaf?.view instanceof MarkdownView) {
+                    this.handleViewChange(leaf.view);
+                }
+            })
+        );
+
+        this.registerEvent(
+            this.app.metadataCache.on('changed', (file) => {
+                this.handleMetadataChange(file);
+            })
+        );
+
         this.addCommand({
             id: 'show-color-picker',
             name: 'Show color picker',
@@ -34,6 +48,7 @@ class ColorHighlighterPlugin extends Plugin {
             name: 'Set highlight style for this note',
             callback: () => this.showStyleSelectionModal(),
         });
+
     }
 
     async loadSettings() {
@@ -44,6 +59,61 @@ class ColorHighlighterPlugin extends Plugin {
         await this.saveData(this.settings);
         this.app.workspace.updateOptions();
         this.applyRefreshEffect();
+    }
+
+    /**
+     * Handles changes in the view mode of a note. This method is called when switching between Reading and Editing views.
+     * 
+     * @param view The MarkdownView instance that has changed.
+     */
+    handleViewChange(view: MarkdownView) {
+        if (view.getMode() === 'preview') {
+            this.handleReadingView(view);
+        } else if (view.getMode() === 'source') {
+            this.applyRefreshEffect();
+        }
+    }
+
+    /**
+     * Handles updates specific to the Reading view (preview mode).
+     * This method rerenders the view and reprocesses the content to ensure
+     * color highlighting is correctly applied after the DOM has updated.
+     * 
+     * @param view The MarkdownView instance in Reading view mode
+     */
+    private handleReadingView(view: MarkdownView) {
+        view.previewMode.rerender(true);
+        requestAnimationFrame(() => {
+            const contentEl = view.containerEl.querySelector('.markdown-preview-view');
+            if (contentEl instanceof HTMLElement) {
+                this.reprocessReadingView(contentEl);
+            }
+        });
+    }
+
+    /**
+     * Handles changes in the metadata of a file, particularly for color highlighting updates.
+     * This method is called when frontmatter or other metadata of a note changes. It updates
+     * both Reading and Editing views of the changed file.
+     * 
+     * @param file The TFile instance representing the file whose metadata has changed.
+     */
+    handleMetadataChange(file: TFile) {
+        this.app.workspace.iterateAllLeaves(leaf => {
+            if (leaf.view instanceof MarkdownView && leaf.view.file === file) {
+                if (leaf.view.getMode() === 'preview') {
+                    leaf.view.previewMode.rerender(true);
+                    setTimeout(() => {
+                        const contentEl = leaf.view.containerEl.querySelector('.markdown-preview-view');
+                        if (contentEl instanceof HTMLElement) {
+                            this.reprocessReadingView(contentEl);
+                        }
+                    }, 100);
+                } else {
+                    this.applyRefreshEffect();
+                }
+            }
+        });
     }
 
     /**
@@ -74,10 +144,12 @@ class ColorHighlighterPlugin extends Plugin {
      * @param element The content element of the reading view to reprocess.
      */
     private reprocessReadingView(element: HTMLElement) {
-        element.querySelectorAll('.color-highlighter').forEach(el => {
+        const highlightElements = element.querySelectorAll('.color-highlighter');
+        
+        highlightElements.forEach(el => {
             el.replaceWith(el.textContent || '');
         });
-
+    
         const postProcessor = createPostProcessor(this);
         postProcessor(element);
     }
@@ -149,30 +221,22 @@ class ColorHighlighterPlugin extends Plugin {
             new Notice('No active file');
             return;
         }
-
+    
         const content = await this.app.vault.read(activeFile);
+        const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
+        const frontmatterMatch = content.match(frontmatterRegex);
+    
         let newContent: string;
-
-        if (content.startsWith('---\n')) {
-            const frontmatterEnd = content.indexOf('---', 3);
-            if (frontmatterEnd !== -1) {
-                const frontmatter = content.slice(0, frontmatterEnd);
-                const restContent = content.slice(frontmatterEnd);
-                
-                if (frontmatter.includes('highlightStyle:')) {
-                    newContent = frontmatter.replace(/highlightStyle:.*\n/, `highlightStyle: ${style}\n`) + restContent;
-                } else {
-                    newContent = frontmatter + `highlightStyle: ${style}\n` + restContent;
-                }
-            } else {
-                // Invalid frontmatter, add new one
-                newContent = `---\nhighlightStyle: ${style}\n---\n\n${content}`;
-            }
+        if (frontmatterMatch) {
+            const frontmatter = frontmatterMatch[1];
+            const updatedFrontmatter = frontmatter.includes('highlightStyle:')
+                ? frontmatter.replace(/highlightStyle:.*/, `highlightStyle: ${style}`)
+                : `${frontmatter}\nhighlightStyle: ${style}`;
+            newContent = content.replace(frontmatterRegex, `---\n${updatedFrontmatter}\n---`);
         } else {
-            // No frontmatter, add new one
             newContent = `---\nhighlightStyle: ${style}\n---\n\n${content}`;
         }
-
+    
         await this.app.vault.modify(activeFile, newContent);
         new Notice(`Highlight style set to ${style}`);
         this.applyRefreshEffect();

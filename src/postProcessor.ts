@@ -11,7 +11,7 @@ import { HighlightStyle } from './HighlightStyle';
  */
 export function createPostProcessor(plugin: ColorHighlighterPlugin) {
     return (el: HTMLElement) => {
-        const noteHighlightStyle = getNoteHighlightStyle(el);
+        const noteHighlightStyle = getNoteHighlightStyle(el, plugin);
         const isDataviewInline = (node: Node): boolean => {
             let parent = node.parentElement;
             while (parent) {
@@ -28,27 +28,31 @@ export function createPostProcessor(plugin: ColorHighlighterPlugin) {
         // Process code blocks after a short delay
         setTimeout(() => {
             el.querySelectorAll('pre code').forEach(codeBlock => {
-                processCodeBlock(codeBlock as HTMLElement, plugin);
+                processCodeBlock(codeBlock as HTMLElement, plugin, noteHighlightStyle);
             });
         }, 100);
     };
 }
 
 /**
- * Extracts the highlight style from a note's frontmatter, if specified.
+ * Extracts the highlight style from a note's frontmatter properties, if specified.
  * 
  * @param el The root HTML element of the rendered note.
  * @returns HighlightStyle | undefined - The highlight style specified in the note's frontmatter, or undefined if no valid highlight style is found.
  */
-function getNoteHighlightStyle(el: HTMLElement): HighlightStyle | undefined {
-    const frontmatterEl = el.querySelector('.frontmatter');
-    if (frontmatterEl) {
-        const frontmatterText = frontmatterEl.textContent || '';
-        const match = frontmatterText.match(/highlightStyle:\s*(\w+)/);
-        if (match) {
-            const style = match[1].toLowerCase();
-            if (Object.values(HighlightStyle).includes(style as HighlightStyle)) {
-                return style as HighlightStyle;
+function getNoteHighlightStyle(el: HTMLElement, plugin: ColorHighlighterPlugin): HighlightStyle | undefined {
+    const activeFile = plugin.app.workspace.getActiveFile();
+    
+    if (activeFile) {
+        const fileCache = plugin.app.metadataCache.getFileCache(activeFile);
+        
+        if (fileCache && fileCache.frontmatter) {
+            const highlightStyle = fileCache.frontmatter.highlightStyle;
+            if (highlightStyle) {
+                const style = highlightStyle.toLowerCase();
+                if (Object.values(HighlightStyle).includes(style as HighlightStyle)) {
+                    return style as HighlightStyle;
+                }
             }
         }
     }
@@ -91,7 +95,7 @@ function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plug
         }
 
         if ((node as Element).tagName.toLowerCase() !== 'svg') {
-            Array.from(node.childNodes).forEach(childNode => processNode(childNode, isDataviewInline, plugin));
+            Array.from(node.childNodes).forEach(childNode => processNode(childNode, isDataviewInline, plugin, noteHighlightStyle));
         }
     }
 }
@@ -102,7 +106,7 @@ function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plug
  * @param codeBlock The code block element to process.
  * @param plugin The ColorHighlighterPlugin instance.
  */
-function processCodeBlock(codeBlock: HTMLElement, plugin: ColorHighlighterPlugin) {
+function processCodeBlock(codeBlock: HTMLElement, plugin: ColorHighlighterPlugin, noteHighlightStyle?: HighlightStyle) {
     const content = codeBlock.textContent || '';
     const matches = Array.from(content.matchAll(COLOR_REGEX));
 
@@ -124,7 +128,7 @@ function processCodeBlock(codeBlock: HTMLElement, plugin: ColorHighlighterPlugin
         // Add highlighted color code
         const span = document.createElement('span');
         span.textContent = colorCode;
-        applyHighlightStyle(span, colorCode, plugin);
+        applyHighlightStyle(span, colorCode, plugin, noteHighlightStyle);
         fragment.appendChild(span);
 
         lastIndex = endIndex;
