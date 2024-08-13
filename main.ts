@@ -24,14 +24,14 @@ class ColorHighlighterPlugin extends Plugin {
         this.registerEvent(
             this.app.workspace.on('active-leaf-change', (leaf) => {
                 if (leaf?.view instanceof MarkdownView) {
-                    this.handleViewChange(leaf.view);
+                    this.refreshAllViews();
                 }
             })
         );
 
         this.registerEvent(
             this.app.metadataCache.on('changed', (file) => {
-                this.handleMetadataChange(file);
+                this.refreshAllViews();
             })
         );
 
@@ -58,100 +58,31 @@ class ColorHighlighterPlugin extends Plugin {
     async saveSettings() {
         await this.saveData(this.settings);
         this.app.workspace.updateOptions();
-        this.applyRefreshEffect();
+        this.refreshAllViews();
     }
 
-    /**
-     * Handles changes in the view mode of a note. This method is called when switching between Reading and Editing views.
-     * 
-     * @param view The MarkdownView instance that has changed.
-     */
-    handleViewChange(view: MarkdownView) {
-        if (view.getMode() === 'preview') {
-            this.handleReadingView(view);
-        } else if (view.getMode() === 'source') {
-            this.applyRefreshEffect();
-        }
-    }
-
-    /**
-     * Handles updates specific to the Reading view (preview mode).
-     * This method rerenders the view and reprocesses the content to ensure
-     * color highlighting is correctly applied after the DOM has updated.
-     * 
-     * @param view The MarkdownView instance in Reading view mode
-     */
-    private handleReadingView(view: MarkdownView) {
-        view.previewMode.rerender(true);
-        requestAnimationFrame(() => {
-            const contentEl = view.containerEl.querySelector('.markdown-preview-view');
-            if (contentEl instanceof HTMLElement) {
-                this.reprocessReadingView(contentEl);
-            }
-        });
-    }
-
-    /**
-     * Handles changes in the metadata of a file, particularly for color highlighting updates.
-     * This method is called when frontmatter or other metadata of a note changes. It updates
-     * both Reading and Editing views of the changed file.
-     * 
-     * @param file The TFile instance representing the file whose metadata has changed.
-     */
-    handleMetadataChange(file: TFile) {
-        this.app.workspace.iterateAllLeaves(leaf => {
-            if (leaf.view instanceof MarkdownView && leaf.view.file === file) {
-                if (leaf.view.getMode() === 'preview') {
-                    leaf.view.previewMode.rerender(true);
-                    setTimeout(() => {
-                        const contentEl = leaf.view.containerEl.querySelector('.markdown-preview-view');
-                        if (contentEl instanceof HTMLElement) {
-                            this.reprocessReadingView(contentEl);
-                        }
-                    }, 100);
-                } else {
-                    this.applyRefreshEffect();
-                }
-            }
-        });
-    }
-
-    /**
-     * Applies a refresh effect to all open Markdown views, updating color highlighting to reflect changes in plugin settings.
-     */
-    applyRefreshEffect() {
+    public refreshAllViews() {
         this.app.workspace.iterateAllLeaves(leaf => {
             if (leaf.view instanceof MarkdownView) {
                 if (leaf.view.getMode() === 'source') {
-                    const editor = leaf.view.editor;
-                    if ('cm' in editor && editor.cm instanceof EditorView) {
+                    const editor = leaf.view.editor as unknown as CustomEditor;
+                    if (editor.cm instanceof EditorView) {
                         editor.cm.dispatch({
                             effects: refreshEffect.of(null)
                         });
                     }
                 } else if (leaf.view.getMode() === 'preview') {
-                    // For reading view, re-apply our post processor
-                    const content = leaf.view.contentEl;
-                    this.reprocessReadingView(content);
+                    leaf.view.previewMode.rerender(true);
+                    requestAnimationFrame(() => {
+                        const contentEl = leaf.view.containerEl.querySelector('.markdown-preview-view');
+                        if (contentEl instanceof HTMLElement) {
+                            const postProcessor = createPostProcessor(this);
+                            postProcessor(contentEl);
+                        }
+                    });
                 }
             }
         });
-    }
-
-    /**
-     * Reprocesses reading view to update color highlighting based on the current plugin settings.
-     * 
-     * @param element The content element of the reading view to reprocess.
-     */
-    private reprocessReadingView(element: HTMLElement) {
-        const highlightElements = element.querySelectorAll('.color-highlighter');
-        
-        highlightElements.forEach(el => {
-            el.replaceWith(el.textContent || '');
-        });
-    
-        const postProcessor = createPostProcessor(this);
-        postProcessor(element);
     }
 
     /**
@@ -239,7 +170,7 @@ class ColorHighlighterPlugin extends Plugin {
     
         await this.app.vault.modify(activeFile, newContent);
         new Notice(`Highlight style set to ${style}`);
-        this.applyRefreshEffect();
+        this.refreshAllViews();
     }
 }
 

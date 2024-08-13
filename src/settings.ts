@@ -193,7 +193,6 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     (this.plugin.settings[settingKey] as number) = value;
                     await this.plugin.saveSettings();
-                    this.plugin.applyRefreshEffect();
                 })
             )
             .addButton((button: ButtonComponent) => {
@@ -202,7 +201,6 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                     .onClick(async () => {
                         (this.plugin.settings[settingKey] as number) = DEFAULT_SETTINGS[settingKey] as number;
                         await this.plugin.saveSettings();
-                        this.plugin.applyRefreshEffect();
                         this.display();
                     });
             });
