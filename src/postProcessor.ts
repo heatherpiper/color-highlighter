@@ -11,6 +11,7 @@ import { HighlightStyle } from './HighlightStyle';
  */
 export function createPostProcessor(plugin: ColorHighlighterPlugin) {
     return (el: HTMLElement) => {
+        const noteHighlightStyle = getNoteHighlightStyle(el);
         const isDataviewInline = (node: Node): boolean => {
             let parent = node.parentElement;
             while (parent) {
@@ -22,7 +23,7 @@ export function createPostProcessor(plugin: ColorHighlighterPlugin) {
             return false;
         };
 
-        processNode(el, isDataviewInline, plugin);
+        processNode(el, isDataviewInline, plugin, noteHighlightStyle);
 
         // Process code blocks after a short delay
         setTimeout(() => {
@@ -34,13 +35,35 @@ export function createPostProcessor(plugin: ColorHighlighterPlugin) {
 }
 
 /**
+ * Extracts the highlight style from a note's frontmatter, if specified.
+ * 
+ * @param el The root HTML element of the rendered note.
+ * @returns HighlightStyle | undefined - The highlight style specified in the note's frontmatter, or undefined if no valid highlight style is found.
+ */
+function getNoteHighlightStyle(el: HTMLElement): HighlightStyle | undefined {
+    const frontmatterEl = el.querySelector('.frontmatter');
+    if (frontmatterEl) {
+        const frontmatterText = frontmatterEl.textContent || '';
+        const match = frontmatterText.match(/highlightStyle:\s*(\w+)/);
+        if (match) {
+            const style = match[1].toLowerCase();
+            if (Object.values(HighlightStyle).includes(style as HighlightStyle)) {
+                return style as HighlightStyle;
+            }
+        }
+    }
+    return undefined;
+}
+
+/**
  * Recursively processes node in the DOM, applying color highlighting where appropriate.
  * 
  * @param node The DOM node to process.
  * @param isDataviewInline Function to check if a node is part of a Dataview inline query.
  * @param plugin The ColorHighlighterPlugin instance.
+ * @param noteHighlightStyle The highlight style to use. If not provided, the plugin's default style is used.
  */
-function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plugin: ColorHighlighterPlugin): void {
+function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plugin: ColorHighlighterPlugin, noteHighlightStyle?: HighlightStyle): void {
     if (node.nodeType === Node.TEXT_NODE && node.textContent) {
         const parent = node.parentElement;
 
@@ -59,7 +82,7 @@ function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plug
             (plugin.settings.highlightInBackticks && parent?.tagName === 'CODE' && parent.parentElement?.tagName !== 'PRE') ||
             (plugin.settings.highlightInCodeblocks && parent?.tagName === 'CODE' && parent.parentElement?.tagName === 'PRE')
         ) {
-            highlightColorInNode(node as Text, plugin);
+            highlightColorInNode(node as Text, plugin, noteHighlightStyle);
         }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
         if (isDataviewInline(node)) {
@@ -122,8 +145,9 @@ function processCodeBlock(codeBlock: HTMLElement, plugin: ColorHighlighterPlugin
  * 
  * @param node The text node to process.
  * @param plugin The ColorHighlighterPlugin instance.
+ * @param noteHighlightStyle The highlight style to use. If not provided, the plugin's default style is used.
  */
-function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin) {
+function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin, noteHighlightStyle?: HighlightStyle) {
     const fragment = document.createDocumentFragment();
     let lastIndex = 0;
     let match;
@@ -144,7 +168,7 @@ function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin) {
 
         const span = document.createElement('span');
         span.textContent = colorCode;
-        applyHighlightStyle(span, colorCode, plugin);
+        applyHighlightStyle(span, colorCode, plugin, noteHighlightStyle);
         fragment.appendChild(span);
 
         lastIndex = endIndex;
@@ -165,8 +189,9 @@ function highlightColorInNode(node: Text, plugin: ColorHighlighterPlugin) {
  * @param span The span element to style.
  * @param colorCode The color code to highlight.
  * @param plugin The ColorHighlighterPlugin instance.
+ * @param noteHighlightStyle The highlight style to use. If not provided, the plugin's default style is used.
  */
-function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: ColorHighlighterPlugin) {
+function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: ColorHighlighterPlugin, noteHighlightStyle?: HighlightStyle) {
     const backgroundColor = getBackgroundColor(plugin.app);
     let effectiveColor;
     try {
@@ -177,7 +202,9 @@ function applyHighlightStyle(span: HTMLSpanElement, colorCode: string, plugin: C
 
     span.classList.add('color-highlighter');
 
-    switch (plugin.settings.highlightStyle) {
+    const highlightStyle = noteHighlightStyle || plugin.settings.highlightStyle;
+
+    switch (highlightStyle) {
         case HighlightStyle.Background:
             span.classList.add('background');
             const contrastColor = getContrastColor(effectiveColor, backgroundColor);

@@ -9,9 +9,9 @@ import { addDecoration } from './colorDecorationUtils';
 import { getFrontmatterRange, isWithinFrontmatter, isWithinTag, shouldHighlightColor } from './syntaxTreeUtils';
 import { HighlightStyle } from '../HighlightStyle';
 
-export function buildDecorations(view: EditorView, settings: ColorHighlighterSettings, app: App, colorPicker: ColorPicker): DecorationSet {
+export function buildDecorations(view: EditorView, settings: ColorHighlighterSettings, app: App, colorPicker: ColorPicker, noteHighlightStyle?: HighlightStyle): DecorationSet {
     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks } = settings;
-    const highlightStyle = settings.highlightStyle as HighlightStyle;
+    const highlightStyle = noteHighlightStyle || settings.highlightStyle as HighlightStyle;
     const decorations: { from: number; to: number; color: string }[] = [];
     const tree = syntaxTree(view.state);
     const frontmatterRange = getFrontmatterRange(tree);
