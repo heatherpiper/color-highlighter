@@ -25,8 +25,6 @@ export function addDecoration(builder: RangeSetBuilder<Decoration>, start: numbe
         let effectiveColor = hasAlphaChannel(color) ? blendColorWithBackground(color, editorBackground, app) : color;
         const contrastColor = getContrastColor(effectiveColor, editorBackground);
 
-        console.log('Adding decoration with style:', highlightStyle);
-
         // Get the decoration attributes based on the selected style
         const decorationAttributes = getDecorationAttributes(highlightStyle, effectiveColor, contrastColor, editorBackground, settings);
 

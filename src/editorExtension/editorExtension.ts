@@ -17,7 +17,6 @@ export function createEditorExtension(plugin: ColorHighlighterPlugin) {
             constructor(view: EditorView) {
                 this.colorPicker = plugin.colorPicker;
                 const noteHighlightStyle =  parseFrontmatter(view.state);
-                console.log('Initial note highlight style:', noteHighlightStyle); // Debug log
                 this.decorations = buildDecorations(view, plugin.settings, plugin.app, this.colorPicker, noteHighlightStyle);
             }
 
