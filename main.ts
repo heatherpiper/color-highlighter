@@ -1,9 +1,11 @@
 import { EditorView } from '@codemirror/view';
 import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
+import { HighlightStyle } from 'src/HighlightStyle';
 import { ColorPicker } from './src/colorPicker';
 import { createEditorExtension, refreshEffect } from './src/editorExtension/editorExtension';
 import { createPostProcessor } from './src/postProcessor';
 import { ColorHighlighterSettings, ColorHighlighterSettingTab, DEFAULT_SETTINGS } from './src/settings';
+import { StyleSelectionModal } from './src/StyleSelectionModal';
 import { COLOR_REGEX } from './src/utils';
 import './styles.css';
 import { Editor as CustomEditor } from './types';
@@ -25,6 +27,12 @@ class ColorHighlighterPlugin extends Plugin {
             editorCallback: (editor: Editor) => {
                 this.showColorPicker(editor);
             }
+        });
+
+        this.addCommand({
+            id: 'set-highlight-style',
+            name: 'Set highlight style for this note',
+            callback: () => this.showStyleSelectionModal(),
         });
     }
 
@@ -101,6 +109,16 @@ class ColorHighlighterPlugin extends Plugin {
     }
 
     /**
+     * Shows a modal for selecting a highlight style for the current note. If a style is selected, the frontmatter of the note is updated with the new style.
+     */
+    showStyleSelectionModal() {
+        const modal = new StyleSelectionModal(this.app, (style: HighlightStyle) => {
+            this.updateFrontmatter(style);
+        });
+        modal.open();
+    }
+
+    /**
      * Finds a color code at the current cursor position in the given line of text.
      * 
      * @param line The line of text to search.
@@ -116,6 +134,48 @@ class ColorHighlighterPlugin extends Plugin {
             }
         }
         return null;
+    }
+
+    /**
+     * Updates the frontmatter of a note to include a specified highlight style. 
+     * If the note already has a highlight style, it is replaced with the new one. 
+     * If the note does not have any frontmatter, new frontmatter is added with the specified highlight style.
+     * 
+     * @param style The highlight style to update the frontmatter with.
+     */
+    async updateFrontmatter(style: HighlightStyle) {
+        const activeFile = this.app.workspace.getActiveFile();
+        if (!activeFile) {
+            new Notice('No active file');
+            return;
+        }
+
+        const content = await this.app.vault.read(activeFile);
+        let newContent: string;
+
+        if (content.startsWith('---\n')) {
+            const frontmatterEnd = content.indexOf('---', 3);
+            if (frontmatterEnd !== -1) {
+                const frontmatter = content.slice(0, frontmatterEnd);
+                const restContent = content.slice(frontmatterEnd);
+                
+                if (frontmatter.includes('highlightStyle:')) {
+                    newContent = frontmatter.replace(/highlightStyle:.*\n/, `highlightStyle: ${style}\n`) + restContent;
+                } else {
+                    newContent = frontmatter + `highlightStyle: ${style}\n` + restContent;
+                }
+            } else {
+                // Invalid frontmatter, add new one
+                newContent = `---\nhighlightStyle: ${style}\n---\n\n${content}`;
+            }
+        } else {
+            // No frontmatter, add new one
+            newContent = `---\nhighlightStyle: ${style}\n---\n\n${content}`;
+        }
+
+        await this.app.vault.modify(activeFile, newContent);
+        new Notice(`Highlight style set to ${style}`);
+        this.applyRefreshEffect();
     }
 }
 
