@@ -15,10 +15,10 @@ Color Highlighter provides a visual representation of colors directly in your te
 
 - Automatically detects and highlights color codes in various formats
     - HEX
-        - #RGB
-        - #RGBA
-        - #RRGGBB
-        - #RRGGBBAA 
+        - #rgb
+        - #rgba
+        - #rrggbb
+        - #rrggbbaa 
     - RGB and RBGA
     - HSL and HSLA
 - Customize where colors are highlighted:
@@ -60,9 +60,9 @@ To install using BRAT:
 4. Paste the link into the pop-up modal and select **Add Plugin**.
 5. After BRAT confirms the installation, go to **Settings → Community plugins** and enable Color Highlighter. You made need to first refresh the list of plugins.
 
-## Usage and configuration
+## Usage and settings
 
-Once installed and enabled, the plugin will automatically detect and highlight color codes based on your settings. To configure the plugin, first go to **Settings → Community plugins**. Find Color Highlighter in the list and select the gear icon to access its settings.
+Once installed and enabled, the plugin will automatically detect and highlight color codes based on your settings. To configure the plugin, go to **Settings → Community plugins**. Find Color Highlighter in the list and select the gear icon to access its settings.
 
 ### Highlight locations
 
@@ -84,25 +84,33 @@ Choose what part of your notes to highlight color codes in:
 
 #### Customizing the highlight style
 
-You can further customize your highlights with style-specific adjustments that allow you change the padding, border radius, or width of highlights, depending on your chosen style. Below are some examples of what these adjustments look like.
+You can further refine the appearance of highlights with style-specific adjustments.
 
-##### Background styles:
+**Background adjustments**: 
+- vertical padding
+- horizontal padding
+- border radius
 
 ![Background style adjustment options](images/styles-background.png)
 
-##### Border styles:
+**Border adjustments**:
+- thickness
+- border radius
 
 ![Border style adjustment options](images/styles-border.png)
 
-##### Square styles:
+**Square adjustments**: 
+- position (before or after text)
+- border radius
 
 ![Square style adjustment options](images/styles-square.png)
 
-You can choose to scale the size of the square with the size of the text. If disabled, the square will always be 10 x 10 pixels.
+- size: choose whether to scale the size of the square with the size of the text (if disabled, the square will always be a fixed 10 x 10 pixels.)
 
 ![Square scaling disabled versus enabled](images/square-scaling.png)
 
-##### Underline styles:
+**Underline adjustments**: 
+- thickness
 
 ![Underline style adjustment options](images/styles-underline.png)
 
@@ -125,7 +133,7 @@ If this setting is disabled, the color picker can still be displayed by selectin
 As this plugin is in beta, your feedback is crucial! If you encounter any issues or have suggestions for improvements:
 
 1. Check the [GitHub issues](https://github.com/heatherpiper/color-highlighter/issues) to see if it has already been reported.
-2. If not, please open a new issue with as much detail as possible.
+2. If not, please open a new issue with as much detail as possible. Suggestions for new features are welcome!
 
 Contributions are welcome! Feel free to fork the repository and submit pull requests.
 
