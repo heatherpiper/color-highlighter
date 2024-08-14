@@ -14,7 +14,6 @@ export function createPostProcessor(plugin: ColorHighlighterPlugin) {
         // Clean up any existing highlights
         const existingHighlights = el.querySelectorAll('.color-highlighter');
         if (existingHighlights.length > 0) {
-            console.log(`Removing ${existingHighlights.length} existing highlights`);
             existingHighlights.forEach(h => h.replaceWith(h.textContent || ''))
         }
 
