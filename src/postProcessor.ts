@@ -11,6 +11,13 @@ import { HighlightStyle } from './HighlightStyle';
  */
 export function createPostProcessor(plugin: ColorHighlighterPlugin) {
     return (el: HTMLElement) => {
+        // Clean up any existing highlights
+        const existingHighlights = el.querySelectorAll('.color-highlighter');
+        if (existingHighlights.length > 0) {
+            console.log(`Removing ${existingHighlights.length} existing highlights`);
+            existingHighlights.forEach(h => h.replaceWith(h.textContent || ''))
+        }
+
         const noteHighlightStyle = getNoteHighlightStyle(el, plugin);
         const isDataviewInline = (node: Node): boolean => {
             let parent = node.parentElement;
