@@ -3,28 +3,30 @@
 }
 
 .color-highlighter.background {
+    position: relative;
     background-color: var(--highlight-color);
     color: var(--contrast-color);
     border-radius: var(--background-border-radius, 3px);
     padding: var(--background-vertical-padding, 0.1em) var(--background-horizontal-padding, 0.2em);
     caret-color: var(--caret-color);
+    z-index: 0;
 }
 
 .color-highlighter.background[data-contrast-border="true"] {
-    position: relative;
-    z-index: 1;
+    z-index: 0;
 }
 
 .color-highlighter.background[data-contrast-border="true"]::before {
     content: "";
     position: absolute;
-    top: calc(-1 * var(--background-vertical-padding, 0.1em));
-    left: calc(-1 * var(--background-horizontal-padding, 0.2em));
-    right: calc(-1 * var(--background-horizontal-padding, 0.2em));
-    bottom: calc(-1 * var(--background-vertical-padding, 0.1em));
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     border: 1px solid var(--background-modifier-border-hover);
-    border-radius: var(--background-border-radius, 3px);
-    z-index: -1;
+    border-radius: inherit;
+    z-index: 1;
+    pointer-events: none;
 }
 
 .color-highlighter.border {
