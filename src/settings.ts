@@ -26,7 +26,7 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     highlightInCodeblocks: false,
     highlightStyle: HighlightStyle.Background,
     enableColorPicker: true,
-    useContrastingBorder: false,
+    useContrastingBorder: true,
     scaleSquareWithText: false,
     squarePosition: 'after',
     backgroundVerticalPadding: 0.1,
@@ -104,7 +104,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
             
         new Setting(containerEl)
             .setName('Highlight style')
-            .setDesc('Choose how color code highlights are displayed.')
+            .setDesc('Choose how highlights appear.')
             .addDropdown(dropdown => dropdown
                 .addOption(HighlightStyle.Background, 'Background color')
                 .addOption(HighlightStyle.Border, 'Border')
@@ -147,7 +147,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 
             new Setting(containerEl)
                 .setName('Scale square with text size')
-                .setDesc('Make the size of the square scale with the text size. If disabled, the square will always be 10 x 10 pixels.')
+                .setDesc('Make the size of the square scale with the text size. If disabled, the square will be a fixed 10 x 10 pixels.')
                 .addToggle(toggle => toggle
                     .setValue(this.plugin.settings.scaleSquareWithText)
                     .onChange(async (value) => {
@@ -160,7 +160,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
         if (this.plugin.settings.highlightStyle === HighlightStyle.Background || this.plugin.settings.highlightStyle === HighlightStyle.Square) {
             new Setting(containerEl)
                 .setName('Use contrasting border for low-contrast highlights')
-                .setDesc('Adds a faint border around highlights when there is not enough contrast with the background.')
+                .setDesc('Adds a faint border around highlights when there is not enough contrast with the editor\'s background color.')
                 .addToggle(toggle => toggle
                     .setValue(this.plugin.settings.useContrastingBorder)
                     .onChange(async (value) => {
