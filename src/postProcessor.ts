@@ -17,7 +17,7 @@ export function createPostProcessor(plugin: ColorHighlighterPlugin) {
             existingHighlights.forEach(h => h.replaceWith(h.textContent || ''))
         }
 
-        const noteHighlightStyle = getNoteHighlightStyle(el, plugin);
+        const noteHighlightStyle = getNoteHighlightStyle(plugin);
         const isDataviewInline = (node: Node): boolean => {
             let parent = node.parentElement;
             while (parent) {
@@ -46,7 +46,7 @@ export function createPostProcessor(plugin: ColorHighlighterPlugin) {
  * @param el The root HTML element of the rendered note.
  * @returns HighlightStyle | undefined - The highlight style specified in the note's frontmatter, or undefined if no valid highlight style is found.
  */
-function getNoteHighlightStyle(el: HTMLElement, plugin: ColorHighlighterPlugin): HighlightStyle | undefined {
+function getNoteHighlightStyle(plugin: ColorHighlighterPlugin): HighlightStyle | undefined {
     const activeFile = plugin.app.workspace.getActiveFile();
     
     if (activeFile) {
