@@ -114,6 +114,22 @@ You can further refine the appearance of highlights with style-specific adjustme
 
 ![Underline style adjustment options](images/styles-underline.png)
 
+### Overriding the default highlight style
+
+You can override the default highlight style on a per-note basis using a note's frontmatter (properties).
+
+- Add `highlightStyle` as a new property to a note's frontmatter and indicate which style you want to use for that note. The available options are `background`, `border`, `square`, or `underline`. 
+- Example: 
+    ```
+    ---
+    highlightStyle: underline
+    ---
+    ```
+- If no valid `highlightStyle` property is found, the default style indicated in the settings will be used. 
+- To easily set a note's highlight style, open the command palette and select **Color Highlighter: Set highlight style for this note**, then choose your preferred highlight style from the dropdown menu.
+
+![Demonstration of setting a note's highlight style](images/highlightStyle-demo.gif)
+
 ### Contrast border
 
 If your highlight style is set to **background** or **square**, you can choose to enable a contrasting border that appears around low-contrast highlights. This adds a faint border around highlights if there is not sufficient contrast between the highlight color and the editor's background color.
