@@ -106,3 +106,26 @@
 .color-highlighter-picker-top {
     transform: translateY(-100%);
 }
+
+.cm-strikethrough .color-highlighter.background,
+.cm-strikethrough .color-highlighter.border,
+.markdown-rendered del .color-highlighter.background,
+.markdown-rendered del .color-highlighter.border {
+    display: inline-block;
+    position: relative;
+    text-decoration: none;
+}
+
+.cm-strikethrough .color-highlighter.background::before,
+.cm-strikethrough .color-highlighter.border::before,
+.markdown-rendered del .color-highlighter.background::before,
+.markdown-rendered del .color-highlighter.border::before {
+    content: "";
+    position: absolute;
+    left: calc(-1 * var(--background-horizontal-padding, 0.2em));
+    right: calc(-1 * var(--background-horizontal-padding, 0.2em));
+    top: calc(50% - 0.7px);
+    height: 1.4px;
+    background-color: currentColor;
+    pointer-events: none;
+}
