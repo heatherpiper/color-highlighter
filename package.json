@@ -4,7 +4,7 @@
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
-    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && shx cp styles.css dist/ && node copy-build-files.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && shx cp styles.css dist/ && (test -f copy-build-files.mjs && node copy-build-files.mjs || true)",
     "version": "node version-bump.mjs && git add manifest.json"
   },
   "keywords": [],
