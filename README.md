@@ -120,11 +120,11 @@ You can override the default highlight style on a per-note basis using a note's 
 
 Example: 
 
-    ```
+    
     ---
     highlightStyle: underline
     ---
-    ```
+    
 
 If no valid `highlightStyle` property is found, the default style indicated in the settings will be used. 
 
