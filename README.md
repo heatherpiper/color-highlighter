@@ -119,6 +119,7 @@ You can further refine the appearance of highlights with style-specific adjustme
 You can override the default highlight style on a per-note basis using a note's frontmatter (properties). Add `highlightStyle` as a new property to a note's frontmatter and indicate which style you want to use for that note. The available options are `background`, `border`, `square`, or `underline`. 
 
 Example: 
+
     ```
     ---
     highlightStyle: underline
