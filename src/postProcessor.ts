@@ -41,7 +41,9 @@ export function createPostProcessor(plugin: ColorHighlighterPlugin) {
         // Process code blocks after a short delay
         setTimeout(() => {
             el.querySelectorAll('pre code').forEach(codeBlock => {
-                processCodeBlock(codeBlock as HTMLElement, plugin, noteHighlightStyle);
+                if (plugin.settings.highlightInCodeblocks) {
+                    processCodeBlock(codeBlock as HTMLElement, plugin, noteHighlightStyle);
+                }
             });
         }, 100);
     };
