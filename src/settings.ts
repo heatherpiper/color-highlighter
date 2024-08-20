@@ -1,4 +1,4 @@
-import { App, ButtonComponent, PluginSettingTab, Setting } from 'obsidian';
+import { App, ButtonComponent, PluginSettingTab, Setting, SuggestModal, TFile } from 'obsidian';
 import ColorHighlighterPlugin from '../main';
 import { HighlightStyle } from './HighlightStyle';
 
@@ -18,6 +18,7 @@ export interface ColorHighlighterSettings {
     borderBorderRadius: number;
     underlineThickness: number;
     squareBorderRadius: number;
+    excludedFiles: string[];
 }
 
 export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
@@ -35,7 +36,8 @@ export const DEFAULT_SETTINGS: ColorHighlighterSettings = {
     borderThickness: 2,
     borderBorderRadius: 3,
     underlineThickness: 2,
-    squareBorderRadius: 1
+    squareBorderRadius: 1,
+    excludedFiles: []
 }
 
 export class ColorHighlighterSettingTab extends PluginSettingTab {
@@ -180,6 +182,8 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 })
             );
+
+        this.addExcludedFilesSection(containerEl);
     }
 
     addSliderWithReset(containerEl: HTMLElement, name: string, desc: string, settingKey: keyof ColorHighlighterSettings, min: number, max: number, step: number) {
@@ -204,5 +208,74 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                         this.display();
                     });
             });
+    }
+
+    addExcludedFilesSection(containerEl: HTMLElement) {
+        const excludedFilesSection = containerEl.createDiv();
+        excludedFilesSection.createEl('h4', { text: 'Excluded Files' });
+        
+        new Setting(containerEl)
+            .setName('Excluded Files')
+            .setDesc('Files in this list will not have their color codes highlighted.')
+            .addButton(button => button
+                .setButtonText('Add file to exclude')
+                .onClick(() => {
+                    new FileSuggestModal(this.app, async (file: TFile) => {
+                        if (!this.plugin.settings.excludedFiles.includes(file.path)) {
+                            this.plugin.settings.excludedFiles.push(file.path);
+                            await this.plugin.saveSettings();
+                            this.display();
+                        }
+                    }).open();
+                }));  
+        const excludedFilesList = containerEl.createEl('ul');
+        this.updateExcludedFilesList(excludedFilesList);
+    }
+    
+    updateExcludedFilesList(listEl: HTMLUListElement) {
+        listEl.empty();
+        this.plugin.settings.excludedFiles.forEach((filePath) => {
+            const listItem = listEl.createEl('li');
+            listItem.style.display = 'flex';
+            listItem.style.alignItems = 'center';
+            listItem.style.marginBottom = '0.5em';
+            listItem.setText(filePath);
+            
+            const button = new ButtonComponent(listItem)
+                .setIcon('trash')
+                .setTooltip('Remove')
+                .onClick(async () => {
+                    this.plugin.settings.excludedFiles = this.plugin.settings.excludedFiles.filter(
+                        (path) => path !== filePath
+                    );
+                    await this.plugin.saveSettings();
+                    this.display();
+                });
+            
+            button.buttonEl.style.marginLeft = '1em';
+        });
+    }
+}
+
+class FileSuggestModal extends SuggestModal<TFile> {
+    onChoose: (file: TFile) => void;
+
+    constructor(app: App, onChoose: (file: TFile) => void) {
+        super(app);
+        this.onChoose = onChoose;
+    }
+
+    getSuggestions(query: string): TFile[] {
+        return this.app.vault.getFiles().filter(file => 
+            file.path.toLowerCase().includes(query.toLowerCase())
+        );
+    }
+
+    renderSuggestion(file: TFile, el: HTMLElement) {
+        el.createEl("div", { text: file.path });
+    }
+
+    onChooseSuggestion(file: TFile, evt: MouseEvent | KeyboardEvent) {
+        this.onChoose(file);
     }
 }

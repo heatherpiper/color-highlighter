@@ -1,7 +1,9 @@
+import { TFile } from 'obsidian';
 import ColorHighlighterPlugin from '../main';
 import { blendColorWithBackground, getContrastColor, getContrastRatio } from './colorProcessor';
-import { COLOR_REGEX, getBackgroundColor } from './utils';
 import { HighlightStyle } from './HighlightStyle';
+import { ColorHighlighterSettings } from './settings';
+import { COLOR_REGEX, getBackgroundColor } from './utils';
 
 /**
  * Processes the DOM of a rendered Markdown note file, highlighting color codes within text nodes.
@@ -10,7 +12,12 @@ import { HighlightStyle } from './HighlightStyle';
  * @returns A post-processor function to be used in an Obsidian plugin.
  */
 export function createPostProcessor(plugin: ColorHighlighterPlugin) {
-    return (el: HTMLElement) => {
+    return (el: HTMLElement, ctx: { sourcePath: string }) => {
+        const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
+        if (file instanceof TFile && isFileExcluded(file, plugin.settings)) {
+            return;
+        }
+        
         // Clean up any existing highlights
         const existingHighlights = el.querySelectorAll('.color-highlighter');
         if (existingHighlights.length > 0) {
@@ -38,6 +45,17 @@ export function createPostProcessor(plugin: ColorHighlighterPlugin) {
             });
         }, 100);
     };
+}
+
+/**
+ * Checks if a file is in the list of excluded files in the plugin settings.
+ * 
+ * @param file The file to check.
+ * @param settings The plugin settings containing the excluded files list.
+ * @returns True if the file is excluded, false otherwise.
+ */
+function isFileExcluded(file: TFile, settings: ColorHighlighterSettings): boolean {
+    return settings.excludedFiles.includes(file.path);
 }
 
 /**

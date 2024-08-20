@@ -53,6 +53,7 @@ class ColorHighlighterPlugin extends Plugin {
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        console.log("Loaded settings, excluded files:", this.settings.excludedFiles);
     }
 
     async saveSettings() {
@@ -64,25 +65,32 @@ class ColorHighlighterPlugin extends Plugin {
     public refreshAllViews() {
         this.app.workspace.iterateAllLeaves(leaf => {
             if (leaf.view instanceof MarkdownView) {
-                if (leaf.view.getMode() === 'source') {
-                    const editor = leaf.view.editor as unknown as CustomEditor;
-                    if (editor.cm instanceof EditorView) {
-                        editor.cm.dispatch({
-                            effects: refreshEffect.of(null)
+                const file = leaf.view.file;
+                if (file && !this.isFileExcluded(file)) {
+                    if (leaf.view.getMode() === 'source') {
+                        const editor = leaf.view.editor as unknown as CustomEditor;
+                        if (editor.cm instanceof EditorView) {
+                            editor.cm.dispatch({
+                                effects: refreshEffect.of(null)
+                            });
+                        }
+                    } else if (leaf.view.getMode() === 'preview') {
+                        leaf.view.previewMode.rerender(true);
+                        requestAnimationFrame(() => {
+                            const contentEl = leaf.view.containerEl.querySelector('.markdown-preview-view');
+                            if (contentEl instanceof HTMLElement) {
+                                const postProcessor = createPostProcessor(this);
+                                postProcessor(contentEl, { sourcePath: file.path });
+                            }
                         });
                     }
-                } else if (leaf.view.getMode() === 'preview') {
-                    leaf.view.previewMode.rerender(true);
-                    requestAnimationFrame(() => {
-                        const contentEl = leaf.view.containerEl.querySelector('.markdown-preview-view');
-                        if (contentEl instanceof HTMLElement) {
-                            const postProcessor = createPostProcessor(this);
-                            postProcessor(contentEl);
-                        }
-                    });
                 }
             }
         });
+    }
+
+    private isFileExcluded(file: TFile): boolean {
+        return this.settings.excludedFiles.includes(file.path);
     }
 
     /**

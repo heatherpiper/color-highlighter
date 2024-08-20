@@ -1,15 +1,20 @@
 import { syntaxTree } from '@codemirror/language';
 import { RangeSetBuilder } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
-import { App } from 'obsidian';
+import { App, TFile } from 'obsidian';
 import { ColorPicker } from '../colorPicker';
+import { HighlightStyle } from '../HighlightStyle';
 import { ColorHighlighterSettings } from '../settings';
 import { COLOR_REGEX } from '../utils';
 import { addDecoration } from './colorDecorationUtils';
 import { getFrontmatterRange, isWithinFrontmatter, isWithinTag, shouldHighlightColor } from './syntaxTreeUtils';
-import { HighlightStyle } from '../HighlightStyle';
 
 export function buildDecorations(view: EditorView, settings: ColorHighlighterSettings, app: App, colorPicker: ColorPicker, noteHighlightStyle?: HighlightStyle): DecorationSet {
+    const file = app.workspace.getActiveFile()
+    if (file && isFileExcluded(file, settings)) {
+        return Decoration.none;
+    }
+    
     const { highlightEverywhere, highlightInBackticks, highlightInCodeblocks } = settings;
     const highlightStyle = noteHighlightStyle || settings.highlightStyle as HighlightStyle;
     const decorations: { from: number; to: number; color: string }[] = [];
@@ -42,4 +47,15 @@ export function buildDecorations(view: EditorView, settings: ColorHighlighterSet
     }
 
     return builder.finish();
+}
+
+/**
+ * Checks if the given file is excluded from color highlighting based on the settings.
+ * 
+ * @param file The file to check.
+ * @param settings The plugin settings containing the excluded files list.
+ * @returns True if the file is excluded, false otherwise.
+ */
+function isFileExcluded(file: TFile, settings: ColorHighlighterSettings): boolean {
+    return settings.excludedFiles.includes(file.path);
 }
