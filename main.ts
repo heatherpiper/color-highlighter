@@ -53,7 +53,6 @@ class ColorHighlighterPlugin extends Plugin {
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-        console.log("Loaded settings, excluded files:", this.settings.excludedFiles);
     }
 
     async saveSettings() {
