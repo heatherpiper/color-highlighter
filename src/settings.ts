@@ -212,11 +212,11 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
 
     addExcludedFilesSection(containerEl: HTMLElement) {
         const excludedFilesSection = containerEl.createDiv();
-        excludedFilesSection.createEl('h4', { text: 'Excluded Files' });
+        excludedFilesSection.createEl('h4', { text: 'Excluded files' });
         
         new Setting(containerEl)
-            .setName('Excluded Files')
-            .setDesc('Files in this list will not have their color codes highlighted.')
+            .setName('Add excluded file')
+            .setDesc('Prevent colors from being highlighted in selected file.')
             .addButton(button => button
                 .setButtonText('Add file to exclude')
                 .onClick(() => {
