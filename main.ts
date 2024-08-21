@@ -55,10 +55,28 @@ class ColorHighlighterPlugin extends Plugin {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     }
 
+    /**
+     * Saves the plugin settings and forces a rebuild of all views.
+     * This approach is necessary to ensure that color highlighting updates correctly
+     * in all elements (particularly tables and callouts) when in Live Preview mode.
+     * The setTimeout is used to ensure the view rebuild is complete before refreshing.
+     */
     async saveSettings() {
         await this.saveData(this.settings);
         this.app.workspace.updateOptions();
-        this.refreshAllViews();
+    
+        // Force a rebuild of all views
+        this.app.workspace.iterateAllLeaves(leaf => {
+            if (leaf.view instanceof MarkdownView) {
+                // @ts-ignore: Accessing private API
+                leaf.rebuildView();
+            }
+        });
+    
+        // Delay the refresh to ensure the rebuild has completed
+        setTimeout(() => {
+            this.refreshAllViews();
+        }, 100);
     }
 
     public refreshAllViews() {
