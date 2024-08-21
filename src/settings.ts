@@ -225,7 +225,7 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
 
     addExcludedFilesSection(containerEl: HTMLElement) {
         const excludedFilesSection = containerEl.createDiv();
-        excludedFilesSection.createEl('h4', { text: 'Excluded files' });
+        excludedFilesSection.createEl('h2', { text: 'Excluded files' });
         
         new Setting(containerEl)
             .setName('Add excluded file')
