@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1
+
+- Updated the regex for HSL and HSLA colors to correctly highlight values with decimal points.
+
 ## 0.7.0
 
 - **New feature**: You can now override the default highlight style on a per-note basis by specifying a `highlightStyle` in a note's frontmatter (properties).
@@ -20,7 +24,7 @@
 
 ## 0.5.2
 
-- **New setting**: If you use the square style highlight, you can now choose to scale the size of theh square with the text size. If this setting is disabled, the square will always be a fixed 10 x 10 pixels.
+- **New setting**: If you use the square style highlight, you can now choose to scale the size of the square with the text size. If this setting is disabled, the square will always be a fixed 10 x 10 pixels.
 - The cursor color (`--caret-color`) now matches the text color for background highlights to ensure it has the appropriate contrast to be visible within all highlight colors.
 - Changes made in settings are now instantly reflected in open notes without needing to reload them.
 - Tags are now excluded from highlighting in all viewing modes, both inline and in yaml frontmatter.
@@ -41,8 +45,8 @@
 
 ## 0.5.0
 
-- **New setting**: Use contrasting border for low-contrast highlights. 
-  - This adds a faint border around highlights if there is not sufficient contrast between the highlight color and the editor's background color. 
+- **New setting**: Use contrasting border for low-contrast highlights.
+  - This adds a faint border around highlights if there is not sufficient contrast between the highlight color and the editor's background color.
   - This setting applies to the 'background' and 'square' highlight styles.
 - Fixed a bug which caused highlights to not work inside code blocks in Reading Mode if there was a language specified. Highlights within code blocks should now work consistently in all viewing modes.
 - When the square highlight style is chosen, the hover area to show the color picker now extends to the square itself.
@@ -112,6 +116,6 @@
 
 ## 0.1.0 (Initial release)
 
-- Color highlighting implemented for HEX, RGB, RGBA, andn HSL color formats.
+- Color highlighting implemented for HEX, RGB, RGBA, and HSL color formats.
 - Customize highlight locations.
 - Automatic contrast adjustment for readability.

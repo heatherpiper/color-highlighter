@@ -1,17 +1,9 @@
-# Ignore node_modules directory
+*.idea
+.vscode/*
+
 node_modules/
 
-# Ignore dist directory
-dist/
-
-# Ignore main.js
-main.js
-
-# Ignore IDE configuration files
-*.idea
-
-# Ignore .txt files
+copy-build-files.mjs
 *.txt
 
-# Ignore personal build script
-copy-build-files.mjs
+dist/*
