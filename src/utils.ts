@@ -5,8 +5,8 @@ export const COLOR_PATTERNS = {
     hex: /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})(?![0-9A-Fa-f])/,
     rgb: /rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)/,
     rgba: /rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)/,
-    hsl: /hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)/,
-    hsla: /hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[\d.]+\s*\)/
+    hsl: /hsl\(\s*[\d.]+\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*\)/,
+    hsla: /hsla\(\s*[\d.]+\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+\s*\)/
 };
 
 export const COLOR_REGEX = new RegExp(Object.values(COLOR_PATTERNS).map(pattern => pattern.source).join('|'), 'gi');
@@ -134,7 +134,7 @@ export function extractRgbaComponents(rgbaString: ColorString): RGBAComponents |
  * @returns An array containing the HSLA components [h, s, l, a], or null if the HSLA string is invalid.
  */
 export function extractHslaComponents(hsla: ColorString): HSLAComponents | null {
-    const match = hsla.match(/hsla?\((\d+),\s*(\d+)%?,\s*(\d+)%?,?\s*([\d.]+)?\)/);
+    const match = hsla.match(/hsla?\((\s*[\d.]+)\s*,\s*([\d.]+)%?\s*,\s*([\d.]+)%?,?\s*([\d.]+)?\)/);
 
     // Validate HSLA string format
     if (!match) {
@@ -143,9 +143,9 @@ export function extractHslaComponents(hsla: ColorString): HSLAComponents | null 
     }
     
     // Extract HSLA components
-    const h = parseInt(match[1], 10);
-    const s = parseInt(match[2], 10) / 100;
-    const l = parseInt(match[3], 10) / 100;
+    const h = parseFloat(match[1]);
+    const s = parseFloat(match[2]) / 100;
+    const l = parseFloat(match[3]) / 100;
     const a = match[4] ? parseFloat(match[4]) : 1;
 
     // Validate HSLA components
