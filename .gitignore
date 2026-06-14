@@ -1,9 +1,7 @@
 *.idea
 .vscode/*
-
 node_modules/
-
 copy-build-files.mjs
-*.txt
-
 dist/*
+*.txt
+assets/

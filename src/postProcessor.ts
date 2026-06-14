@@ -128,46 +128,22 @@ function processNode(node: Node, isDataviewInline: (node: Node) => boolean, plug
 
 /**
  * Processes a code block, highlighting color codes within it.
+ * Walks existing text nodes individually to preserve syntax highlighting
+ * and other existing DOM elements within the code block.
  * 
  * @param codeBlock The code block element to process.
  * @param plugin The ColorHighlighterPlugin instance.
+ * @param noteHighlightStyle The highlight style to use. If not provided, the plugin's default style is used.
  */
 function processCodeBlock(codeBlock: HTMLElement, plugin: ColorHighlighterPlugin, noteHighlightStyle?: HighlightStyle) {
-    const content = codeBlock.textContent || '';
-    const matches = Array.from(content.matchAll(COLOR_REGEX));
-
-    if (matches.length === 0) return;
-
-    const fragment = document.createDocumentFragment();
-    let lastIndex = 0;
-
-    matches.forEach(match => {
-        const colorCode = match[0];
-        const startIndex = match.index!;
-        const endIndex = startIndex + colorCode.length;
-
-        // Add text before the color code
-        if (startIndex > lastIndex) {
-            fragment.appendChild(document.createTextNode(content.slice(lastIndex, startIndex)));
-        }
-
-        // Add highlighted color code
-        const span = document.createElement('span');
-        span.textContent = colorCode;
-        applyHighlightStyle(span, colorCode, plugin, noteHighlightStyle);
-        fragment.appendChild(span);
-
-        lastIndex = endIndex;
-    });
-
-    // Add any remaining text
-    if (lastIndex < content.length) {
-        fragment.appendChild(document.createTextNode(content.slice(lastIndex)));
+    const walker = document.createTreeWalker(codeBlock, NodeFilter.SHOW_TEXT);
+    const textNodes: Text[] = [];
+    while (walker.nextNode()) {
+        textNodes.push(walker.currentNode as Text);
     }
-
-    // Replace the content of the code block
-    codeBlock.textContent = '';
-    codeBlock.appendChild(fragment);
+    for (const node of textNodes) {
+        highlightColorInNode(node, plugin, noteHighlightStyle);
+    }
 }
 
 /**
