@@ -1,6 +1,6 @@
 import { EditorState, StateEffect } from '@codemirror/state';
 import { DecorationSet, EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
-import { HighlightStyle } from 'src/HighlightStyle';
+import { HighlightStyle } from '../HighlightStyle';
 import ColorHighlighterPlugin from '../../main';
 import { ColorPicker } from '../colorPicker';
 import { updateCursorColor } from './colorDecorationUtils';

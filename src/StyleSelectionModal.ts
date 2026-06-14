@@ -1,8 +1,8 @@
 import { App, Modal, Setting } from 'obsidian';
-import { HighlightStyle } from './HighlightStyle';
+import { HighlightStyle, isHighlightStyle } from './HighlightStyle';
 
 export class StyleSelectionModal extends Modal {
-    result: HighlightStyle;
+    result: HighlightStyle = HighlightStyle.Background;
     onSubmit: (result: HighlightStyle) => void;
 
     constructor(app: App, onSubmit: (result: HighlightStyle) => void) {
@@ -22,8 +22,10 @@ export class StyleSelectionModal extends Modal {
                 .addOption(HighlightStyle.Border, 'Border')
                 .addOption(HighlightStyle.Square, 'Square')
                 .addOption(HighlightStyle.Underline, 'Underline')
-                .onChange((value: HighlightStyle) => {
-                    this.result = value;
+                .onChange((value) => {
+                    if (isHighlightStyle(value)) {
+                       this.result = value;
+                        }
                 })
             );
 

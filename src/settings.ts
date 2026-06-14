@@ -1,6 +1,6 @@
 import { App, ButtonComponent, PluginSettingTab, Setting, SuggestModal, TFile } from 'obsidian';
 import ColorHighlighterPlugin from '../main';
-import { HighlightStyle } from './HighlightStyle';
+import { HighlightStyle, isHighlightStyle } from './HighlightStyle';
 
 export interface ColorHighlighterSettings {
     highlightEverywhere: boolean;
@@ -126,10 +126,12 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                 .addOption(HighlightStyle.Square, 'Square')
                 .addOption(HighlightStyle.Underline, 'Underline')
                 .setValue(this.plugin.settings.highlightStyle)
-                .onChange(async (value: HighlightStyle) => {
-                    this.plugin.settings.highlightStyle = value;
-                    await this.plugin.saveSettings();
-                    this.display();
+                .onChange(async (value) => {
+                    if (isHighlightStyle(value)) {
+                        this.plugin.settings.highlightStyle = value;
+                        await this.plugin.saveSettings();
+                        this.display();
+                    }
                 })
             );
 
@@ -154,9 +156,11 @@ export class ColorHighlighterSettingTab extends PluginSettingTab {
                     .addOption('before', 'Before text')
                     .addOption('after', 'After text')
                     .setValue(this.plugin.settings.squarePosition)
-                    .onChange(async (value: 'before' | 'after') => {
-                    this.plugin.settings.squarePosition = value;
-                    await this.plugin.saveSettings();
+                    .onChange(async (value) => {
+                        if (value === 'before' || value === 'after') {
+                            this.plugin.settings.squarePosition = value;
+                            await this.plugin.saveSettings();
+                        }
                     })
                 );
                 

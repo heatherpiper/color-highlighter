@@ -4,7 +4,7 @@
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
-    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && shx cp styles.css dist/ && (if exist copy-build-files.mjs (node copy-build-files.mjs) else (echo Skipping copy-build-files.mjs))",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && shx cp styles.css dist",
     "version": "node version-bump.mjs && git add manifest.json"
   },
   "keywords": [],
@@ -19,7 +19,7 @@
     "cross-env": "^7.0.3",
     "esbuild": "^0.21.5",
     "shx": "^0.3.4",
-    "typescript": "^5.5.2"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "@codemirror/language": "^6.10.2",

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.0
+
+- Fixed an issue where `processCodeBlock` would overwrite syntax highlighting if codeblocks were contained within callouts.
+- Updated TypeScript from 5.5.2 to 6.0.3
+- Fixed build script for cross-platform compatibility.
+- Fixed GitHub Actions release workflow.
+
 ## 0.7.1
 
 - Updated the regex for HSL and HSLA colors to correctly highlight values with decimal points.

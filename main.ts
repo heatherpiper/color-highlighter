@@ -1,6 +1,6 @@
 import { EditorView } from '@codemirror/view';
 import { Editor, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
-import { HighlightStyle } from 'src/HighlightStyle';
+import { HighlightStyle } from './src/HighlightStyle';
 import { ColorPicker } from './src/colorPicker';
 import { createEditorExtension, refreshEffect } from './src/editorExtension/editorExtension';
 import { createPostProcessor } from './src/postProcessor';
@@ -11,8 +11,8 @@ import './styles.css';
 import { Editor as CustomEditor } from './types';
 
 class ColorHighlighterPlugin extends Plugin {
-    settings: ColorHighlighterSettings;
-    colorPicker: ColorPicker;
+    settings!: ColorHighlighterSettings;
+    colorPicker!: ColorPicker;
 
     async onload() {
         await this.loadSettings();
